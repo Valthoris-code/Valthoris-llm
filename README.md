@@ -1,6 +1,6 @@
-# Aetheris: Assistente Inteligente de Deteção de Fraude e Phishing
+# Valthoris: Assistente Inteligente de Deteção de Fraude e Phishing
 
-**Aetheris** é um assistente de inteligência artificial baseado em Transformer que detecta fraude, phishing e tentativas de engenharia social em mensagens de texto, emails e comunicações.
+**Valthoris** é um assistente de inteligência artificial baseado em Transformer que detecta fraude, phishing e tentativas de engenharia social em mensagens de texto, emails e comunicações.
 
 ## 🎯 Objetivo
 
@@ -55,8 +55,8 @@ O modelo é treinado com dados públicos de phishing e spam:
 
 ### 1. Clonar repositório
 ```bash
-git clone https://github.com/Aetheris-code/Aetheris-llm.git
-cd Aetheris-llm
+git clone https://github.com/Aetheris-code/Valthoris-llm.git
+cd Valthoris-llm
 ```
 
 ### 2. Instalar dependências
@@ -117,7 +117,7 @@ Classifica mensagem em tempo real:
 ## 📁 Estrutura do Projeto
 
 ```
-Aetheris-llm/
+Valthoris-llm/
 ├── data/
 │   ├── .gitkeep
 │   └── dataset.csv          # Dataset com labels
