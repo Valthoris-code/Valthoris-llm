@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Relógio digital simples com múltiplos fusos horários.
+Simple digital clock with multiple time zones.
 """
 
 import argparse
@@ -42,18 +42,18 @@ def positive_int(value: str) -> int:
 
 
 def parse_args(argv: Optional[Sequence[str]] = None):
-    parser = argparse.ArgumentParser(description="Mostrar relógio digital multi-fuso.")
+    parser = argparse.ArgumentParser(description="Display a multi-timezone digital clock.")
     parser.add_argument(
         "--interval",
         type=positive_float,
         default=1.0,
-        help="Intervalo de atualização em segundos (default: 1.0).",
+        help="Refresh interval in seconds (default: 1.0).",
     )
     parser.add_argument(
         "--iterations",
         type=positive_int,
         default=None,
-        help="Número de atualizações antes de terminar (default: contínuo).",
+        help="Number of refreshes before exit (default: run continuously).",
     )
     return parser.parse_args(argv)
 
