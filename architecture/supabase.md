@@ -2,7 +2,7 @@
 
 **Estado:** Em construção
 
-Este documento irá descrever a arquitetura, configuração e integração do Supabase na plataforma Aetheris.
+Este documento irá descrever a arquitetura, configuração e integração do Supabase na plataforma Valthoris.
 
 ## Conteúdo previsto
 
