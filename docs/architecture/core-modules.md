@@ -1,4 +1,4 @@
-# Aetheris Core Modules
+# Valthoris Core Modules
 
 **Versão:** 1.0.0
 
@@ -6,7 +6,7 @@
 
 ## Módulos Principais
 
-### 🤖 Aetheris Chat
+### 🤖 Valthoris AI
 Assistente inteligente especializado em fraude digital.
 
 ### 🛡️ AutoShield

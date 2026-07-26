@@ -8,7 +8,7 @@
 
 # Objetivo
 
-O AutoShield é o sistema de proteção preventiva em tempo real da plataforma Aetheris.
+O AutoShield é o sistema de proteção preventiva em tempo real da plataforma Valthoris.
 
 O seu objetivo é identificar, analisar e responder a ameaças digitais antes que provoquem danos ao utilizador.
 
@@ -88,7 +88,7 @@ Proteção de operações bancárias.
 
 O AutoShield combina informação proveniente de:
 
-- Modelo Aetheris AI
+- Modelo Valthoris AI
 - Radar Global de Fraudes
 - Threat Intelligence
 - APIs Públicas
@@ -104,7 +104,7 @@ Nenhuma fonte é considerada absoluta. Todas contribuem para uma decisão fundam
 
 O AutoShield comunica com:
 
-- Aetheris Chat
+- Valthoris AI
 - Scanner Universal
 - Radar Global de Fraudes
 - Threat Intelligence

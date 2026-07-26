@@ -1,10 +1,10 @@
-# Aetheris Specification
+# Valthoris Specification
 
 **Versão:** 1.0.0
 
 **Estado:** Em Desenvolvimento
 
-**Projeto:** Aetheris
+**Projeto:** Valthoris
 
 **Codename:** Project Phoenix
 

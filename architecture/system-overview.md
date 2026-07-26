@@ -1,8 +1,8 @@
-# Aetheris System Overview
+# Valthoris System Overview
 
 ## Objetivo
 
-Este documento descreve a arquitetura global da plataforma Aetheris.
+Este documento descreve a arquitetura global da plataforma Valthoris.
 
 ## Componentes
 
