@@ -114,6 +114,13 @@ Classifica mensagem em tempo real:
 - Nível de confiança
 - Recomendação
 
+### 8. Relógio digital multi-fuso (exemplo executável)
+```bash
+python digital_clock.py
+```
+
+Mostra a hora atual em vários fusos horários e atualiza automaticamente.
+
 ## 📁 Estrutura do Projeto
 
 ```
