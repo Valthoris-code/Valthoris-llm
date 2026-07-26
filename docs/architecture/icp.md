@@ -8,7 +8,7 @@
 
 # Objetivo
 
-Este documento descreve a arquitetura da Internet Computer Protocol (ICP) utilizada pela plataforma Aetheris.
+Este documento descreve a arquitetura da Internet Computer Protocol (ICP) utilizada pela plataforma Valthoris.
 
 A Aetheris utilizará uma arquitetura modular baseada em canisters próprios, concebida para garantir escalabilidade, segurança, elevada disponibilidade e facilidade de manutenção.
 
