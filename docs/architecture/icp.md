@@ -10,9 +10,9 @@
 
 Este documento descreve a arquitetura da Internet Computer Protocol (ICP) utilizada pela plataforma Valthoris.
 
-A Aetheris utilizará uma arquitetura modular baseada em canisters próprios, concebida para garantir escalabilidade, segurança, elevada disponibilidade e facilidade de manutenção.
+A Valthoris utilizará uma arquitetura modular baseada em canisters próprios, concebida para garantir escalabilidade, segurança, elevada disponibilidade e facilidade de manutenção.
 
-Sempre que possível serão reutilizados e evoluídos os canisters originalmente desenvolvidos para a AntiFraudApp.
+Sempre que possível serão reutilizados e evoluídos os canisters existentes da plataforma.
 
 ---
 
@@ -208,7 +208,7 @@ Os canisters poderão comunicar com:
 
 - Supabase
 - APIs públicas
-- Modelo Aetheris AI
+- Modelo Valthoris AI
 - Aplicações Android
 - Aplicações iOS
 - Aplicação Web
