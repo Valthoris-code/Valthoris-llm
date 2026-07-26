@@ -1,4 +1,4 @@
-# Aetheris Vision 2035
+# Valthoris Vision 2035
 
 **Versão:** 1.0.0
 
@@ -8,7 +8,7 @@
 
 # Visão
 
-Aetheris é uma plataforma de Inteligência Artificial concebida para se tornar uma referência mundial na prevenção, deteção e combate ao crime digital.
+Valthoris é uma plataforma de Inteligência Artificial concebida para se tornar uma referência mundial na prevenção, deteção e combate ao crime digital.
 
 A plataforma combina Inteligência Artificial, Threat Intelligence, análise comportamental, inteligência colaborativa e tecnologias descentralizadas para proteger utilizadores, empresas e organizações em tempo real.
 
@@ -36,7 +36,7 @@ Proteger pessoas e organizações contra o crime digital através de tecnologia 
 
 # Visão para 2035
 
-Até 2035, a Aetheris pretende:
+Até 2035, a Valthoris pretende:
 
 - Ser uma referência internacional na prevenção de fraude digital.
 - Disponibilizar proteção inteligente para milhões de utilizadores.
