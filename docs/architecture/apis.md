@@ -8,9 +8,9 @@
 
 # Objetivo
 
-Este documento descreve todas as APIs utilizadas pela plataforma Aetheris.
+Este documento descreve todas as APIs utilizadas pela plataforma Valthoris.
 
-A filosofia da Aetheris é combinar Inteligência Artificial com múltiplas fontes públicas de Threat Intelligence, reduzindo falsos positivos e aumentando a precisão das análises.
+A filosofia da Valthoris é combinar Inteligência Artificial com múltiplas fontes públicas de Threat Intelligence, reduzindo falsos positivos e aumentando a precisão das análises.
 
 ---
 
@@ -117,7 +117,7 @@ A plataforma deverá suportar:
 
 As APIs comunicarão com:
 
-- Aetheris AI
+- Valthoris AI
 - AutoShield
 - Threat Intelligence
 - Backend
