@@ -209,7 +209,7 @@ Este projeto está sob licença MIT. Veja `LICENSE` para mais detalhes.
 
 ## 👤 Autor
 
-**Aetheris-code**
+**Valthoris-code**
 
 ## 📞 Suporte
 
