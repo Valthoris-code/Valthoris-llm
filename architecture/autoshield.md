@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Este documento descreve a arquitetura, funcionamento e integração do AutoShield, o sistema de proteção em tempo real da plataforma Aetheris.
+Este documento descreve a arquitetura, funcionamento e integração do AutoShield, o sistema de proteção em tempo real da plataforma Valthoris.
 
 ## Conteúdo previsto
 
