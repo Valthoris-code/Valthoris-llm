@@ -30,14 +30,14 @@ def render_clock() -> str:
 def positive_float(value: str) -> float:
     interval = float(value)
     if interval <= 0:
-        raise argparse.ArgumentTypeError("Interval must be greater than 0.")
+        raise argparse.ArgumentTypeError(f"Interval must be greater than 0, got {interval}.")
     return interval
 
 
 def positive_int(value: str) -> int:
     iterations = int(value)
     if iterations <= 0:
-        raise argparse.ArgumentTypeError("Iterations must be greater than 0.")
+        raise argparse.ArgumentTypeError(f"Iterations must be greater than 0, got {iterations}.")
     return iterations
 
 
