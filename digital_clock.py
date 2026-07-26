@@ -6,6 +6,7 @@ Relógio digital simples com múltiplos fusos horários.
 import argparse
 import time
 from datetime import datetime, timedelta, timezone
+from typing import Optional, Sequence
 
 
 TIME_ZONES = [
@@ -36,11 +37,11 @@ def positive_float(value: str) -> float:
 def positive_int(value: str) -> int:
     iterations = int(value)
     if iterations <= 0:
-        raise argparse.ArgumentTypeError("Iterations deve ser maior que 0.")
+        raise argparse.ArgumentTypeError("Iterações deve ser maior que 0.")
     return iterations
 
 
-def parse_args(argv=None):
+def parse_args(argv: Optional[Sequence[str]] = None):
     parser = argparse.ArgumentParser(description="Mostrar relógio digital multi-fuso.")
     parser.add_argument(
         "--interval",
@@ -57,7 +58,13 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def run_clock(interval: float, iterations=None, clear_screen: bool = True, sleep_fn=time.sleep, print_fn=print) -> None:
+def run_clock(
+    interval: float,
+    iterations: Optional[int] = None,
+    clear_screen: bool = True,
+    sleep_fn=time.sleep,
+    print_fn=print,
+) -> None:
     updates = 0
     while True:
         if clear_screen:
@@ -69,7 +76,7 @@ def run_clock(interval: float, iterations=None, clear_screen: bool = True, sleep
         sleep_fn(interval)
 
 
-def main(argv=None) -> None:
+def main(argv: Optional[Sequence[str]] = None) -> None:
     args = parse_args(argv)
     run_clock(interval=args.interval, iterations=args.iterations)
 
