@@ -55,7 +55,7 @@ O modelo é treinado com dados públicos de phishing e spam:
 
 ### 1. Clonar repositório
 ```bash
-git clone https://github.com/Aetheris-code/Valthoris-llm.git
+git clone https://github.com/Valthoris-code/Valthoris-llm.git
 cd Valthoris-llm
 ```
 
