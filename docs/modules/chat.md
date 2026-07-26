@@ -1,4 +1,4 @@
-# Aetheris Chat
+# Valthoris Chat
 
 **Versão:** 1.0.0
 
@@ -10,11 +10,11 @@
 
 # Objetivo
 
-O Aetheris Chat é o assistente inteligente da plataforma Aetheris.
+O Valthoris Chat é o assistente inteligente da plataforma Valthoris.
 
 Foi concebido para ajudar utilizadores, empresas e organizações a prevenir, identificar, compreender e combater ameaças digitais através de Inteligência Artificial especializada.
 
-Ao contrário de um chatbot generalista, o Aetheris Chat é especializado em cibersegurança, fraude digital, phishing, engenharia social, proteção de identidade, fraude financeira e segurança em criptomoedas.
+Ao contrário de um chatbot generalista, o Valthoris Chat é especializado em cibersegurança, fraude digital, phishing, engenharia social, proteção de identidade, fraude financeira e segurança em criptomoedas.
 
 O seu principal objetivo é transformar informação complexa em explicações simples, rigorosas e úteis para o utilizador.
 
@@ -46,7 +46,7 @@ Disponibilizar um assistente especializado capaz de:
 
 # Filosofia
 
-O Aetheris Chat foi desenvolvido segundo cinco princípios fundamentais.
+O Valthoris Chat foi desenvolvido segundo cinco princípios fundamentais.
 
 ## Explicabilidade
 
@@ -90,7 +90,7 @@ O conhecimento deverá evoluir continuamente através de novos modelos, novos da
 
 # Capacidades
 
-O Aetheris Chat deverá ser capaz de:
+O Valthoris Chat deverá ser capaz de:
 
 - Conversação natural.
 - Compreensão multilingue.
@@ -134,7 +134,7 @@ Todo o conjunto deverá produzir um relatório único.
 
 # Fluxo de Análise
 
-Sempre que receber um pedido, o Aetheris Chat deverá:
+Sempre que receber um pedido, o Valthoris Chat deverá:
 
 1. Identificar o tipo de conteúdo.
 
@@ -184,13 +184,13 @@ Ensina prevenção.
 
 ## Emergência
 
-Apoia o utilizador durante ataques em curso.
+Apoio durante ataques em curso.
 
 ---
 
 # Integração
 
-O Aetheris Chat comunica com:
+O Valthoris Chat comunica com:
 
 - AutoShield
 - Scanner Universal
@@ -223,7 +223,7 @@ O Aetheris Chat comunica com:
 
 # Evolução
 
-O Aetheris Chat evoluirá continuamente através de:
+O Valthoris Chat evoluirá continuamente através de:
 
 - Novos modelos de IA.
 - Novos datasets.
@@ -238,14 +238,14 @@ O Aetheris Chat evoluirá continuamente através de:
 
 # Visão de Longo Prazo
 
-O objetivo da Aetheris é que o Chat se torne um verdadeiro especialista digital capaz de:
+O objetivo da Valthoris é que o Chat se torne um verdadeiro especialista digital capaz de:
 
 - Prevenir fraudes antes de acontecerem.
 - Investigar casos complexos.
 - Explicar ameaças de forma compreensível.
 - Apoiar utilizadores particulares, empresas e entidades públicas.
-- Trabalhar em conjunto com todos os módulos da plataforma Aetheris para fornecer uma proteção inteligente, transparente e contínua.
+- Trabalhar em conjunto com todos os módulos da plataforma Valthoris para fornecer uma proteção inteligente, transparente e contínua.
 
 ---
 
-> Documento em desenvolvimento contínuo.Create chat module documentation
+> Documento em desenvolvimento contínuo.
