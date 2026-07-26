@@ -26,30 +26,52 @@ def render_clock() -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
+def positive_float(value: str) -> float:
+    interval = float(value)
+    if interval <= 0:
+        raise argparse.ArgumentTypeError("Intervalo deve ser maior que 0.")
+    return interval
+
+
+def positive_int(value: str) -> int:
+    iterations = int(value)
+    if iterations <= 0:
+        raise argparse.ArgumentTypeError("Iterations deve ser maior que 0.")
+    return iterations
+
+
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Mostrar relógio digital multi-fuso.")
     parser.add_argument(
         "--interval",
-        type=float,
+        type=positive_float,
         default=1.0,
         help="Intervalo de atualização em segundos (default: 1.0).",
     )
     parser.add_argument(
         "--iterations",
-        type=int,
+        type=positive_int,
         default=None,
         help="Número de atualizações antes de terminar (default: contínuo).",
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
 
+
+def run_clock(interval: float, iterations=None, clear_screen: bool = True, sleep_fn=time.sleep, print_fn=print) -> None:
     updates = 0
     while True:
-        print("\033[2J\033[H", end="")
-        print(render_clock())
+        if clear_screen:
+            print_fn("\033[2J\033[H", end="")
+        print_fn(render_clock())
         updates += 1
-        if args.iterations is not None and updates >= args.iterations:
+        if iterations is not None and updates >= iterations:
             break
-        time.sleep(max(args.interval, 0.1))
+        sleep_fn(interval)
+
+
+def main(argv=None) -> None:
+    args = parse_args(argv)
+    run_clock(interval=args.interval, iterations=args.iterations)
 
 
 if __name__ == "__main__":
