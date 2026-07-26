@@ -8,7 +8,7 @@
 
 # Objetivo
 
-O AutoShield é o sistema de proteção preventiva em tempo real da plataforma Aetheris.
+O AutoShield é o sistema de proteção preventiva em tempo real da plataforma Valthoris.
 
 O seu objetivo é identificar, analisar e responder a ameaças digitais antes que provoquem danos ao utilizador.
 
