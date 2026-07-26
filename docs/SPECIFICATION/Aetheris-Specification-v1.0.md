@@ -1,4 +1,4 @@
-# Valthoris Specification
+# Valthorys Specification
 
 **Versão:** 1.0.0
 
