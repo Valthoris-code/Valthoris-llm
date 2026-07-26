@@ -12,7 +12,7 @@ O AutoShield é o sistema de proteção preventiva em tempo real da plataforma V
 
 O seu objetivo é identificar, analisar e responder a ameaças digitais antes que provoquem danos ao utilizador.
 
-O AutoShield funciona como um "escudo inteligente", monitorizando continuamente diferentes tipos de comunicações, conteúdos e eventos, recorrendo à Inteligência Artificial, Threat Intelligence e regras de segurança para reduzir o risco de fraude.
+O AutoShield funciona como um "escudo inteligente", monitorizando continuamente diferentes tipos de comunicações, conteúdos e eventos, recorrendo à Inteligência Artificial, Threat Intelligence e regras de proteção especializadas.
 
 ---
 
@@ -88,7 +88,7 @@ Proteção de operações bancárias.
 
 O AutoShield combina informação proveniente de:
 
-- Modelo Aetheris AI
+- Modelo Valthoris AI
 - Radar Global de Fraudes
 - Threat Intelligence
 - APIs Públicas
@@ -104,7 +104,7 @@ Nenhuma fonte é considerada absoluta. Todas contribuem para uma decisão fundam
 
 O AutoShield comunica com:
 
-- Aetheris Chat
+- Valthoris Chat
 - Scanner Universal
 - Radar Global de Fraudes
 - Threat Intelligence
