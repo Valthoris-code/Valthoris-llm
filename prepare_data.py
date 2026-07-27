@@ -77,6 +77,33 @@ def download_dataset(url: str, output_path: str) -> str:
     return output_path
 
 
+def add_record_if_allowed(
+    records: list[dict],
+    counters: dict[str, int],
+    language: str,
+    text: str,
+    original_label: str,
+    max_samples_per_language: int | None,
+) -> None:
+    """Adiciona um registo se houver texto e quota disponível para o idioma."""
+    if not text:
+        return
+    if max_samples_per_language is not None and counters[language] >= max_samples_per_language:
+        return
+
+    label_id = classify_label(original_label, text)
+    records.append(
+        {
+            "text": text,
+            "label": label_id,
+            "label_name": LABEL_NAMES[label_id],
+            "language": language,
+            "source": "mnarrissa/Multilingual-Spam-Classification",
+        }
+    )
+    counters[language] += 1
+
+
 def load_records(csv_path: str, max_samples_per_language: int | None = None) -> list[dict]:
     """Carrega e normaliza registos EN/PT a partir do CSV público."""
     records: list[dict] = []
@@ -92,31 +119,22 @@ def load_records(csv_path: str, max_samples_per_language: int | None = None) -> 
             en_text = clean_text(row.get("text", ""))
             pt_text = clean_text(row.get("text_pt", ""))
 
-            if en_text and (max_samples_per_language is None or counters["en"] < max_samples_per_language):
-                label_id = classify_label(original_label, en_text)
-                records.append(
-                    {
-                        "text": en_text,
-                        "label": label_id,
-                        "label_name": LABEL_NAMES[label_id],
-                        "language": "en",
-                        "source": "mnarrissa/Multilingual-Spam-Classification",
-                    }
-                )
-                counters["en"] += 1
-
-            if pt_text and (max_samples_per_language is None or counters["pt"] < max_samples_per_language):
-                label_id = classify_label(original_label, pt_text)
-                records.append(
-                    {
-                        "text": pt_text,
-                        "label": label_id,
-                        "label_name": LABEL_NAMES[label_id],
-                        "language": "pt",
-                        "source": "mnarrissa/Multilingual-Spam-Classification",
-                    }
-                )
-                counters["pt"] += 1
+            add_record_if_allowed(
+                records=records,
+                counters=counters,
+                language="en",
+                text=en_text,
+                original_label=original_label,
+                max_samples_per_language=max_samples_per_language,
+            )
+            add_record_if_allowed(
+                records=records,
+                counters=counters,
+                language="pt",
+                text=pt_text,
+                original_label=original_label,
+                max_samples_per_language=max_samples_per_language,
+            )
 
             if max_samples_per_language is not None:
                 if counters["en"] >= max_samples_per_language and counters["pt"] >= max_samples_per_language:
@@ -202,24 +220,24 @@ def main(
 
 
 if __name__ == "__main__":
+    def parse_max_samples(value: str) -> int | None:
+        parsed = int(value)
+        return None if parsed <= 0 else parsed
+
     parser = argparse.ArgumentParser(description="Preparar dataset e corpus EN/PT.")
     parser.add_argument("--dataset-output", default="data/dataset.csv")
     parser.add_argument("--corpus-output", default="data/corpus.txt")
     parser.add_argument(
         "--max-samples-per-language",
-        type=int,
+        type=parse_max_samples,
         default=10000,
         help="Máximo de amostras por idioma (default: 10000). Use <=0 para sem limite.",
     )
     args = parser.parse_args()
 
-    max_samples = args.max_samples_per_language
-    if max_samples is not None and max_samples <= 0:
-        max_samples = None
-
     success = main(
         dataset_output_path=args.dataset_output,
         corpus_output_path=args.corpus_output,
-        max_samples_per_language=max_samples,
+        max_samples_per_language=args.max_samples_per_language,
     )
     raise SystemExit(0 if success else 1)
