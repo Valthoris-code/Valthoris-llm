@@ -30,9 +30,8 @@ LABEL_NAMES = {
 }
 
 
-URL_PATTERN = re.compile(r"https?://\S+|www\.\S+", flags=re.IGNORECASE)
-
 PHISHING_KEYWORDS = (
+    "[url]",
     "login",
     "verify",
     "verification",
@@ -92,7 +91,7 @@ def classify_label(original_label: str, text: str) -> int:
 
     text_lower = text.lower()
 
-    if URL_PATTERN.search(text) or any(keyword in text_lower for keyword in PHISHING_KEYWORDS):
+    if any(keyword in text_lower for keyword in PHISHING_KEYWORDS):
         return 1
 
     if any(keyword in text_lower for keyword in FRAUD_KEYWORDS):
@@ -201,8 +200,10 @@ def write_corpus(records: list[dict], output_path: str) -> None:
     with open(output_path, "w", encoding="utf-8") as f:
         for record in records:
             text = record["text"]
-            text_hash = hashlib.sha256(text.encode("utf-8")).digest() if text else None
-            if text and text_hash not in seen_hashes:
+            if not text:
+                continue
+            text_hash = hashlib.sha256(text.encode("utf-8")).digest()
+            if text_hash not in seen_hashes:
                 seen_hashes.add(text_hash)
                 f.write(text + "\n\n")
 
@@ -264,7 +265,9 @@ if __name__ == "__main__":
         try:
             parsed = int(value)
         except ValueError as exc:
-            raise argparse.ArgumentTypeError("max-samples-per-language must be an integer") from exc
+            raise argparse.ArgumentTypeError(
+                "max-samples-per-language must be an integer (<=0 means no limit)"
+            ) from exc
         return None if parsed <= 0 else parsed
 
     parser = argparse.ArgumentParser(description="Preparar dataset e corpus EN/PT.")
