@@ -12,7 +12,7 @@ Este documento descreve a arquitetura da Internet Computer Protocol (ICP) utiliz
 
 A Valthoris utilizará uma arquitetura modular baseada em canisters próprios, concebida para garantir escalabilidade, segurança, elevada disponibilidade e facilidade de manutenção.
 
-Sempre que possível serão reutilizados e evoluídos os canisters originalmente desenvolvidos para a AntiFraudApp.
+Sempre que possível serão reutilizados e evoluídos os canisters existentes da plataforma.
 
 ---
 
@@ -218,6 +218,12 @@ Os canisters poderão comunicar com:
 # Evolução
 
 A arquitetura ICP será continuamente revista para acomodar novas funcionalidades e otimizações sem comprometer a estabilidade da plataforma.
+
+---
+
+# Nota sobre Preparação de Dados (Treino)
+
+A preparação de dados de treino EN/PT é um processo offline (`prepare_data.py`) baseado em CSV público, com saída em `data/dataset.csv` e `data/corpus.txt`. Este fluxo é externo aos canisters ICP e serve a etapa de treino/tokenização.
 
 ---
 

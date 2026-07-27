@@ -6,7 +6,11 @@
 
 ## Módulos Principais
 
+<<<<<<< HEAD
 ### 🤖 Valthoris AI
+=======
+### 🤖 Valthoris Chat
+>>>>>>> origin/main
 Assistente inteligente especializado em fraude digital.
 
 ### 🛡️ AutoShield
@@ -50,3 +54,15 @@ Canisters e serviços descentralizados.
 
 ### 🔌 API Gateway
 Integração com APIs externas.
+
+## Pipeline de Dados de Treino (CSV)
+
+O pipeline atual de preparação de dados é executado offline pelo script `prepare_data.py` e gera os artefactos usados pelo tokenizer:
+
+1. Download de um CSV público para `data/raw/multilingual_spam.csv`.
+2. Leitura de `text` (EN) e `text_pt` (PT).
+3. Normalização de texto e labels.
+4. Escrita de `data/dataset.csv` com colunas `text,label,label_name,language,source`.
+5. Geração de `data/corpus.txt` deduplicado para treino de tokenizer.
+
+Este pipeline não utiliza datasets de enciclopédia e não faz parte da arquitetura online de inferência.
