@@ -5,9 +5,6 @@
 **Estado:** Em Desenvolvimento
 
 **Projeto:** Valthoris
-
-**Codename:** Project Phoenix
-
 **Autor:** Hermínio Coragem
 
 ---
@@ -39,6 +36,7 @@
 ## Volume III — Inteligência Artificial
 
 - Modelo LLM
+- Pipeline de Preparação de Dados (CSV EN/PT)
 - Fine-tuning
 - RAG
 - Memória

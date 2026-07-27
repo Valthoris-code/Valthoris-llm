@@ -1,4 +1,4 @@
-# Nome do Módulo
+# Dashboard
 
 **Versão:** 1.0.0
 
