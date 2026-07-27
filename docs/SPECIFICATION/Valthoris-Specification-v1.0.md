@@ -5,7 +5,6 @@
 **Estado:** Em Desenvolvimento
 
 **Projeto:** Valthoris
-
 **Autor:** Hermínio Coragem
 
 ---
