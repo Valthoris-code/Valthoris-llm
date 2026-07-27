@@ -1,4 +1,4 @@
-# Nome do Módulo
+# Definições
 
 **Versão:** 1.0.0
 

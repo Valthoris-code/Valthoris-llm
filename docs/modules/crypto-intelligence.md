@@ -1,4 +1,4 @@
-# Nome do Módulo
+# Crypto Intelligence
 
 **Versão:** 1.0.0
 

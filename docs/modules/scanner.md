@@ -1,4 +1,4 @@
-# Nome do Módulo
+# Scanner Universal
 
 **Versão:** 1.0.0
 

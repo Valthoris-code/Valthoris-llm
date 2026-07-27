@@ -6,8 +6,6 @@
 
 **Projeto:** Valthoris
 
-**Codename:** Project Phoenix
-
 **Autor:** Hermínio Coragem
 
 ---

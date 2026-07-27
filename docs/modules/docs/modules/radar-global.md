@@ -1,7 +1,3 @@
-# Nome do Módulo
+# Deprecated
 
-**Versão:** 1.0.0
-
-**Estado:** Em construção
-
-> Documento em desenvolvimento contínuo.
+This file was moved. Please refer to <a>radar-global.md</a>.
