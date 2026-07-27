@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# Valthoris AI
-=======
 # Valthoris Chat
->>>>>>> origin/main
 
 **Versão:** 1.0.0
 
@@ -14,19 +10,11 @@
 
 # Objetivo
 
-<<<<<<< HEAD
-O Valthoris AI é o assistente inteligente da plataforma Valthoris.
-
-Foi concebido para ajudar utilizadores, empresas e organizações a prevenir, identificar, compreender e combater ameaças digitais através de Inteligência Artificial especializada.
-
-Ao contrário de um chatbot generalista, o Valthoris AI é especializado em cibersegurança, fraude digital, phishing, engenharia social, proteção de identidade, fraude financeira e segurança em criptomoedas.
-=======
 O Valthoris Chat é o assistente inteligente da plataforma Valthoris.
 
 Foi concebido para ajudar utilizadores, empresas e organizações a prevenir, identificar, compreender e combater ameaças digitais através de Inteligência Artificial especializada.
 
 Ao contrário de um chatbot generalista, o Valthoris Chat é especializado em cibersegurança, fraude digital, phishing, engenharia social, proteção de identidade, fraude financeira e segurança em criptomoedas.
->>>>>>> origin/main
 
 O seu principal objetivo é transformar informação complexa em explicações simples, rigorosas e úteis para o utilizador.
 
@@ -58,11 +46,7 @@ Disponibilizar um assistente especializado capaz de:
 
 # Filosofia
 
-<<<<<<< HEAD
-O Valthoris AI foi desenvolvido segundo cinco princípios fundamentais.
-=======
 O Valthoris Chat foi desenvolvido segundo cinco princípios fundamentais.
->>>>>>> origin/main
 
 ## Explicabilidade
 
@@ -106,11 +90,7 @@ O conhecimento deverá evoluir continuamente através de novos modelos, novos da
 
 # Capacidades
 
-<<<<<<< HEAD
-O Valthoris AI deverá ser capaz de:
-=======
 O Valthoris Chat deverá ser capaz de:
->>>>>>> origin/main
 
 - Conversação natural.
 - Compreensão multilingue.
@@ -154,11 +134,7 @@ Todo o conjunto deverá produzir um relatório único.
 
 # Fluxo de Análise
 
-<<<<<<< HEAD
-Sempre que receber um pedido, o Valthoris AI deverá:
-=======
 Sempre que receber um pedido, o Valthoris Chat deverá:
->>>>>>> origin/main
 
 1. Identificar o tipo de conteúdo.
 
@@ -214,11 +190,7 @@ Apoio durante ataques em curso.
 
 # Integração
 
-<<<<<<< HEAD
-O Valthoris AI comunica com:
-=======
 O Valthoris Chat comunica com:
->>>>>>> origin/main
 
 - AutoShield
 - Scanner Universal
@@ -251,11 +223,7 @@ O Valthoris Chat comunica com:
 
 # Evolução
 
-<<<<<<< HEAD
-O Valthoris AI evoluirá continuamente através de:
-=======
 O Valthoris Chat evoluirá continuamente através de:
->>>>>>> origin/main
 
 - Novos modelos de IA.
 - Novos datasets.

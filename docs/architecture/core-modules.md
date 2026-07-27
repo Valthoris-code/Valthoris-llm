@@ -6,11 +6,7 @@
 
 ## Módulos Principais
 
-<<<<<<< HEAD
-### 🤖 Valthoris AI
-=======
 ### 🤖 Valthoris Chat
->>>>>>> origin/main
 Assistente inteligente especializado em fraude digital.
 
 ### 🛡️ AutoShield

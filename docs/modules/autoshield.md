@@ -104,11 +104,7 @@ Nenhuma fonte é considerada absoluta. Todas contribuem para uma decisão fundam
 
 O AutoShield comunica com:
 
-<<<<<<< HEAD
-- Valthoris AI
-=======
 - Valthoris Chat
->>>>>>> origin/main
 - Scanner Universal
 - Radar Global de Fraudes
 - Threat Intelligence

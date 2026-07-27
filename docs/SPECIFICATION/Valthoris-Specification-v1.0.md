@@ -5,12 +5,6 @@
 **Estado:** Em Desenvolvimento
 
 **Projeto:** Valthoris
-<<<<<<< HEAD
-
-**Codename:** Project Phoenix
-
-=======
->>>>>>> origin/main
 **Autor:** Hermínio Coragem
 
 ---
