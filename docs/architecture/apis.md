@@ -132,4 +132,10 @@ Novas APIs poderão ser adicionadas sem necessidade de alterar a arquitetura pri
 
 ---
 
+# Fonte de Dados de Treino
+
+O treino de dados textuais EN/PT não é obtido via API de enciclopédia. O processo atual utiliza download direto de um CSV público no `prepare_data.py`, com cache local em `data/raw/multilingual_spam.csv`, geração de `data/dataset.csv` e produção de `data/corpus.txt` para o tokenizer.
+
+---
+
 > Documento em construção.

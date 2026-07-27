@@ -38,18 +38,30 @@ Output: Probabilidades [Legítimo | Fraude | Phishing | ...]
 
 ## 📊 Dataset
 
-O modelo é treinado com dados públicos de phishing e spam:
+O pipeline prepara dados públicos EN/PT a partir de um ficheiro CSV remoto:
 
-- **Fonte**: Hugging Face Datasets
-- **Idiomas**: Inglês e Português
-- **Labels**: 
-  - `0`: Legítimo
+- **Fonte**: `mnarrissa/Multilingual-Spam-Classification` (`data-augmented.csv`, descarregado por URL direta)
+- **Cache local do CSV bruto**: `data/raw/multilingual_spam.csv`
+- **Idiomas**: Inglês (`text`) e Português (`text_pt`)
+- **Labels de saída**:
+  - `0`: Legítimo (`ham`)
   - `1`: Phishing
   - `2`: Spam
   - `3`: Fraude
+- **Mapeamento de labels**:
+  - `ham` → `0` (legítimo)
+  - `spam` → classificado por regras (`phishing` > `fraude` > `spam`)
+- **Limite por idioma**: `--max-samples-per-language` (default: `10000`, `<=0` sem limite)
 
-- **Tamanho**: ~500MB por idioma (configurável)
-- **Proporção**: Balanceado entre idiomas e classes
+### Outputs do `prepare_data.py`
+
+- `data/dataset.csv` com colunas:
+  - `text`
+  - `label`
+  - `label_name`
+  - `language`
+  - `source`
+- `data/corpus.txt` para treino do tokenizer (linhas deduplicadas por hash)
 
 ## 🚀 Quick Start
 
@@ -69,10 +81,16 @@ pip install -r requirements.txt
 python prepare_data.py
 ```
 
-Descarrega datasets públicos de phishing/spam em EN e PT:
-- Equilibra classes
-- Combina idiomas
-- Gera `data/dataset.csv`
+Descarrega e prepara o CSV bilingue EN/PT:
+- Guarda CSV bruto em `data/raw/multilingual_spam.csv`
+- Normaliza texto e labels
+- Gera `data/dataset.csv` (estruturado)
+- Gera `data/corpus.txt` (corpus para tokenizer)
+
+Exemplo com parâmetros:
+```bash
+python prepare_data.py --dataset-output data/dataset.csv --corpus-output data/corpus.txt --max-samples-per-language 10000
+```
 
 ### 4. Treinar tokenizer
 ```bash
@@ -120,7 +138,10 @@ Classifica mensagem em tempo real:
 Valthoris-llm/
 ├── data/
 │   ├── .gitkeep
-│   └── dataset.csv          # Dataset com labels
+│   ├── dataset.csv          # Dataset normalizado para treino
+│   ├── corpus.txt           # Corpus para treino do tokenizer
+│   └── raw/
+│       └── multilingual_spam.csv  # CSV bruto em cache local
 ├── model/
 │   ├── .gitkeep
 │   └── architecture.py      # Arquitetura do transformer
@@ -140,7 +161,7 @@ Valthoris-llm/
 
 - Python 3.8+
 - PyTorch 2.0+
-- Hugging Face `datasets` e `tokenizers`
+- `tokenizers`
 - NumPy, Pandas, scikit-learn
 
 Veja `requirements.txt` para versões exatas.

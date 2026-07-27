@@ -221,4 +221,10 @@ A arquitetura ICP será continuamente revista para acomodar novas funcionalidade
 
 ---
 
+# Nota sobre Preparação de Dados (Treino)
+
+A preparação de dados de treino EN/PT é um processo offline (`prepare_data.py`) baseado em CSV público, com saída em `data/dataset.csv` e `data/corpus.txt`. Este fluxo é externo aos canisters ICP e serve a etapa de treino/tokenização.
+
+---
+
 > Documento em construção.
