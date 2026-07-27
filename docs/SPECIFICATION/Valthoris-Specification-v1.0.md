@@ -1,9 +1,9 @@
 # Valthoris Specification
 
-**Versão:** 1.0.0
-**Estado:** Em Desenvolvimento
-**Projeto:** Valthoris
-**Autor:** Hermínio Coragem
+- **Versão:** 1.0.0
+- **Estado:** Em Desenvolvimento
+- **Projeto:** Valthoris
+- **Autor:** Hermínio Coragem
 
 ---
 
