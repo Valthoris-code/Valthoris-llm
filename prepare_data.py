@@ -9,6 +9,7 @@ Outputs:
 
 import argparse
 import csv
+import hashlib
 import os
 import re
 import urllib.request
@@ -29,16 +30,39 @@ LABEL_NAMES = {
 }
 
 
-PHISHING_PATTERNS = re.compile(
-    r"(http|www\.|login|verify|verification|account|password|click|"
-    r"senha|conta|verifique|clique|credencial|token)",
-    flags=re.IGNORECASE,
+URL_PATTERN = re.compile(r"https?://\S+|www\.\S+", flags=re.IGNORECASE)
+
+PHISHING_KEYWORDS = (
+    "login",
+    "verify",
+    "verification",
+    "account",
+    "password",
+    "click",
+    "senha",
+    "conta",
+    "verifique",
+    "clique",
+    "credencial",
+    "token",
 )
 
-FRAUD_PATTERNS = re.compile(
-    r"(winner|lottery|prize|claim|urgent payment|bank transfer|bitcoin|crypto|"
-    r"investment|premio|ganhou|transfer[êe]ncia|pix|iban)",
-    flags=re.IGNORECASE,
+FRAUD_KEYWORDS = (
+    "winner",
+    "lottery",
+    "prize",
+    "claim",
+    "urgent payment",
+    "bank transfer",
+    "bitcoin",
+    "crypto",
+    "investment",
+    "premio",
+    "ganhou",
+    "transferência",
+    "transferencia",
+    "pix",
+    "iban",
 )
 
 
@@ -66,10 +90,12 @@ def classify_label(original_label: str, text: str) -> int:
     if normalized == "ham":
         return 0
 
-    if PHISHING_PATTERNS.search(text):
+    text_lower = text.lower()
+
+    if URL_PATTERN.search(text) or any(keyword in text_lower for keyword in PHISHING_KEYWORDS):
         return 1
 
-    if FRAUD_PATTERNS.search(text):
+    if any(keyword in text_lower for keyword in FRAUD_KEYWORDS):
         return 3
 
     return 2
@@ -95,7 +121,7 @@ def add_record_if_allowed(
     """Adiciona um registo se houver texto e quota disponível para o idioma."""
     if not text:
         return
-    if language_limit_reached(counters[language], max_samples_per_language):
+    if is_language_limit_reached(counters[language], max_samples_per_language):
         return
 
     label_id = classify_label(original_label, text)
@@ -111,7 +137,7 @@ def add_record_if_allowed(
     counters[language] += 1
 
 
-def language_limit_reached(current_count: int, max_samples_per_language: int | None) -> bool:
+def is_language_limit_reached(current_count: int, max_samples_per_language: int | None) -> bool:
     """Indica se o limite por idioma já foi atingido."""
     return max_samples_per_language is not None and current_count >= max_samples_per_language
 
@@ -148,7 +174,7 @@ def load_records(csv_path: str, max_samples_per_language: int | None = None) -> 
                 max_samples_per_language=max_samples_per_language,
             )
 
-            if language_limit_reached(counters["en"], max_samples_per_language) and language_limit_reached(
+            if is_language_limit_reached(counters["en"], max_samples_per_language) and is_language_limit_reached(
                 counters["pt"], max_samples_per_language
             ):
                 break
@@ -171,12 +197,13 @@ def write_dataset(records: list[dict], output_path: str) -> None:
 def write_corpus(records: list[dict], output_path: str) -> None:
     """Gera corpus.txt a partir do texto do dataset."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    seen = set()
+    seen_hashes = set()
     with open(output_path, "w", encoding="utf-8") as f:
         for record in records:
             text = record["text"]
-            if text and text not in seen:
-                seen.add(text)
+            text_hash = hashlib.sha256(text.encode("utf-8")).digest() if text else None
+            if text and text_hash not in seen_hashes:
+                seen_hashes.add(text_hash)
                 f.write(text + "\n\n")
 
 
@@ -233,8 +260,11 @@ def main(
 
 
 if __name__ == "__main__":
-    def parse_max_samples(value: str) -> int | None:
-        parsed = int(value)
+    def parse_optional_max_samples(value: str) -> int | None:
+        try:
+            parsed = int(value)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError("max-samples-per-language must be an integer") from exc
         return None if parsed <= 0 else parsed
 
     parser = argparse.ArgumentParser(description="Preparar dataset e corpus EN/PT.")
@@ -242,7 +272,7 @@ if __name__ == "__main__":
     parser.add_argument("--corpus-output", default="data/corpus.txt")
     parser.add_argument(
         "--max-samples-per-language",
-        type=parse_max_samples,
+        type=parse_optional_max_samples,
         default=10000,
         help="Máximo de amostras por idioma (default: 10000). Use <=0 para sem limite.",
     )
