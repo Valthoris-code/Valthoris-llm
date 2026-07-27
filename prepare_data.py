@@ -53,7 +53,14 @@ def clean_text(text: str) -> str:
 
 
 def classify_label(original_label: str, text: str) -> int:
-    """Mapeia label original (ham/spam) para taxonomia do projeto."""
+    """
+    Mapeia label original (ham/spam) para taxonomia do projeto.
+
+    Precedência de regras para mensagens "spam":
+    1) phishing
+    2) fraude
+    3) spam genérico
+    """
     normalized = (original_label or "").strip().lower()
 
     if normalized == "ham":
@@ -88,7 +95,7 @@ def add_record_if_allowed(
     """Adiciona um registo se houver texto e quota disponível para o idioma."""
     if not text:
         return
-    if max_samples_per_language is not None and counters[language] >= max_samples_per_language:
+    if language_limit_reached(counters[language], max_samples_per_language):
         return
 
     label_id = classify_label(original_label, text)
@@ -102,6 +109,11 @@ def add_record_if_allowed(
         }
     )
     counters[language] += 1
+
+
+def language_limit_reached(current_count: int, max_samples_per_language: int | None) -> bool:
+    """Indica se o limite por idioma já foi atingido."""
+    return max_samples_per_language is not None and current_count >= max_samples_per_language
 
 
 def load_records(csv_path: str, max_samples_per_language: int | None = None) -> list[dict]:
@@ -136,9 +148,10 @@ def load_records(csv_path: str, max_samples_per_language: int | None = None) -> 
                 max_samples_per_language=max_samples_per_language,
             )
 
-            if max_samples_per_language is not None:
-                if counters["en"] >= max_samples_per_language and counters["pt"] >= max_samples_per_language:
-                    break
+            if language_limit_reached(counters["en"], max_samples_per_language) and language_limit_reached(
+                counters["pt"], max_samples_per_language
+            ):
+                break
 
     return records
 
