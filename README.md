@@ -1,7 +1,8 @@
 
 <div align="center">
 
-<img src="docs/assets/valthoris-logo.png" alt="Valthoris Logo" width="320"/>
+<img src="documentos/valthoris-logo.png" alt="Valthoris Logo" width="300"/>
+
 
 # VALTHORIS
 
