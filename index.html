@@ -15,10 +15,37 @@
 
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #071122, #0c2340, #103e73, #1496d4);
-      background-attachment: fixed;
+      background-color: #040814;
       color: white;
       min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Canvas de Fundo Animado Cyberpunk */
+    #cyber-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    /* Overlay com Grelha Neon / Gradiente de fusão */
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(189, 0, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
+        linear-gradient(to bottom, rgba(4, 8, 20, 0.4), rgba(4, 8, 20, 0.85));
+      pointer-events: none;
     }
 
     /* Navegação Responsiva */
@@ -28,12 +55,13 @@
       align-items: center;
       gap: 20px;
       padding: 16px 20px;
-      background: rgba(6, 19, 33, 0.92);
-      backdrop-filter: blur(12px);
+      background: rgba(6, 12, 28, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       position: sticky;
       top: 0;
       z-index: 1000;
-      border-bottom: 1px solid rgba(69, 216, 255, 0.2);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.25);
       overflow-x: auto;
       white-space: nowrap;
     }
@@ -43,34 +71,37 @@
     }
 
     .menu a {
-      color: #5de0ff;
+      color: #00f0ff;
       text-decoration: none;
       font-weight: 600;
       font-size: 15px;
-      transition: color 0.3s;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+      transition: all 0.3s;
     }
 
     .menu a:hover {
-      color: white;
+      color: #ff00ea;
+      text-shadow: 0 0 12px rgba(255, 0, 234, 0.8);
     }
 
     /* Header */
     header {
-      padding: 50px 20px 60px;
+      padding: 60px 20px 60px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    /* Badge de Construção */
+    /* Badge de Construção Cyberpunk */
     .badge-construction {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 193, 7, 0.15);
-      color: #ffca28;
-      border: 1px solid rgba(255, 193, 7, 0.4);
+      background: rgba(255, 0, 234, 0.12);
+      color: #ff55ee;
+      border: 1px solid rgba(255, 0, 234, 0.5);
+      box-shadow: 0 0 15px rgba(255, 0, 234, 0.2);
       padding: 8px 18px;
       border-radius: 50px;
       font-size: 13px;
@@ -80,7 +111,7 @@
       letter-spacing: 1px;
     }
 
-    /* Contentor do Logo com efeito de fusão */
+    /* Logo com Brilho Neon */
     .logo-container {
       position: relative;
       margin: 0 auto 25px auto;
@@ -93,8 +124,8 @@
       height: auto;
       display: block;
       border-radius: 20px;
-      box-shadow: 0 0 35px rgba(69, 216, 255, 0.3);
-      border: 1px solid rgba(69, 216, 255, 0.3);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), 0 0 60px rgba(189, 0, 255, 0.2);
+      border: 1px solid rgba(0, 240, 255, 0.4);
       animation: float 4s ease-in-out infinite;
     }
 
@@ -105,9 +136,10 @@
     }
 
     header h1 {
-      font-size: clamp(38px, 8vw, 72px);
-      color: #45d8ff;
-      letter-spacing: 4px;
+      font-size: clamp(40px, 8vw, 76px);
+      color: #00f0ff;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.6), 0 0 40px rgba(189, 0, 255, 0.4);
+      letter-spacing: 5px;
       margin-bottom: 15px;
       text-align: center;
     }
@@ -118,6 +150,7 @@
       margin-bottom: 30px;
       text-align: center;
       color: #e2f1ff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
     }
 
     header p {
@@ -134,20 +167,21 @@
       margin-top: 35px;
       padding: 16px 38px;
       border-radius: 12px;
-      background: #3bd6ff;
-      color: #00182f;
+      background: linear-gradient(135deg, #00f0ff, #bd00ff);
+      color: #ffffff;
       font-weight: bold;
       text-decoration: none;
       font-size: 18px;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
       transition: 0.3s;
     }
 
     .button:hover {
-      background: white;
       transform: scale(1.05);
+      box-shadow: 0 0 35px rgba(255, 0, 234, 0.7);
     }
 
-    /* Seções */
+    /* Seções com Cartões "Glassmorphism" Neon */
     section {
       padding: 60px 6%;
     }
@@ -155,7 +189,8 @@
     h3 {
       font-size: clamp(26px, 5vw, 42px);
       margin-bottom: 35px;
-      color: #49d5ff;
+      color: #00f0ff;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
       text-align: center;
     }
 
@@ -166,17 +201,21 @@
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(12, 20, 42, 0.55);
       padding: 25px;
       border-radius: 18px;
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
       transition: 0.3s;
     }
 
     .card:hover {
       transform: translateY(-6px);
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(20, 32, 65, 0.75);
+      border-color: rgba(255, 0, 234, 0.4);
+      box-shadow: 0 0 20px rgba(255, 0, 234, 0.25);
     }
 
     .card h4 {
@@ -190,19 +229,20 @@
       color: #dbeafe;
     }
 
-    /* Footer Profissional */
+    /* Footer Profissional Cyberpunk */
     footer {
       padding: 60px 20px 40px;
-      background: #040d18;
-      border-top: 1px solid rgba(69, 216, 255, 0.15);
+      background: rgba(4, 8, 18, 0.95);
+      border-top: 1px solid rgba(0, 240, 255, 0.2);
       text-align: center;
     }
 
     .footer-brand h2 {
-      color: #45d8ff;
+      color: #00f0ff;
       font-size: 28px;
       letter-spacing: 2px;
       margin-bottom: 8px;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
     }
 
     .footer-brand p {
@@ -223,13 +263,14 @@
     }
 
     .footer-links a:hover {
+      color: #ff00ea;
       text-decoration: underline;
     }
 
     .footer-divider {
       max-width: 600px;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(69, 216, 255, 0.3), transparent);
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
       margin: 0 auto 30px auto;
     }
 
@@ -243,14 +284,15 @@
 
     .footer-legal .security-tag {
       display: inline-block;
-      background: rgba(69, 216, 255, 0.1);
-      color: #45d8ff;
+      background: rgba(0, 240, 255, 0.1);
+      color: #00f0ff;
       padding: 4px 12px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
       margin-bottom: 15px;
-      border: 1px solid rgba(69, 216, 255, 0.2);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
     }
 
     .footer-legal .copyright {
@@ -267,6 +309,10 @@
 </head>
 
 <body>
+
+  <!-- Canvas de Animação Cyberpunk Futurista -->
+  <canvas id="cyber-bg"></canvas>
+  <div class="bg-overlay"></div>
 
   <nav class="menu">
     <a href="#inicio">Início</a>
@@ -382,13 +428,84 @@
         ⚡ 100% On-chain Security — ICP Blockchain
       </div>
       <p class="copyright">
-        ©2026 🇵🇹 Valthoris HCenterprise. Todos os direitos reservados.
+        ©2026 🇵🇹 AntiFraudapp HCenterprise. Todos os direitos reservados.
       </p>
       <p class="nis2-compliance">
         Em conformidade com as leis europeias de Segurança Digital. Alinhado com princípios europeus de cibersegurança inspirados na Diretiva NIS2.
       </p>
     </div>
   </footer>
+
+  <!-- Script para Animação de Rede Neural & Linhas Cyberpunk -->
+  <script>
+    const canvas = document.getElementById('cyber-bg');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Partículas / Nós de Cibersegurança
+    const particles = [];
+    const numParticles = Math.min(Math.floor(window.innerWidth / 15), 65);
+
+    for (let i = 0; i < numParticles; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.8,
+        radius: Math.random() * 2 + 1,
+        color: Math.random() > 0.4 ? '#00f0ff' : '#bd00ff'
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Desenhar conexões de dados (linhas de rede)
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 140) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 140})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Desenhar e mover partículas
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
 
 </body>
 </html>
