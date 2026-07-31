@@ -21,20 +21,25 @@
       min-height: 100vh;
     }
 
-    /* Navegação */
+    /* Navegação Responsiva */
     .menu {
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 15px 25px;
-      padding: 15px 20px;
-      background: rgba(6, 19, 33, 0.9);
-      backdrop-filter: blur(10px);
+      gap: 20px;
+      padding: 16px 20px;
+      background: rgba(6, 19, 33, 0.92);
+      backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
       z-index: 1000;
       border-bottom: 1px solid rgba(69, 216, 255, 0.2);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .menu::-webkit-scrollbar {
+      display: none;
     }
 
     .menu a {
@@ -68,32 +73,39 @@
       border: 1px solid rgba(255, 193, 7, 0.4);
       padding: 8px 18px;
       border-radius: 50px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       margin-bottom: 30px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    /* Logo e Animação */
-    .logo {
-      width: 180px;
-      max-width: 60%;
-      height: auto;
+    /* Contentor do Logo com efeito de fusão */
+    .logo-container {
+      position: relative;
       margin: 0 auto 25px auto;
+      display: inline-block;
+    }
+
+    .logo {
+      width: 220px;
+      max-width: 70vw;
+      height: auto;
       display: block;
-      filter: drop-shadow(0 0 25px rgba(69, 216, 255, 0.8));
+      border-radius: 20px;
+      box-shadow: 0 0 35px rgba(69, 216, 255, 0.3);
+      border: 1px solid rgba(69, 216, 255, 0.3);
       animation: float 4s ease-in-out infinite;
     }
 
     @keyframes float {
       0% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      50% { transform: translateY(-8px); }
       100% { transform: translateY(0); }
     }
 
     header h1 {
-      font-size: clamp(40px, 8vw, 72px);
+      font-size: clamp(38px, 8vw, 72px);
       color: #45d8ff;
       letter-spacing: 4px;
       margin-bottom: 15px;
@@ -102,16 +114,17 @@
 
     header h2 {
       font-weight: 300;
-      font-size: clamp(18px, 4vw, 28px);
+      font-size: clamp(16px, 4vw, 26px);
       margin-bottom: 30px;
       text-align: center;
+      color: #e2f1ff;
     }
 
     header p {
       max-width: 800px;
       margin: 0 auto;
       line-height: 1.8;
-      font-size: clamp(16px, 3.5vw, 20px);
+      font-size: clamp(15px, 3.5vw, 19px);
       color: #d9e9ff;
       text-align: center;
     }
@@ -140,7 +153,7 @@
     }
 
     h3 {
-      font-size: clamp(28px, 5vw, 42px);
+      font-size: clamp(26px, 5vw, 42px);
       margin-bottom: 35px;
       color: #49d5ff;
       text-align: center;
@@ -157,7 +170,7 @@
       padding: 25px;
       border-radius: 18px;
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       transition: 0.3s;
     }
 
@@ -167,7 +180,7 @@
     }
 
     .card h4 {
-      font-size: 22px;
+      font-size: 21px;
       margin-bottom: 12px;
       color: #5de0ff;
     }
@@ -177,29 +190,78 @@
       color: #dbeafe;
     }
 
-    /* Footer */
+    /* Footer Profissional */
     footer {
-      padding: 40px 20px;
+      padding: 60px 20px 40px;
+      background: #040d18;
+      border-top: 1px solid rgba(69, 216, 255, 0.15);
       text-align: center;
-      background: #061321;
     }
 
-    footer h2 {
+    .footer-brand h2 {
       color: #45d8ff;
-      margin-bottom: 10px;
+      font-size: 28px;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
     }
 
-    footer p {
-      color: #dbeafe;
+    .footer-brand p {
+      color: #8bb2d9;
+      font-size: 15px;
+      margin-bottom: 25px;
     }
 
-    footer a {
+    .footer-links {
+      margin-bottom: 30px;
+    }
+
+    .footer-links a {
       color: #53dbff;
       text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
     }
 
-    footer a:hover {
+    .footer-links a:hover {
       text-decoration: underline;
+    }
+
+    .footer-divider {
+      max-width: 600px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(69, 216, 255, 0.3), transparent);
+      margin: 0 auto 30px auto;
+    }
+
+    .footer-legal {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.8;
+    }
+
+    .footer-legal .security-tag {
+      display: inline-block;
+      background: rgba(69, 216, 255, 0.1);
+      color: #45d8ff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      border: 1px solid rgba(69, 216, 255, 0.2);
+    }
+
+    .footer-legal .copyright {
+      color: #cbd5e1;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .footer-legal .nis2-compliance {
+      font-size: 12px;
+      color: #64748b;
     }
   </style>
 </head>
@@ -219,7 +281,9 @@
       ⚠️ Aplicação em Construção
     </div>
 
-    <img src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo" class="logo">
+    <div class="logo-container">
+      <img src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo" class="logo">
+    </div>
     
     <h1>VALTHORIS</h1>
     <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
@@ -300,12 +364,30 @@
   </section>
 
   <footer>
-    <h2>VALTHORIS</h2>
-    <p>Inteligência • Prevenção • Proteção</p>
-    <br>
-    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
-      GitHub Oficial
-    </a>
+    <div class="footer-brand">
+      <h2>VALTHORIS</h2>
+      <p>Inteligência • Prevenção • Proteção</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
+        GitHub Oficial do Projeto
+      </a>
+    </div>
+
+    <div class="footer-divider"></div>
+
+    <div class="footer-legal">
+      <div class="security-tag">
+        ⚡ 100% On-chain Security — ICP Blockchain
+      </div>
+      <p class="copyright">
+        ©2026 🇵🇹 Valthoris HCenterprise. Todos os direitos reservados.
+      </p>
+      <p class="nis2-compliance">
+        Em conformidade com as leis europeias de Segurança Digital. Alinhado com princípios europeus de cibersegurança inspirados na Diretiva NIS2.
+      </p>
+    </div>
   </footer>
 
 </body>
