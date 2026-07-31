@@ -1,394 +1,277 @@
-<html ⁣lang="pt">
+<!DOCTYPE html>
+<html lang="pt">
 <head>
-<meta ⁣charset="UTF-8">
-<meta ⁣name="viewport" ⁣content="width=device-width, ⁣initial-scale=1.0">
-
-<title>VALTHORIS ⁣| ⁣AI ⁣Cybersecurity ⁣Platform</title>
-
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-scroll-behavior:smooth;
-}
-⁣
-body{
-
-font-family:Segoe ⁣UI,Arial,sans-serif;
-
-background:
-linear-gradient(135deg,#071122,#0c2340,#103e73,#1496d4).logo{
-width:180px;
-max-width:75%;
-margin-bottom:25px;
-filter:drop-shadow(0 ⁣0 ⁣25px ⁣rgba(69,216,255,.8));
-animation:float ⁣4s ⁣ease-in-out ⁣infinite;
-}<nav ⁣class="menu">
-<a ⁣href="#inicio">Início</a>
-<a ⁣href="#modulos">Módulos</a>
-<a ⁣href="#tecnologia">Tecnologia</a>
-<a ⁣href="#roadmap">Roadmap</a>
-<a ⁣href="https://github.com/Valthoris-code/Valthoris-llm">GitHub</a>
-</nav>
-
-@keyframes ⁣float{
-0%{transform:translateY(0);}
-50%{transform:translateY(-10px);}
-100%{transform:translateY(0);}
-};
-
-color:white;
-
-}
-
-header{
-
-padding:120px ⁣30px;
-
-text-align:center;
-
-}
-
-header<img ⁣src="assets/valthoris-logo.png" ⁣alt="Valthoris ⁣Logo" ⁣class="logo"> ⁣h1{
-
-font-size:72px;
-
-color:#45d8ff;
-
-letter-spacing:4px;
-
-margin-bottom:20px;
-
-}
-
-header ⁣h2{
-⁣
-font-weight:300;
-
-font-size:28px;
-
-margin-bottom:35px;
-
-}
-
-header ⁣p{
-
-max-width:900px;
-
-margin:auto;
-
-line-height:1.8;
-
-font-size:20px;
-
-color:#d9e9ff;
-
-}
-
-.button{
-
-display:inline-block;
-
-margin-top:40px;
-
-padding:18px ⁣42px;
-
-border-radius:12px;
-
-background:#3bd6ff;
-
-color:#00182f;
-
-font-weight:bold;
-
-text-decoration:none;
-
-font-size:18px;
-
-transition:.3s;
-
-}
-
-.button:hover{
-
-background:white;
-
-transform:scale(1.05);
-
-}
-
-section{
-
-padding:90px ⁣8%;
-
-}
-
-h3{
-
-font-size:42px;
-
-margin-bottom:40px;
-
-color:#49d5ff;
-
-}
-
-.cards{
-
-display:grid;
-
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-
-gap:25px;
-
-}
-
-.card{
-
-background:rgba(255,255,255,.08);
-
-padding:30px;
-
-border-radius:18px;
-
-backdrop-filter:blur(12px);
-
-transition:.3s;
-
-}
-
-.card:hover{
-
-transform:translateY(-8px);
-
-background:rgba(255,255,255,.12);
-
-}
-
-.card ⁣h4{
-
-font-size:24px;
-
-margin-bottom:15px;
-
-color:#5de0ff;
-
-}
-
-.card ⁣p{
-
-line-height:1.6;
-
-color:#dbeafe;
-
-}
-
-footer{
-
-padding:50px;
-
-text-align:center;
-
-background:#061321;
-
-}
-
-footer ⁣a{
-
-color:#53dbff;
-
-text-decoration:none;
-
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VALTHORIS | AI Cybersecurity Platform</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #071122, #0c2340, #103e73, #1496d4);
+      background-attachment: fixed;
+      color: white;
+      min-height: 100vh;
+    }
+
+    /* Navegação */
+    .menu {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      padding: 20px;
+      background: rgba(6, 19, 33, 0.85);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(69, 216, 255, 0.2);
+    }
+
+    .menu a {
+      color: #5de0ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: color 0.3s;
+    }
+
+    .menu a:hover {
+      color: white;
+    }
+
+    /* Logo e Animação */
+    .logo {
+      width: 180px;
+      max-width: 75%;
+      margin-bottom: 25px;
+      filter: drop-shadow(0 0 25px rgba(69, 216, 255, 0.8));
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* Header */
+    header {
+      padding: 80px 30px 60px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 72px;
+      color: #45d8ff;
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+    }
+
+    header h2 {
+      font-weight: 300;
+      font-size: 28px;
+      margin-bottom: 35px;
+    }
+
+    header p {
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.8;
+      font-size: 20px;
+      color: #d9e9ff;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 18px 42px;
+      border-radius: 12px;
+      background: #3bd6ff;
+      color: #00182f;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+
+    .button:hover {
+      background: white;
+      transform: scale(1.05);
+    }
+
+    /* Seções */
+    section {
+      padding: 90px 8%;
+    }
+
+    h3 {
+      font-size: 42px;
+      margin-bottom: 40px;
+      color: #49d5ff;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 30px;
+      border-radius: 18px;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .card h4 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #5de0ff;
+    }
+
+    .card p {
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    /* Footer */
+    footer {
+      padding: 50px;
+      text-align: center;
+      background: #061321;
+    }
+
+    footer h2 {
+      color: #45d8ff;
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      color: #dbeafe;
+    }
+
+    footer a {
+      color: #53dbff;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-
-<h1>VALTHORIS</h1>
-
-<h2>Artificial ⁣Intelligence ⁣• ⁣Cybersecurity ⁣• ⁣Internet ⁣Computer ⁣• ⁣Blockchain</h2>
-
-<p>
-
-Valthoris ⁣é ⁣uma ⁣plataforma ⁣inteligente ⁣de ⁣proteção ⁣digital ⁣desenvolvida ⁣para ⁣combater ⁣fraude ⁣online,
-
-engenharia ⁣social, ⁣phishing, ⁣burlas, ⁣malware ⁣e ⁣ameaças ⁣digitais ⁣utilizando ⁣Inteligência ⁣Artificial,
-
-Blockchain ⁣e ⁣Internet ⁣Computer ⁣Protocol.
-
-</p>
-
-<a ⁣class="button"
-
-href="https://github.com/Valthoris-code/Valthoris-llm">
-
-Ver ⁣Projeto
-
-</a>
-
-</header>
-
-<section>
-
-<h3>Principais ⁣Módulos</h3>
-
-<div ⁣class="cards">
-
-<div ⁣class="card">
-
-<h4>🛡 ⁣AutoShield</h4>
-
-<p>Proteção ⁣automática ⁣em ⁣tempo ⁣real ⁣contra ⁣fraude ⁣digital.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>🤖 ⁣AI ⁣Assistant</h4>
-
-<p>Assistente ⁣inteligente ⁣especializado ⁣em ⁣cibersegurança.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>🌍 ⁣Radar ⁣Global</h4>
-
-<p>Mapa ⁣mundial ⁣colaborativo ⁣de ⁣ameaças ⁣digitais.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>📍 ⁣Safe ⁣Location</h4>
-
-<p>Partilha ⁣segura ⁣de ⁣localização ⁣protegida ⁣por ⁣IA.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>💰 ⁣Crypto ⁣Intelligence</h4>
-
-<p>Análise ⁣de ⁣risco ⁣de ⁣carteiras, ⁣tokens ⁣e ⁣blockchain.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>⚠ ⁣Threat ⁣Intelligence</h4>
-
-<p>Motor ⁣de ⁣análise ⁣avançada ⁣de ⁣ameaças ⁣globais.</p>
-
-</div>
-
-</div>
-
-</section>
-
-<section>
-
-<h3>Tecnologia</h3>
-
-<div ⁣class="cards">
-
-<div ⁣class="card">
-
-<h4>Internet ⁣Computer</h4>
-
-<p>Canisters ⁣ICP ⁣dedicados ⁣para ⁣Frontend, ⁣Backend, ⁣Reports, ⁣Contact ⁣Lookup, ⁣Public ⁣Data ⁣e ⁣Safe ⁣Location.</p>
-⁣
-</div>
-
-<div ⁣class="card">
-
-<h4>React ⁣+ ⁣TypeScript</h4>
-
-<p>Frontend ⁣moderno ⁣preparado ⁣para ⁣aplicação ⁣Web ⁣e ⁣PWA.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>Supabase</h4>
-
-<p>Base ⁣de ⁣dados ⁣em ⁣tempo ⁣real ⁣com ⁣sincronização ⁣inteligente.</p>
-
-</div>
-
-<div ⁣class="card">
-
-<h4>Artificial ⁣Intelligence</h4>
-
-<p>Motor ⁣LLM ⁣próprio ⁣para ⁣deteção ⁣de ⁣fraude ⁣e ⁣apoio ⁣ao ⁣utilizador.</p>
-
-</div>
-
-</div>
-
-</section>
-
-<section>
-
-<h3>Roadmap</h3>
-
-<div ⁣class="cards">
-
-<div ⁣class="card">
-
-✔ ⁣Arquitetura ⁣concluída</div>
-
-<div ⁣class="card">
-
-✔ ⁣ICP ⁣preparado</div>
-
-<div ⁣class="card">
-
-✔ ⁣Blockchain ⁣integrada</div>
-
-<div ⁣class="card">
-
-✔ ⁣Base ⁣IA ⁣iniciada</div>
-
-<div ⁣class="card">
-
-🔄 ⁣Frontend ⁣em ⁣desenvolvimento</div>
-
-<div ⁣class="card">
-
-🔄 ⁣Backend ⁣em ⁣desenvolvimento</div>
-
-</div>
-⁣
-</section>
-⁣
-<footer>
-⁣
-<h2>VALTHORIS</h2>
-
-<p>
-
-Inteligência ⁣• ⁣Prevenção ⁣• ⁣Proteção
-
-</p>
-
-<br>
-
-<a ⁣href="https://github.com/Valthoris-code/Valthoris-llm">
-
-GitHub ⁣Oficial
-
-</a>
-
-</footer>
+  <nav class="menu">
+    <a href="#inicio">Início</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#tecnologia">Tecnologia</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub</a>
+  </nav>
+
+  <header id="inicio">
+    <img src="assets/valthoris-logo.png" alt="Valthoris Logo" class="logo">
+    <h1>VALTHORIS</h1>
+    <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
+    <p>
+      Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online,
+      engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial,
+      Blockchain e Internet Computer Protocol.
+    </p>
+    <a class="button" href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
+      Ver Projeto
+    </a>
+  </header>
+
+  <section id="modulos">
+    <h3>Principais Módulos</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>🛡 AutoShield</h4>
+        <p>Proteção automática em tempo real contra fraude digital.</p>
+      </div>
+      <div class="card">
+        <h4>🤖 AI Assistant</h4>
+        <p>Assistente inteligente especializado em cibersegurança.</p>
+      </div>
+      <div class="card">
+        <h4>🌍 Radar Global</h4>
+        <p>Mapa mundial colaborativo de ameaças digitais.</p>
+      </div>
+      <div class="card">
+        <h4>📍 Safe Location</h4>
+        <p>Partilha segura de localização protegida por IA.</p>
+      </div>
+      <div class="card">
+        <h4>💰 Crypto Intelligence</h4>
+        <p>Análise de risco de carteiras, tokens e blockchain.</p>
+      </div>
+      <div class="card">
+        <h4>⚠ Threat Intelligence</h4>
+        <p>Motor de análise avançada de ameaças globais.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tecnologia">
+    <h3>Tecnologia</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>Internet Computer</h4>
+        <p>Canisters ICP dedicados para Frontend, Backend, Reports, Contact Lookup, Public Data e Safe Location.</p>
+      </div>
+      <div class="card">
+        <h4>React + TypeScript</h4>
+        <p>Frontend moderno preparado para aplicação Web e PWA.</p>
+      </div>
+      <div class="card">
+        <h4>Supabase</h4>
+        <p>Base de dados em tempo real com sincronização inteligente.</p>
+      </div>
+      <div class="card">
+        <h4>Artificial Intelligence</h4>
+        <p>Motor LLM próprio para deteção de fraude e apoio ao utilizador.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <h3>Roadmap</h3>
+    <div class="cards">
+      <div class="card">✔ Arquitetura concluída</div>
+      <div class="card">✔ ICP preparado</div>
+      <div class="card">✔ Blockchain integrada</div>
+      <div class="card">✔ Base IA iniciada</div>
+      <div class="card">🔄 Frontend em desenvolvimento</div>
+      <div class="card">🔄 Backend em desenvolvimento</div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>VALTHORIS</h2>
+    <p>Inteligência • Prevenção • Proteção</p>
+    <br>
+    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
+      GitHub Oficial
+    </a>
+  </footer>
 
 </body>
-
 </html>
