@@ -54,7 +54,6 @@
       pointer-events: none;
     }
 
-    /* Garantir que o conteúdo fica por cima do fundo animado */
     .menu, header, section, footer {
       position: relative;
       z-index: 2;
@@ -98,7 +97,7 @@
     }
 
     /* ===========================
-    3. MENU & LOGO CENTRADO
+    3. MENU & HEADER (CENTRADOS A 100%)
     =========================== */
     .menu {
       position: fixed;
@@ -127,34 +126,25 @@
       text-shadow: 0 0 10px cyan;
     }
 
+    /* HEADER COM FLEXBOX PARA CENTRAR RIGOROSAMENTE TUDO NO ECRÃ */
     header {
-      padding-top: 140px;
-      padding-bottom: 100px;
-      text-align: center;
+      padding-top: 130px;
+      padding-bottom: 90px;
       padding-left: 20px;
       padding-right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 10px 20px;
-      border-radius: 50px;
-      background: rgba(255, 0, 200, .12);
-      border: 1px solid rgba(255, 0, 200, .4);
-      color: #ff70ff;
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      margin-bottom: 35px;
-      text-transform: uppercase;
-    }
-
-    /* LOGO RIGOROSAMENTE CENTRADO */
     .logo {
       display: block;
-      margin: 0 auto 35px auto;
       width: 240px;
       max-width: 70vw;
+      margin: 0 auto 25px auto;
       filter: drop-shadow(0 0 20px cyan);
       animation: float 5s ease-in-out infinite;
     }
@@ -165,32 +155,48 @@
       100% { transform: translateY(0px); }
     }
 
+    .badge {
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 50px;
+      background: rgba(255, 0, 200, .12);
+      border: 1px solid rgba(255, 0, 200, .4);
+      color: #ff70ff;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 25px;
+      text-transform: uppercase;
+    }
+
     header h1 {
       font-size: 78px;
       letter-spacing: 6px;
       color: #52e5ff;
       text-shadow: 0 0 10px cyan, 0 0 40px cyan;
       margin-bottom: 18px;
+      width: 100%;
     }
 
     header h2 {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 300;
-      margin-bottom: 35px;
+      margin-bottom: 30px;
       color: #dbeafe;
+      max-width: 900px;
     }
 
     header p {
-      max-width: 900px;
-      margin: auto;
-      font-size: 20px;
-      line-height: 1.9;
+      max-width: 850px;
+      font-size: 19px;
+      line-height: 1.8;
       color: #d4e8ff;
+      margin: 0 auto;
     }
 
     .button {
       display: inline-block;
-      margin-top: 45px;
+      margin-top: 40px;
       padding: 18px 45px;
       border-radius: 12px;
       background: linear-gradient(135deg, #00e7ff, #bb00ff);
@@ -413,19 +419,19 @@
     /* RESPONSIVIDADE */
     @media(max-width:900px) {
       .menu { gap: 18px; font-size: 14px; overflow-x: auto; }
-      header { padding-top: 120px; }
-      header h1 { font-size: 52px; letter-spacing: 3px; }
-      header h2 { font-size: 22px; }
-      header p { font-size: 17px; }
+      header { padding-top: 110px; }
+      header h1 { font-size: 48px; letter-spacing: 3px; }
+      header h2 { font-size: 20px; }
+      header p { font-size: 16px; }
       .logo { width: 180px; }
       section h3 { font-size: 34px; }
     }
 
     @media(max-width:600px) {
-      header h1 { font-size: 40px; }
-      header h2 { font-size: 18px; }
-      header p { font-size: 16px; }
-      .button { width: 100%; max-width: 320px; }
+      header h1 { font-size: 38px; }
+      header h2 { font-size: 17px; }
+      header p { font-size: 15px; }
+      .button { width: 100%; max-width: 300px; }
       .fixed-security-badge { bottom: 16px !important; right: 16px !important; font-size: 11px; padding: 8px 14px; }
     }
   </style>
@@ -437,7 +443,7 @@
   <canvas id="cyber-bg"></canvas>
   <div class="bg-overlay"></div>
 
-  <!-- 2. SELO FIXO E PERMANENTE NO ECRÃ (NUNCA DESAPARECE COM SCROLL) -->
+  <!-- 2. SELO FIXO E PERMANENTE NO ECRÃ -->
   <div class="fixed-security-badge">
     <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
     <span>Segurança by design</span>
@@ -452,9 +458,8 @@
   </nav>
 
   <header id="inicio">
-    <div class="badge">⚠ Aplicação em Construção</div>
-    <!-- 3. LOGO TOTALMENTE CENTRADO -->
     <img class="logo" src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo">
+    <div class="badge">⚠ Aplicação em Construção</div>
     <h1>VALTHORIS</h1>
     <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
     <p>
@@ -612,7 +617,7 @@
     <div class="security">⚡ Powered by Internet Computer Protocol (ICP)</div>
 
     <div class="small">
-      <p>© 2026 🇵🇹 Valthoris • HTenterprise</p>
+      <p>© 2026 🇵🇹 Valthoris • HCenterprise</p>
       <br>
       <p>Designed with European cybersecurity and privacy principles, inspired by the NIS2 Directive and GDPR.</p>
     </div>
@@ -630,7 +635,6 @@
       height = canvas.height = window.innerHeight;
       particles = [];
 
-      // Densidade de partículas responsiva
       const count = Math.floor((width * height) / 12000);
       for (let i = 0; i < count; i++) {
         particles.push({
@@ -652,19 +656,16 @@
         p.x += p.vx;
         p.y += p.vy;
 
-        // Repor partículas nas bordas
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
-        // Desenhar nó
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha})`;
         ctx.fill();
 
-        // Desenhar linhas de ligação
         for (let j = i + 1; j < particles.length; j++) {
           let p2 = particles[j];
           let dx = p.x - p2.x;
