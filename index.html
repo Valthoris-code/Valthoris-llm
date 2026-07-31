@@ -1,545 +1,1135 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VALTHORIS | AI Cybersecurity Platform</title>
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      scroll-behavior: smooth;
-    }
+<meta charset="UTF-8">
 
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #040814;
-      color: white;
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* Canvas de Fundo Animado Cyberpunk */
-    #cyber-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -2;
-      pointer-events: none;
-    }
+<meta name="description" content="Valthoris - Artificial Intelligence Cybersecurity Platform">
 
-    /* Overlay com Grelha Neon / Gradiente de fusão */
-    .bg-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -1;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(189, 0, 255, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
-        linear-gradient(to bottom, rgba(4, 8, 20, 0.4), rgba(4, 8, 20, 0.85));
-      pointer-events: none;
-    }
+<meta name="theme-color" content="#041426">
 
-    /* Navegação Responsiva */
-    .menu {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      padding: 16px 20px;
-      background: rgba(6, 12, 28, 0.75);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 1px solid rgba(0, 240, 255, 0.25);
-      overflow-x: auto;
-      white-space: nowrap;
-    }
+<title>VALTHORIS | Artificial Intelligence Cybersecurity Platform</title>
 
-    .menu::-webkit-scrollbar {
-      display: none;
-    }
+<link rel="icon" href="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png">
 
-    .menu a {
-      color: #00f0ff;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-      transition: all 0.3s;
-    }
+<style>
 
-    .menu a:hover {
-      color: #ff00ea;
-      text-shadow: 0 0 12px rgba(255, 0, 234, 0.8);
-    }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+scroll-behavior:smooth;
+}
 
-    /* Header */
-    header {
-      padding: 60px 20px 60px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+html{
+overflow-x:hidden;
+}
 
-    /* Badge de Construção Cyberpunk */
-    .badge-construction {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 0, 234, 0.12);
-      color: #ff55ee;
-      border: 1px solid rgba(255, 0, 234, 0.5);
-      box-shadow: 0 0 15px rgba(255, 0, 234, 0.2);
-      padding: 8px 18px;
-      border-radius: 50px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 30px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
+body{
 
-    /* Logo com Brilho Neon */
-    .logo-container {
-      position: relative;
-      margin: 0 auto 25px auto;
-      display: inline-block;
-    }
+font-family:'Segoe UI',Arial,sans-serif;
 
-    .logo {
-      width: 220px;
-      max-width: 70vw;
-      height: auto;
-      display: block;
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), 0 0 60px rgba(189, 0, 255, 0.2);
-      border: 1px solid rgba(0, 240, 255, 0.4);
-      animation: float 4s ease-in-out infinite;
-    }
+background:#050b17;
 
-    @keyframes float {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-      100% { transform: translateY(0); }
-    }
+color:white;
 
-    header h1 {
-      font-size: clamp(40px, 8vw, 76px);
-      color: #00f0ff;
-      text-shadow: 0 0 20px rgba(0, 240, 255, 0.6), 0 0 40px rgba(189, 0, 255, 0.4);
-      letter-spacing: 5px;
-      margin-bottom: 15px;
-      text-align: center;
-    }
+overflow-x:hidden;
 
-    header h2 {
-      font-weight: 300;
-      font-size: clamp(16px, 4vw, 26px);
-      margin-bottom: 30px;
-      text-align: center;
-      color: #e2f1ff;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-    }
+position:relative;
 
-    header p {
-      max-width: 800px;
-      margin: 0 auto;
-      line-height: 1.8;
-      font-size: clamp(15px, 3.5vw, 19px);
-      color: #d9e9ff;
-      text-align: center;
-    }
+}
 
-    .button {
-      display: inline-block;
-      margin-top: 35px;
-      padding: 16px 38px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #00f0ff, #bd00ff);
-      color: #ffffff;
-      font-weight: bold;
-      text-decoration: none;
-      font-size: 18px;
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
-      transition: 0.3s;
-    }
+/* ===========================
+CYBER BACKGROUND
+=========================== */
 
-    .button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 35px rgba(255, 0, 234, 0.7);
-    }
+#cyber-bg{
 
-    /* Seções com Cartões "Glassmorphism" Neon */
-    section {
-      padding: 60px 6%;
-    }
+position:fixed;
 
-    h3 {
-      font-size: clamp(26px, 5vw, 42px);
-      margin-bottom: 35px;
-      color: #00f0ff;
-      text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-      text-align: center;
-    }
+top:0;
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
+left:0;
 
-    .card {
-      background: rgba(12, 20, 42, 0.55);
-      padding: 25px;
-      border-radius: 18px;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 240, 255, 0.15);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-      transition: 0.3s;
-    }
+width:100%;
 
-    .card:hover {
-      transform: translateY(-6px);
-      background: rgba(20, 32, 65, 0.75);
-      border-color: rgba(255, 0, 234, 0.4);
-      box-shadow: 0 0 20px rgba(255, 0, 234, 0.25);
-    }
+height:100%;
 
-    .card h4 {
-      font-size: 21px;
-      margin-bottom: 12px;
-      color: #5de0ff;
-    }
+z-index:-2;
 
-    .card p {
-      line-height: 1.6;
-      color: #dbeafe;
-    }
+}
 
-    /* Footer Profissional Cyberpunk */
-    footer {
-      padding: 60px 20px 40px;
-      background: rgba(4, 8, 18, 0.95);
-      border-top: 1px solid rgba(0, 240, 255, 0.2);
-      text-align: center;
-    }
+.bg-overlay{
 
-    .footer-brand h2 {
-      color: #00f0ff;
-      font-size: 28px;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-    }
+position:fixed;
 
-    .footer-brand p {
-      color: #8bb2d9;
-      font-size: 15px;
-      margin-bottom: 25px;
-    }
+top:0;
 
-    .footer-links {
-      margin-bottom: 25px;
-    }
+left:0;
 
-    .footer-links a {
-      color: #53dbff;
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 500;
-    }
+width:100%;
 
-    .footer-links a:hover {
-      color: #ff00ea;
-      text-decoration: underline;
-    }
+height:100%;
 
-    /* Estilos para a secção de E-mails de Contacto no Rodapé */
-    .footer-emails {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
+z-index:-1;
 
-    .footer-emails a {
-      color: #00f0ff;
-      text-decoration: none;
-      font-size: 14px;
-      background: rgba(0, 240, 255, 0.05);
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      transition: all 0.3s ease;
-    }
+background:
 
-    .footer-emails a:hover {
-      color: #ffffff;
-      background: rgba(255, 0, 234, 0.2);
-      border-color: rgba(255, 0, 234, 0.5);
-      box-shadow: 0 0 15px rgba(255, 0, 234, 0.4);
-    }
+radial-gradient(circle at 20% 20%,rgba(0,240,255,.10),transparent 45%),
 
-    .footer-divider {
-      max-width: 600px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
-      margin: 0 auto 30px auto;
-    }
+radial-gradient(circle at 80% 80%,rgba(189,0,255,.12),transparent 40%),
 
-    .footer-legal {
-      max-width: 800px;
-      margin: 0 auto;
-      font-size: 13px;
-      color: #94a3b8;
-      line-height: 1.8;
-    }
+linear-gradient(180deg,#050b17,#08172d,#091d35);
 
-    .footer-legal .security-tag {
-      display: inline-block;
-      background: rgba(0, 240, 255, 0.1);
-      color: #00f0ff;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 15px;
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
-    }
+}
 
-    .footer-legal .copyright {
-      color: #cbd5e1;
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
+/* ===========================
+MENU
+=========================== */
 
-    .footer-legal .nis2-compliance {
-      font-size: 12px;
-      color: #64748b;
-    }
-  </style>
+.menu{
+
+position:fixed;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+display:flex;
+
+justify-content:center;
+
+gap:35px;
+
+padding:18px;
+
+background:rgba(5,12,25,.75);
+
+backdrop-filter:blur(18px);
+
+border-bottom:1px solid rgba(0,240,255,.20);
+
+z-index:999;
+
+}
+
+.menu a{
+
+text-decoration:none;
+
+color:#8ceeff;
+
+font-weight:600;
+
+transition:.3s;
+
+}
+
+.menu a:hover{
+
+color:#ffffff;
+
+text-shadow:0 0 10px cyan;
+
+}
+
+/* ===========================
+HEADER
+=========================== */
+
+header{
+
+padding-top:140px;
+
+padding-bottom:100px;
+
+text-align:center;
+
+padding-left:20px;
+
+padding-right:20px;
+
+}
+
+.badge{
+
+display:inline-block;
+
+padding:10px 20px;
+
+border-radius:50px;
+
+background:rgba(255,0,200,.12);
+
+border:1px solid rgba(255,0,200,.4);
+
+color:#ff70ff;
+
+font-size:13px;
+
+font-weight:bold;
+
+letter-spacing:1px;
+
+margin-bottom:35px;
+
+text-transform:uppercase;
+
+}
+
+.logo{
+
+width:240px;
+
+max-width:70vw;
+
+margin-bottom:35px;
+
+filter:drop-shadow(0 0 20px cyan);
+
+animation:float 5s ease-in-out infinite;
+
+}
+
+@keyframes float{
+
+0%{transform:translateY(0px);}
+
+50%{transform:translateY(-10px);}
+
+100%{transform:translateY(0px);}
+
+}
+
+header h1{
+
+font-size:78px;
+
+letter-spacing:6px;
+
+color:#52e5ff;
+
+text-shadow:
+
+0 0 10px cyan,
+
+0 0 40px cyan;
+
+margin-bottom:18px;
+
+}
+
+header h2{
+
+font-size:28px;
+
+font-weight:300;
+
+margin-bottom:35px;
+
+color:#dbeafe;
+
+}
+
+header p{
+
+max-width:900px;
+
+margin:auto;
+
+font-size:20px;
+
+line-height:1.9;
+
+color:#d4e8ff;
+
+}
+
+.button{
+
+display:inline-block;
+
+margin-top:45px;
+
+padding:18px 45px;
+
+border-radius:12px;
+
+background:linear-gradient(135deg,#00e7ff,#bb00ff);
+
+text-decoration:none;
+
+font-size:18px;
+
+font-weight:bold;
+
+color:white;
+
+transition:.3s;
+
+box-shadow:0 0 30px rgba(0,240,255,.30);
+
+}
+
+.button:hover{
+
+transform:scale(1.05);
+
+box-shadow:0 0 40px rgba(255,0,255,.60);
+
+}
+
+/* ===========================
+SEÇÕES
+=========================== */
+
+section{
+
+padding:90px 8%;
+
+}
+
+section h3{
+
+text-align:center;
+
+font-size:42px;
+
+margin-bottom:45px;
+
+color:#56e8ff;
+
+text-shadow:0 0 15px cyan;
+
+}
+
+/* ===========================
+CARDS
+=========================== */
+
+.cards{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+
+gap:25px;
+
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(14px);
+
+border:1px solid rgba(0,240,255,.15);
+
+border-radius:20px;
+
+padding:30px;
+
+transition:.35s;
+
+}
+
+.card:hover{
+
+transform:translateY(-8px);
+
+border-color:#00f0ff;
+
+box-shadow:
+
+0 0 20px rgba(0,240,255,.25),
+
+0 0 50px rgba(189,0,255,.20);
+
+}
+
+.card h4{
+
+font-size:24px;
+
+margin-bottom:18px;
+
+color:#67ecff;
+
+}
+
+.card p{
+
+line-height:1.7;
+
+color:#d9eaff;
+
+}
+
+/* ===========================
+ROADMAP
+=========================== */
+
+.timeline{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+
+gap:20px;
+
+}
+
+.step{
+
+padding:28px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+text-align:center;
+
+transition:.3s;
+
+}
+
+.step:hover{
+
+transform:translateY(-6px);
+
+box-shadow:0 0 25px rgba(0,240,255,.20);
+
+}
+
+.done{
+
+border-color:#00ff88;
+
+}
+
+.progress{
+
+border-color:#ffd000;
+
+}
+
+.future{
+
+border-color:#00f0ff;
+
+}
+
+/* ===========================
+FOOTER
+=========================== */
+
+footer{
+
+margin-top:80px;
+
+padding:70px 20px;
+
+background:#040914;
+
+border-top:1px solid rgba(0,240,255,.15);
+
+text-align:center;
+
+}
+
+footer h2{
+
+color:#58eaff;
+
+font-size:32px;
+
+margin-bottom:10px;
+
+}
+
+footer p{
+
+color:#b9cfe8;
+
+line-height:1.8;
+
+}
+
+.footer-mails{
+
+display:flex;
+
+justify-content:center;
+
+flex-wrap:wrap;
+
+gap:15px;
+
+margin:35px 0;
+
+}
+
+.footer-mails a{
+
+padding:10px 18px;
+
+border-radius:10px;
+
+background:rgba(0,240,255,.08);
+
+border:1px solid rgba(0,240,255,.20);
+
+color:#66ecff;
+
+text-decoration:none;
+
+transition:.3s;
+
+}
+
+.footer-mails a:hover{
+
+background:#00f0ff;
+
+color:#041426;
+
+}
+
+.security{
+
+margin-top:20px;
+
+display:inline-block;
+
+padding:10px 20px;
+
+border-radius:12px;
+
+background:rgba(0,240,255,.08);
+
+border:1px solid rgba(0,240,255,.20);
+
+color:#5de9ff;
+
+font-weight:bold;
+
+}
+
+.small{
+
+margin-top:20px;
+
+font-size:13px;
+
+color:#8fa9c4;
+
+line-height:1.8;
+
+}
+
+/* ===========================
+RESPONSIVO
+=========================== */
+
+@media(max-width:900px){
+
+.menu{
+
+gap:18px;
+
+font-size:14px;
+
+overflow-x:auto;
+
+}
+
+header{
+
+padding-top:120px;
+
+}
+
+header h1{
+
+font-size:52px;
+
+letter-spacing:3px;
+
+}
+
+header h2{
+
+font-size:22px;
+
+}
+
+header p{
+
+font-size:17px;
+
+}
+
+.logo{
+
+width:180px;
+
+}
+
+section h3{
+
+font-size:34px;
+
+}
+
+}
+
+@media(max-width:600px){
+
+header h1{
+
+font-size:40px;
+
+}
+
+header h2{
+
+font-size:18px;
+
+}
+
+header p{
+
+font-size:16px;
+
+}
+
+.button{
+
+width:100%;
+
+max-width:320px;
+
+}
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-  <!-- Canvas de Animação Cyberpunk Futurista -->
-  <canvas id="cyber-bg"></canvas>
-  <div class="bg-overlay"></div>
+<canvas id="cyber-bg"></canvas>
 
-  <nav class="menu">
-    <a href="#inicio">Início</a>
-    <a href="#modulos">Módulos</a>
-    <a href="#tecnologia">Tecnologia</a>
-    <a href="#roadmap">Roadmap</a>
-    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub</a>
-  </nav>
+<div class="bg-overlay"></div>
 
-  <header id="inicio">
-    <div class="badge-construction">
-      ⚠️ Aplicação em Construção
-    </div>
+<nav class="menu">
 
-    <div class="logo-container">
-      <img src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo" class="logo">
-    </div>
-    
-    <h1>VALTHORIS</h1>
-    <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
-    
-    <p>
-      Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online,
-      engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial,
-      Blockchain e Internet Computer Protocol.
-    </p>
-    
-    <a class="button" href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
-      Ver Projeto
-    </a>
-  </header>
+<a href="#inicio">Início</a>
 
-  <section id="modulos">
-    <h3>Principais Módulos</h3>
-    <div class="cards">
-      <div class="card">
-        <h4>🛡 AutoShield</h4>
-        <p>Proteção automática em tempo real contra fraude digital.</p>
-      </div>
-      <div class="card">
-        <h4>🤖 AI Assistant</h4>
-        <p>Assistente inteligente especializado em cibersegurança.</p>
-      </div>
-      <div class="card">
-        <h4>🌍 Radar Global</h4>
-        <p>Mapa mundial colaborativo de ameaças digitais.</p>
-      </div>
-      <div class="card">
-        <h4>📍 Safe Location</h4>
-        <p>Partilha segura de localização protegida por IA.</p>
-      </div>
-      <div class="card">
-        <h4>💰 Crypto Intelligence</h4>
-        <p>Análise de risco de carteiras, tokens e blockchain.</p>
-      </div>
-      <div class="card">
-        <h4>⚠ Threat Intelligence</h4>
-        <p>Motor de análise avançada de ameaças globais.</p>
-      </div>
-    </div>
-  </section>
+<a href="#modulos">Módulos</a>
 
-  <section id="tecnologia">
-    <h3>Tecnologia</h3>
-    <div class="cards">
-      <div class="card">
-        <h4>Internet Computer</h4>
-        <p>Canisters ICP dedicados para Frontend, Backend, Reports, Contact Lookup, Public Data e Safe Location.</p>
-      </div>
-      <div class="card">
-        <h4>React + TypeScript</h4>
-        <p>Frontend moderno preparado para aplicação Web e PWA.</p>
-      </div>
-      <div class="card">
-        <h4>Supabase</h4>
-        <p>Base de dados em tempo real com sincronização inteligente.</p>
-      </div>
-      <div class="card">
-        <h4>Artificial Intelligence</h4>
-        <p>Motor LLM próprio para deteção de fraude e apoio ao utilizador.</p>
-      </div>
-    </div>
-  </section>
+<a href="#tecnologia">Tecnologia</a>
 
-  <section id="roadmap">
-    <h3>Roadmap</h3>
-    <div class="cards">
-      <div class="card">✔ Arquitetura concluída</div>
-      <div class="card">✔ ICP preparado</div>
-      <div class="card">✔ Blockchain integrada</div>
-      <div class="card">✔ Base IA iniciada</div>
-      <div class="card">🔄 Frontend em desenvolvimento</div>
-      <div class="card">🔄 Backend em desenvolvimento</div>
-    </div>
-  </section>
+<a href="#roadmap">Roadmap</a>
 
-  <footer>
-    <div class="footer-brand">
-      <h2>VALTHORIS</h2>
-      <p>Inteligência • Prevenção • Proteção</p>
-    </div>
+<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub</a>
 
-    <div class="footer-links">
-      <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
-        GitHub Oficial do Projeto
-      </a>
-    </div>
+</nav>
 
-    <!-- Bloco de E-mails de Contacto no Rodapé -->
-    <div class="footer-emails">
-      <a href="mailto:info@valthoris.com">📧 info@valthoris.com</a>
-      <a href="mailto:support@valthoris.com">💬 support@valthoris.com</a>
-      <a href="mailto:security@valthoris.com">🛡️ security@valthoris.com</a>
-    </div>
+<header id="inicio">
 
-    <div class="footer-divider"></div>
+<div class="badge">
 
-    <div class="footer-legal">
-      <div class="security-tag">
-        ⚡ 100% On-chain Security — ICP Blockchain
-      </div>
-      <p class="copyright">
-        ©2026 🇵🇹 Valthoris HCenterprise. Todos os direitos reservados.
-      </p>
-      <p class="nis2-compliance">
-        Em conformidade com as leis europeias de Segurança Digital. Alinhado com princípios europeus de cibersegurança inspirados na Diretiva NIS2.
-      </p>
-    </div>
-  </footer>
+⚠ Aplicação em Construção
 
-  <!-- Script para Animação de Rede Neural & Linhas Cyberpunk -->
-  <script>
-    const canvas = document.getElementById('cyber-bg');
-    const ctx = canvas.getContext('2d');
+</div>
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+<img class="logo"
 
-    // Partículas / Nós de Cibersegurança
-    const particles = [];
-    const numParticles = Math.min(Math.floor(window.innerWidth / 15), 65);
+src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png"
 
-    for (let i = 0; i < numParticles; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        radius: Math.random() * 2 + 1,
-        color: Math.random() > 0.4 ? '#00f0ff' : '#bd00ff'
-      });
-    }
+alt="Valthoris Logo">
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+<h1>VALTHORIS</h1>
 
-      // Desenhar conexões de dados (linhas de rede)
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+<h2>
 
-          if (dist < 140) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 140})`;
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
-          }
-        }
-      }
+Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain
 
-      // Desenhar e mover partículas
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
+</h2>
 
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+<p>
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      });
+Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online, engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial, Blockchain e Internet Computer Protocol.
 
-      requestAnimationFrame(animate);
-    }
+</p>
 
-    animate();
-  </script>
+<a class="button"
+
+href="https://github.com/Valthoris-code/Valthoris-llm"
+
+target="_blank">
+
+Ver Projeto
+
+</a>
+
+</header>
+
+<section id="modulos">
+
+<h3>Principais Módulos</h3>
+
+<div class="cards">
+
+<div class="card">
+<h4>🛡 AutoShield</h4>
+<p>
+Proteção inteligente em tempo real contra phishing,
+engenharia social, malware, burlas online e ataques digitais,
+utilizando Inteligência Artificial.
+</p>
+</div>
+
+<div class="card">
+<h4>🤖 AI Assistant</h4>
+<p>
+Assistente especializado em Cibersegurança,
+capaz de analisar mensagens, URLs, emails,
+SMS, chamadas e fornecer recomendações.
+</p>
+</div>
+
+<div class="card">
+<h4>🌍 Radar Global</h4>
+<p>
+Mapa colaborativo mundial com denúncias
+de fraude digital, números suspeitos,
+websites maliciosos e campanhas ativas.
+</p>
+</div>
+
+<div class="card">
+<h4>📍 Safe Location</h4>
+<p>
+Partilha segura de localização,
+protegida por criptografia e
+Internet Computer Protocol.
+</p>
+</div>
+
+<div class="card">
+<h4>💰 Crypto Intelligence</h4>
+<p>
+Análise inteligente de carteiras,
+tokens, contratos inteligentes,
+rug pulls e esquemas fraudulentos.
+</p>
+</div>
+
+<div class="card">
+<h4>⚠ Threat Intelligence</h4>
+<p>
+Motor avançado de inteligência
+capaz de correlacionar ameaças,
+fontes públicas e informação comunitária.
+</p>
+</div>
+
+</div>
+
+</section>
+
+<section id="tecnologia">
+
+<h3>Tecnologia</h3>
+
+<div class="cards">
+
+<div class="card">
+
+<h4>☁ Internet Computer</h4>
+
+<p>
+
+Infraestrutura totalmente preparada
+para execução em Canisters ICP,
+garantindo descentralização,
+segurança e elevada disponibilidade.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h4>⚛ React + TypeScript</h4>
+
+<p>
+
+Frontend moderno preparado para
+Website, Progressive Web App (PWA)
+e futuras aplicações móveis.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h4>🗄 Supabase</h4>
+
+<p>
+
+Base de dados em tempo real,
+autenticação, sincronização,
+armazenamento e APIs.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h4>🧠 Artificial Intelligence</h4>
+
+<p>
+
+Modelo próprio especializado em
+Fraude Digital, Engenharia Social,
+Blockchain e Cibersegurança.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h4>🔒 Blockchain Security</h4>
+
+<p>
+
+Proteção On-chain,
+assinaturas digitais,
+integridade dos dados
+e validação descentralizada.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h4>🌐 Open Intelligence</h4>
+
+<p>
+
+Integração futura com
+Threat Intelligence,
+OSINT,
+comunidade e APIs externas.
+
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+<section id="roadmap">
+
+<h3>Roadmap</h3>
+
+<div class="timeline">
+
+<div class="step done">
+
+<h4>✅ Arquitetura</h4>
+
+<p>
+Arquitetura geral concluída.
+</p>
+
+</div>
+
+<div class="step done">
+
+<h4>✅ ICP</h4>
+
+<p>
+Preparação dos Canisters
+Internet Computer.
+</p>
+
+</div>
+
+<div class="step done">
+
+<h4>✅ Blockchain</h4>
+
+<p>
+Estrutura Blockchain integrada.
+</p>
+
+</div>
+
+<div class="step progress">
+
+<h4>🔄 Inteligência Artificial</h4>
+
+<p>
+Treino do modelo Valthoris AI.
+</p>
+
+</div>
+
+<div class="step progress">
+
+<h4>🔄 Frontend</h4>
+
+<p>
+Interface Web,
+PWA
+e experiência do utilizador.
+</p>
+
+</div>
+
+<div class="step progress">
+
+<h4>🔄 Backend</h4>
+
+<p>
+Integração completa
+dos módulos
+e APIs.
+</p>
+
+</div>
+
+<div class="step future">
+
+<h4>🚀 Beta Pública</h4>
+
+<p>
+
+Primeira versão pública
+para utilizadores.
+
+</p>
+
+</div>
+
+<div class="step future">
+
+<h4>🌍 Lançamento Global</h4>
+
+<p>
+
+Disponibilização internacional
+da plataforma.
+
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+<footer>
+
+<div class="footer-brand">
+
+<h2>VALTHORIS</h2>
+
+<p>
+
+Artificial Intelligence • Cybersecurity • Blockchain • Internet Computer
+
+</p>
+
+</div>
+
+<div class="footer-links">
+
+<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
+
+GitHub Oficial do Projeto
+
+</a>
+
+</div>
+
+<div class="footer-mails">
+
+<a href="mailto:info@valthoris.com">
+
+📧 info@valthoris.com
+
+</a>
+
+<a href="mailto:support@valthoris.com">
+
+💬 support@valthoris.com
+
+</a>
+
+<a href="mailto:security@valthoris.com">
+
+🛡 security@valthoris.com
+
+</a>
+
+</div>
+
+<div class="security">
+
+⚡ Powered by Internet Computer Protocol (ICP)
+
+</div>
+
+<div class="small">
+
+<p>
+
+© 2026 🇵🇹 Valthoris • HCenterprise
+
+</p>
+
+<br>
+
+<p>
+
+Designed with European cybersecurity and privacy principles,
+
+inspired by the NIS2 Directive and GDPR.
+
+</p>
+
+</div>
+
+</footer>
+
+<script>
+
+const canvas=document.getElementById("cyber-bg");
+
+const ctx=canvas.getContext("2d");
+
+function resize(){
+
+canvas.width=window.innerWidth;
+
+canvas.height=window.innerHeight;
+
+}
+
+resize();
+
+window.addEventListener("resize",resize);
+
+const particles=[];
+
+const amount=Math.min(Math.floor(window.innerWidth/18),90);
+
+for(let i=0;i<amount;i++){
+
+particles.push({
+
+x:Math.random()*canvas.width,
+
+y:Math.random()*canvas.height,
+
+vx:(Math.random()-.5)*.5,
+
+vy:(Math.random()-.5)*.5,
+
+r:Math.random()*2+1,
+
+c:Math.random()>.5?"#00f0ff":"#bd00ff"
+
+});
+
+}
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+for(let i=0;i<particles.length;i++){
+
+let p=particles[i];
+
+p.x+=p.vx;
+
+p.y+=p.vy;
+
+if(p.x<0||p.x>canvas.width)p.vx*=-1;
+
+if(p.y<0||p.y>canvas.height)p.vy*=-1;
+
+ctx.beginPath();
+
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+
+ctx.fillStyle=p.c;
+
+ctx.shadowColor=p.c;
+
+ctx.shadowBlur=12;
+
+ctx.fill();
+
+ctx.shadowBlur=0;
+
+for(let j=i+1;j<particles.length;j++){
+
+let q=particles[j];
+
+let dx=p.x-q.x;
+
+let dy=p.y-q.y;
+
+let d=Math.sqrt(dx*dx+dy*dy);
+
+if(d<140){
+
+ctx.beginPath();
+
+ctx.moveTo(p.x,p.y);
+
+ctx.lineTo(q.x,q.y);
+
+ctx.strokeStyle="rgba(0,240,255,"+(1-d/140)+")";
+
+ctx.lineWidth=.5;
+
+ctx.stroke();
+
+}
+
+}
+
+}
+
+requestAnimationFrame(draw);
+
+}
+
+draw();
+
+</script>
 
 </body>
+
 </html>
