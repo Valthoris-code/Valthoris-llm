@@ -17,20 +17,17 @@
       scroll-behavior: smooth;
     }
 
-    html {
-      overflow-x: hidden;
-    }
-
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: #030712;
+      background: #02050e;
       color: white;
       overflow-x: hidden;
-      position: relative;
     }
 
     /* ===========================
-    CYBER BACKGROUND ANIMADO
+    1. FUNDO ANIMADO EM MOVIMENTO
     =========================== */
     #cyber-bg {
       position: fixed;
@@ -38,17 +35,17 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -2;
-      background: #02050e;
+      z-index: 0;
+      pointer-events: none;
     }
 
     .bg-overlay {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
       background:
         radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08), transparent 60%),
         radial-gradient(circle at 80% 70%, rgba(189, 0, 255, 0.08), transparent 50%),
@@ -57,46 +54,51 @@
       pointer-events: none;
     }
 
+    /* Garantir que o conteúdo fica por cima do fundo animado */
+    .menu, header, section, footer {
+      position: relative;
+      z-index: 2;
+    }
+
     /* ===========================
-    SELO FIXO (CANTO INFERIOR DIREITO)
+    2. SELO FIXO SEMPRE VISÍVEL
     =========================== */
     .fixed-security-badge {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 9999;
+      position: fixed !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      z-index: 99999 !important;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 30px;
-      background: rgba(3, 10, 24, 0.85);
-      border: 1px solid rgba(0, 255, 136, 0.6);
+      background: rgba(3, 10, 24, 0.90);
+      border: 1px solid rgba(0, 255, 136, 0.7);
       color: #00ff88;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.5px;
       backdrop-filter: blur(12px);
-      box-shadow: 0 0 15px rgba(0, 255, 136, 0.25);
-      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       cursor: default;
       user-select: none;
     }
 
     .fixed-security-badge:hover {
       transform: scale(1.05);
-      border-color: #00ff88;
-      box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
     }
 
     .fixed-security-badge svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
+      width: 16px;
+      height: 16px;
+      fill: #00ff88;
     }
 
     /* ===========================
-    MENU
+    3. MENU & LOGO CENTRADO
     =========================== */
     .menu {
       position: fixed;
@@ -107,7 +109,7 @@
       justify-content: center;
       gap: 35px;
       padding: 18px;
-      background: rgba(5, 12, 25, .75);
+      background: rgba(5, 12, 25, .80);
       backdrop-filter: blur(18px);
       border-bottom: 1px solid rgba(0, 240, 255, .20);
       z-index: 999;
@@ -125,9 +127,6 @@
       text-shadow: 0 0 10px cyan;
     }
 
-    /* ===========================
-    HEADER
-    =========================== */
     header {
       padding-top: 140px;
       padding-bottom: 100px;
@@ -150,10 +149,12 @@
       text-transform: uppercase;
     }
 
+    /* LOGO RIGOROSAMENTE CENTRADO */
     .logo {
+      display: block;
+      margin: 0 auto 35px auto;
       width: 240px;
       max-width: 70vw;
-      margin-bottom: 35px;
       filter: drop-shadow(0 0 20px cyan);
       animation: float 5s ease-in-out infinite;
     }
@@ -281,7 +282,7 @@
     .future { border-color: #00f0ff; }
 
     /* ===========================
-    SECÇÃO PARTILHA
+    PARTILHA & FOOTER
     =========================== */
     .share-container {
       max-width: 800px;
@@ -343,9 +344,6 @@
       box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
     }
 
-    /* ===========================
-    FOOTER
-    =========================== */
     footer {
       margin-top: 80px;
       padding: 70px 20px;
@@ -428,18 +426,18 @@
       header h2 { font-size: 18px; }
       header p { font-size: 16px; }
       .button { width: 100%; max-width: 320px; }
-      .fixed-security-badge { bottom: 16px; right: 16px; font-size: 11px; padding: 6px 12px; }
+      .fixed-security-badge { bottom: 16px !important; right: 16px !important; font-size: 11px; padding: 8px 14px; }
     }
   </style>
 </head>
 
 <body>
 
-  <!-- CANVAS DO FUNDO EM MOVIMENTO -->
+  <!-- 1. CANVAS DO FUNDO EM MOVIMENTO -->
   <canvas id="cyber-bg"></canvas>
   <div class="bg-overlay"></div>
 
-  <!-- SELO FIXO NO CANTO INFERIOR DIREITO (NUNCA SAI DO SÍTIO NO SCROLL) -->
+  <!-- 2. SELO FIXO E PERMANENTE NO ECRÃ (NUNCA DESAPARECE COM SCROLL) -->
   <div class="fixed-security-badge">
     <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
     <span>Segurança by design</span>
@@ -455,6 +453,7 @@
 
   <header id="inicio">
     <div class="badge">⚠ Aplicação em Construção</div>
+    <!-- 3. LOGO TOTALMENTE CENTRADO -->
     <img class="logo" src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo">
     <h1>VALTHORIS</h1>
     <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
@@ -568,7 +567,6 @@
       <p>Artificial Intelligence • Cybersecurity • Blockchain • Internet Computer</p>
     </div>
 
-    <!-- SECÇÃO DE PARTILHA -->
     <div class="share-container">
       <h4>Partilhe o Valthoris</h4>
       <p>Ajude a proteger mais pessoas contra fraudes.</p>
@@ -614,13 +612,13 @@
     <div class="security">⚡ Powered by Internet Computer Protocol (ICP)</div>
 
     <div class="small">
-      <p>© 2026 🇵🇹 Valthoris • HCenterprise</p>
+      <p>© 2026 🇵🇹 Valthoris • HTenterprise</p>
       <br>
       <p>Designed with European cybersecurity and privacy principles, inspired by the NIS2 Directive and GDPR.</p>
     </div>
   </footer>
 
-  <!-- SCRIPT PARA A ANIMAÇÃO DO FUNDO EM MOVIMENTO -->
+  <!-- SCRIPT DAS PARTÍCULAS INTERATIVAS EM MOVIMENTO -->
   <script>
     const canvas = document.getElementById('cyber-bg');
     const ctx = canvas.getContext('2d');
@@ -632,14 +630,15 @@
       height = canvas.height = window.innerHeight;
       particles = [];
 
-      const count = Math.floor((width * height) / 14000);
+      // Densidade de partículas responsiva
+      const count = Math.floor((width * height) / 12000);
       for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.7,
-          vy: (Math.random() - 0.5) * 0.7,
-          radius: Math.random() * 1.8 + 0.5,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          radius: Math.random() * 1.8 + 0.6,
           alpha: Math.random() * 0.5 + 0.2
         });
       }
@@ -653,27 +652,30 @@
         p.x += p.vx;
         p.y += p.vy;
 
+        // Repor partículas nas bordas
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
+        // Desenhar nó
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha})`;
         ctx.fill();
 
+        // Desenhar linhas de ligação
         for (let j = i + 1; j < particles.length; j++) {
           let p2 = particles[j];
           let dx = p.x - p2.x;
           let dy = p.y - p2.y;
           let dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 110) {
+          if (dist < 120) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 * (1 - dist / 110)})`;
+            ctx.strokeStyle = `rgba(0, 240, 255, ${0.18 * (1 - dist / 120)})`;
             ctx.lineWidth = 0.6;
             ctx.stroke();
           }
