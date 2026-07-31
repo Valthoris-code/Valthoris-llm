@@ -2,1423 +2,610 @@
 <html lang="pt">
 
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<meta name="description" content="Valthoris - Artificial Intelligence Cybersecurity Platform">
-
-<meta name="theme-color" content="#041426">
-
-<title>VALTHORIS | Artificial Intelligence Cybersecurity Platform</title>
-
-<link rel="icon" href="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png">
-
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-scroll-behavior:smooth;
-}
-
-html{
-overflow-x:hidden;
-}
-
-body{
-
-font-family:'Segoe UI',Arial,sans-serif;
-
-background:#030712;
-
-color:white;
-
-overflow-x:hidden;
-
-position:relative;
-
-}
-
-/* ===========================
-CYBER BACKGROUND (Quantum & Fiber Optics)
-=========================== */
-
-#cyber-bg{
-
-position:fixed;
-
-top:0;
-
-left:0;
-
-width:100%;
-
-height:100%;
-
-z-index:-2;
-
-background: #02050e;
-
-}
-
-.bg-overlay{
-
-position:fixed;
-
-top:0;
-
-left:0;
-
-width:100%;
-
-height:100%;
-
-z-index:-1;
-
-background:
-
-radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08), transparent 60%),
-radial-gradient(circle at 80% 70%, rgba(189, 0, 255, 0.08), transparent 50%),
-radial-gradient(circle at 20% 80%, rgba(0, 100, 255, 0.06), transparent 50%),
-linear-gradient(180deg, rgba(3, 7, 18, 0.4) 0%, rgba(5, 11, 23, 0.8) 100%);
-
-pointer-events: none;
-
-}
-
-/* ===========================
-MENU
-=========================== */
-
-.menu{
-
-position:fixed;
-
-top:0;
-
-left:0;
-
-width:100%;
-
-display:flex;
-
-justify-content:center;
-
-gap:35px;
-
-padding:18px;
-
-background:rgba(5,12,25,.75);
-
-backdrop-filter:blur(18px);
-
-border-bottom:1px solid rgba(0,240,255,.20);
-
-z-index:999;
-
-}
-
-.menu a{
-
-text-decoration:none;
-
-color:#8ceeff;
-
-font-weight:600;
-
-transition:.3s;
-
-}
-
-.menu a:hover{
-
-color:#ffffff;
-
-text-shadow:0 0 10px cyan;
-
-}
-
-/* ===========================
-HEADER
-=========================== */
-
-header{
-
-padding-top:140px;
-
-padding-bottom:100px;
-
-text-align:center;
-
-padding-left:20px;
-
-padding-right:20px;
-
-}
-
-.badge{
-
-display:inline-block;
-
-padding:10px 20px;
-
-border-radius:50px;
-
-background:rgba(255,0,200,.12);
-
-border:1px solid rgba(255,0,200,.4);
-
-color:#ff70ff;
-
-font-size:13px;
-
-font-weight:bold;
-
-letter-spacing:1px;
-
-margin-bottom:35px;
-
-text-transform:uppercase;
-
-}
-
-.logo{
-
-width:240px;
-
-max-width:70vw;
-
-margin-bottom:35px;
-
-filter:drop-shadow(0 0 20px cyan);
-
-animation:float 5s ease-in-out infinite;
-
-}
-
-@keyframes float{
-
-0%{transform:translateY(0px);}
-
-50%{transform:translateY(-10px);}
-
-100%{transform:translateY(0px);}
-
-}
-
-header h1{
-
-font-size:78px;
-
-letter-spacing:6px;
-
-color:#52e5ff;
-
-text-shadow:
-
-0 0 10px cyan,
-
-0 0 40px cyan;
-
-margin-bottom:18px;
-
-}
-
-header h2{
-
-font-size:28px;
-
-font-weight:300;
-
-margin-bottom:35px;
-
-color:#dbeafe;
-
-}
-
-header p{
-
-max-width:900px;
-
-margin:auto;
-
-font-size:20px;
-
-line-height:1.9;
-
-color:#d4e8ff;
-
-}
-
-.button{
-
-display:inline-block;
-
-margin-top:45px;
-
-padding:18px 45px;
-
-border-radius:12px;
-
-background:linear-gradient(135deg,#00e7ff,#bb00ff);
-
-text-decoration:none;
-
-font-size:18px;
-
-font-weight:bold;
-
-color:white;
-
-transition:.3s;
-
-box-shadow:0 0 30px rgba(0,240,255,.30);
-
-}
-
-.button:hover{
-
-transform:scale(1.05);
-
-box-shadow:0 0 40px rgba(255,0,255,.60);
-
-}
-
-/* ===========================
-SEÇÕES
-=========================== */
-
-section{
-
-padding:90px 8%;
-
-}
-
-section h3{
-
-text-align:center;
-
-font-size:42px;
-
-margin-bottom:45px;
-
-color:#56e8ff;
-
-text-shadow:0 0 15px cyan;
-
-}
-
-/* ===========================
-CARDS
-=========================== */
-
-.cards{
-
-display:grid;
-
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-
-gap:25px;
-
-}
-
-.card{
-
-background:rgba(255,255,255,.05);
-
-backdrop-filter:blur(14px);
-
-border:1px solid rgba(0,240,255,.15);
-
-border-radius:20px;
-
-padding:30px;
-
-transition:.35s;
-
-}
-
-.card:hover{
-
-transform:translateY(-8px);
-
-border-color:#00f0ff;
-
-box-shadow:
-
-0 0 20px rgba(0,240,255,.25),
-
-0 0 50px rgba(189,0,255,.20);
-
-}
-
-.card h4{
-
-font-size:24px;
-
-margin-bottom:18px;
-
-color:#67ecff;
-
-}
-
-.card p{
-
-line-height:1.7;
-
-color:#d9eaff;
-
-}
-
-/* ===========================
-ROADMAP
-=========================== */
-
-.timeline{
-
-display:grid;
-
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-
-gap:20px;
-
-}
-
-.step{
-
-padding:28px;
-
-border-radius:18px;
-
-background:rgba(255,255,255,.05);
-
-border:1px solid rgba(255,255,255,.08);
-
-text-align:center;
-
-transition:.3s;
-
-}
-
-.step:hover{
-
-transform:translateY(-6px);
-
-box-shadow:0 0 25px rgba(0,240,255,.20);
-
-}
-
-.done{
-
-border-color:#00ff88;
-
-}
-
-.progress{
-
-border-color:#ffd000;
-
-}
-
-.future{
-
-border-color:#00f0ff;
-
-}
-
-/* ===========================
-SECÇÃO PARTILHA & SEGURANÇA
-=========================== */
-
-.share-container {
-
-max-width: 800px;
-
-margin: 40px auto 20px auto;
-
-padding: 30px 20px;
-
-background: rgba(255, 255, 255, 0.04);
-
-backdrop-filter: blur(16px);
-
-border: 1px solid rgba(0, 240, 255, 0.2);
-
-border-radius: 24px;
-
-text-align: center;
-
-box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-
-}
-
-.share-container h4 {
-
-font-size: 22px;
-
-color: #ffffff;
-
-margin-bottom: 6px;
-
-font-weight: 700;
-
-}
-
-.share-container p {
-
-font-size: 14px;
-
-color: #b9cfe8;
-
-margin-bottom: 25px;
-
-}
-
-.share-icons {
-
-display: flex;
-
-flex-wrap: wrap;
-
-justify-content: center;
-
-align-items: center;
-
-gap: 14px;
-
-margin-bottom: 25px;
-
-}
-
-.share-btn {
-
-display: flex;
-
-align-items: center;
-
-justify-content: center;
-
-width: 44px;
-
-height: 44px;
-
-border-radius: 50%;
-
-background: rgba(255, 255, 255, 0.08);
-
-border: 1px solid rgba(0, 240, 255, 0.25);
-
-color: #8ceeff;
-
-text-decoration: none;
-
-transition: all 0.3s ease;
-
-}
-
-.share-btn svg {
-
-width: 20px;
-
-height: 20px;
-
-fill: currentColor;
-
-}
-
-.share-btn:hover {
-
-transform: translateY(-4px) scale(1.1);
-
-background: rgba(0, 240, 255, 0.2);
-
-color: #ffffff;
-
-border-color: #00f0ff;
-
-box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
-
-}
-
-.security-badge {
-
-display: inline-flex;
-
-align-items: center;
-
-gap: 8px;
-
-padding: 8px 18px;
-
-border-radius: 50px;
-
-background: rgba(0, 255, 136, 0.1);
-
-border: 1px solid rgba(0, 255, 136, 0.4);
-
-color: #00ff88;
-
-font-size: 13px;
-
-font-weight: 600;
-
-box-shadow: 0 0 12px rgba(0, 255, 136, 0.15);
-
-}
-
-.security-badge svg {
-
-width: 15px;
-
-height: 15px;
-
-fill: currentColor;
-
-}
-
-/* ===========================
-FOOTER
-=========================== */
-
-footer{
-
-margin-top:80px;
-
-padding:70px 20px;
-
-background:#040914;
-
-border-top:1px solid rgba(0,240,255,.15);
-
-text-align:center;
-
-}
-
-footer h2{
-
-color:#58eaff;
-
-font-size:32px;
-
-margin-bottom:10px;
-
-}
-
-footer p{
-
-color:#b9cfe8;
-
-line-height:1.8;
-
-}
-
-.footer-mails{
-
-display:flex;
-
-justify-content:center;
-
-flex-wrap:wrap;
-
-gap:15px;
-
-margin:35px 0;
-
-}
-
-.footer-mails a{
-
-padding:10px 18px;
-
-border-radius:10px;
-
-background:rgba(0,240,255,.08);
-
-border:1px solid rgba(0,240,255,.20);
-
-color:#66ecff;
-
-text-decoration:none;
-
-transition:.3s;
-
-}
-
-.footer-mails a:hover{
-
-background:#00f0ff;
-
-color:#041426;
-
-}
-
-.security{
-
-margin-top:20px;
-
-display:inline-block;
-
-padding:10px 20px;
-
-border-radius:12px;
-
-background:rgba(0,240,255,.08);
-
-border:1px solid rgba(0,240,255,.20);
-
-color:#5de9ff;
-
-font-weight:bold;
-
-}
-
-.small{
-
-margin-top:20px;
-
-font-size:13px;
-
-color:#8fa9c4;
-
-line-height:1.8;
-
-}
-
-/* ===========================
-RESPONSIVO
-=========================== */
-
-@media(max-width:900px){
-
-.menu{
-
-gap:18px;
-
-font-size:14px;
-
-overflow-x:auto;
-
-}
-
-header{
-
-padding-top:120px;
-
-}
-
-header h1{
-
-font-size:52px;
-
-letter-spacing:3px;
-
-}
-
-header h2{
-
-font-size:22px;
-
-}
-
-header p{
-
-font-size:17px;
-
-}
-
-.logo{
-
-width:180px;
-
-}
-
-section h3{
-
-font-size:34px;
-
-}
-
-}
-
-@media(max-width:600px){
-
-header h1{
-
-font-size:40px;
-
-}
-
-header h2{
-
-font-size:18px;
-
-}
-
-header p{
-
-font-size:16px;
-
-}
-
-.button{
-
-width:100%;
-
-max-width:320px;
-
-}
-
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Valthoris - Artificial Intelligence Cybersecurity Platform">
+  <meta name="theme-color" content="#041426">
+  <title>VALTHORIS | Artificial Intelligence Cybersecurity Platform</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    html {
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #030712;
+      color: white;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ===========================
+    CYBER BACKGROUND
+    =========================== */
+    #cyber-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background: #02050e;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08), transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(189, 0, 255, 0.08), transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(0, 100, 255, 0.06), transparent 50%),
+        linear-gradient(180deg, rgba(3, 7, 18, 0.4) 0%, rgba(5, 11, 23, 0.8) 100%);
+      pointer-events: none;
+    }
+
+    /* ===========================
+    MENU
+    =========================== */
+    .menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 35px;
+      padding: 18px;
+      background: rgba(5, 12, 25, .75);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(0, 240, 255, .20);
+      z-index: 999;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: #8ceeff;
+      font-weight: 600;
+      transition: .3s;
+    }
+
+    .menu a:hover {
+      color: #ffffff;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    /* ===========================
+    HEADER
+    =========================== */
+    header {
+      padding-top: 140px;
+      padding-bottom: 100px;
+      text-align: center;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 50px;
+      background: rgba(255, 0, 200, .12);
+      border: 1px solid rgba(255, 0, 200, .4);
+      color: #ff70ff;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 35px;
+      text-transform: uppercase;
+    }
+
+    .logo {
+      width: 240px;
+      max-width: 70vw;
+      margin-bottom: 35px;
+      filter: drop-shadow(0 0 20px cyan);
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    header h1 {
+      font-size: 78px;
+      letter-spacing: 6px;
+      color: #52e5ff;
+      text-shadow: 0 0 10px cyan, 0 0 40px cyan;
+      margin-bottom: 18px;
+    }
+
+    header h2 {
+      font-size: 28px;
+      font-weight: 300;
+      margin-bottom: 35px;
+      color: #dbeafe;
+    }
+
+    header p {
+      max-width: 900px;
+      margin: auto;
+      font-size: 20px;
+      line-height: 1.9;
+      color: #d4e8ff;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 45px;
+      padding: 18px 45px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00e7ff, #bb00ff);
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      transition: .3s;
+      box-shadow: 0 0 30px rgba(0, 240, 255, .30);
+    }
+
+    .button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(255, 0, 255, .60);
+    }
+
+    /* ===========================
+    SEÇÕES & CARDS
+    =========================== */
+    section {
+      padding: 90px 8%;
+    }
+
+    section h3 {
+      text-align: center;
+      font-size: 42px;
+      margin-bottom: 45px;
+      color: #56e8ff;
+      text-shadow: 0 0 15px cyan;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .05);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 240, 255, .15);
+      border-radius: 20px;
+      padding: 30px;
+      transition: .35s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: #00f0ff;
+      box-shadow: 0 0 20px rgba(0, 240, 255, .25), 0 0 50px rgba(189, 0, 255, .20);
+    }
+
+    .card h4 {
+      font-size: 24px;
+      margin-bottom: 18px;
+      color: #67ecff;
+    }
+
+    .card p {
+      line-height: 1.7;
+      color: #d9eaff;
+    }
+
+    /* ===========================
+    ROADMAP
+    =========================== */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .step {
+      padding: 28px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .08);
+      text-align: center;
+      transition: .3s;
+    }
+
+    .step:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 0 25px rgba(0, 240, 255, .20);
+    }
+
+    .done { border-color: #00ff88; }
+    .progress { border-color: #ffd000; }
+    .future { border-color: #00f0ff; }
+
+    /* ===========================
+    SECÇÃO PARTILHA & SELO DIREITA
+    =========================== */
+    .share-container {
+      position: relative; /* Posiciona o selo absolutamente em relação a este bloco */
+      max-width: 800px;
+      margin: 40px auto 20px auto;
+      padding: 30px 20px 50px 20px; /* Espaço para o selo na parte inferior */
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      border-radius: 24px;
+      text-align: center;
+    }
+
+    .share-container h4 {
+      font-size: 22px;
+      color: #ffffff;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .share-container p {
+      font-size: 14px;
+      color: #b9cfe8;
+      margin-bottom: 25px;
+    }
+
+    .share-icons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #8ceeff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .share-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-3px) scale(1.08);
+      background: rgba(0, 240, 255, 0.2);
+      color: #ffffff;
+      border-color: #00f0ff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    /* SELO PEQUENO NO CANTO INFERIOR DIREITO */
+    .security-badge-corner {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(0, 255, 136, 0.08);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      color: #00ff88;
+      font-size: 11px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+
+    .security-badge-corner svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    /* ===========================
+    FOOTER
+    =========================== */
+    footer {
+      margin-top: 80px;
+      padding: 70px 20px;
+      background: #040914;
+      border-top: 1px solid rgba(0, 240, 255, .15);
+      text-align: center;
+    }
+
+    footer h2 {
+      color: #58eaff;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      color: #b9cfe8;
+      line-height: 1.8;
+    }
+
+    .footer-links a {
+      color: #00f0ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .footer-mails {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 35px 0;
+    }
+
+    .footer-mails a {
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: rgba(0, 240, 255, .08);
+      border: 1px solid rgba(0, 240, 255, .20);
+      color: #66ecff;
+      text-decoration: none;
+      transition: .3s;
+    }
+
+    .footer-mails a:hover {
+      background: #00f0ff;
+      color: #041426;
+    }
+
+    .security {
+      margin-top: 20px;
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: rgba(0, 240, 255, .08);
+      border: 1px solid rgba(0, 240, 255, .20);
+      color: #5de9ff;
+      font-weight: bold;
+    }
+
+    .small {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #8fa9c4;
+      line-height: 1.8;
+    }
+
+    /* RESPONSIVIDADE */
+    @media(max-width:900px) {
+      .menu { gap: 18px; font-size: 14px; overflow-x: auto; }
+      header { padding-top: 120px; }
+      header h1 { font-size: 52px; letter-spacing: 3px; }
+      header h2 { font-size: 22px; }
+      header p { font-size: 17px; }
+      .logo { width: 180px; }
+      section h3 { font-size: 34px; }
+    }
+
+    @media(max-width:600px) {
+      header h1 { font-size: 40px; }
+      header h2 { font-size: 18px; }
+      header p { font-size: 16px; }
+      .button { width: 100%; max-width: 320px; }
+      .security-badge-corner { position: static; margin-top: 15px; display: inline-flex; }
+      .share-container { padding-bottom: 25px; }
+    }
+  </style>
 </head>
 
 <body>
 
-<canvas id="cyber-bg"></canvas>
-
-<div class="bg-overlay"></div>
-
-<nav class="menu">
-
-<a href="#inicio">Início</a>
-
-<a href="#modulos">Módulos</a>
-
-<a href="#tecnologia">Tecnologia</a>
-
-<a href="#roadmap">Roadmap</a>
-
-<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub</a>
-
-</nav>
-
-<header id="inicio">
-
-<div class="badge">
-
-⚠ Aplicação em Construção
-
-</div>
-
-<img class="logo"
-
-src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png"
-
-alt="Valthoris Logo">
-
-<h1>VALTHORIS</h1>
-
-<h2>
-
-Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain
-
-</h2>
-
-<p>
-
-Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online, engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial, Blockchain e Internet Computer Protocol.
-
-</p>
-
-<a class="button"
-
-href="https://github.com/Valthoris-code/Valthoris-llm"
-
-target="_blank">
-
-Ver Projeto
-
-</a>
-
-</header>
-
-<section id="modulos">
-
-<h3>Principais Módulos</h3>
-
-<div class="cards">
-
-<div class="card">
-<h4>🛡 AutoShield</h4>
-<p>
-Proteção inteligente em tempo real contra phishing,
-engenharia social, malware, burlas online e ataques digitais,
-utilizando Inteligência Artificial.
-</p>
-</div>
-
-<div class="card">
-<h4>🤖 AI Assistant</h4>
-<p>
-Assistente especializado em Cibersegurança,
-capaz de analisar mensagens, URLs, emails,
-SMS, chamadas e fornecer recomendações.
-</p>
-</div>
-
-<div class="card">
-<h4>🌍 Radar Global</h4>
-<p>
-Mapa colaborativo mundial com denúncias
-de fraude digital, números suspeitos,
-websites maliciosos e campanhas ativas.
-</p>
-</div>
-
-<div class="card">
-<h4>📍 Safe Location</h4>
-<p>
-Partilha segura de localização,
-protegida por criptografia e
-Internet Computer Protocol.
-</p>
-</div>
-
-<div class="card">
-<h4>💰 Crypto Intelligence</h4>
-<p>
-Análise inteligente de carteiras,
-tokens, contratos inteligentes,
-rug pulls e esquemas fraudulentos.
-</p>
-</div>
-
-<div class="card">
-<h4>⚠ Threat Intelligence</h4>
-<p>
-Motor avançado de inteligência
-capaz de correlacionar ameaças,
-fontes públicas e informação comunitária.
-</p>
-</div>
-
-</div>
-
-</section>
-
-<section id="tecnologia">
-
-<h3>Tecnologia</h3>
-
-<div class="cards">
-
-<div class="card">
-
-<h4>☁ Internet Computer</h4>
-
-<p>
-
-Infraestrutura totalmente preparada
-para execução em Canisters ICP,
-garantindo descentralização,
-segurança e elevada disponibilidade.
-
-</p>
-
-</div>
-
-<div class="card">
-
-<h4>⚛ React + TypeScript</h4>
-
-<p>
-
-Frontend moderno preparado para
-Website, Progressive Web App (PWA)
-e futuras aplicações móveis.
-
-</p>
-
-</div>
-
-<div class="card">
-
-<h4>🗄 Supabase</h4>
-
-<p>
-
-Base de dados em tempo real,
-autenticação, sincronização,
-armazenamento e APIs.
-
-</p>
-
-</div>
-
-<div class="card">
-
-<h4>🧠 Artificial Intelligence</h4>
-
-<p>
-
-Modelo próprio especializado em
-Fraude Digital, Engenharia Social,
-Blockchain e Cibersegurança.
-
-</p>
-
-</div>
-
-<div class="card">
-
-<h4>🔒 Blockchain Security</h4>
-
-<p>
-
-Proteção On-chain,
-assinaturas digitais,
-integridade dos dados
-e validação descentralizada.
-
-</p>
-
-</div>
-
-<div class="card">
-
-<h4>🌐 Open Intelligence</h4>
-
-<p>
-
-Integração futura com
-Threat Intelligence,
-OSINT,
-comunidade e APIs externas.
-
-</p>
-
-</div>
-
-</div>
-
-</section>
-
-<section id="roadmap">
-
-<h3>Roadmap</h3>
-
-<div class="timeline">
-
-<div class="step done">
-
-<h4>✅ Arquitetura</h4>
-
-<p>
-Arquitetura geral concluída.
-</p>
-
-</div>
-
-<div class="step done">
-
-<h4>✅ ICP</h4>
-
-<p>
-Preparação dos Canisters
-Internet Computer.
-</p>
-
-</div>
-
-<div class="step done">
-
-<h4>✅ Blockchain</h4>
-
-<p>
-Estrutura Blockchain integrada.
-</p>
-
-</div>
-
-<div class="step progress">
-
-<h4>🔄 Inteligência Artificial</h4>
-
-<p>
-Treino do modelo Valthoris AI.
-</p>
-
-</div>
-
-<div class="step progress">
-
-<h4>🔄 Frontend</h4>
-
-<p>
-Interface Web,
-PWA
-e experiência do utilizador.
-</p>
-
-</div>
-
-<div class="step progress">
-
-<h4>🔄 Backend</h4>
-
-<p>
-Integração completa
-dos módulos
-e APIs.
-</p>
-
-</div>
-
-<div class="step future">
-
-<h4>🚀 Beta Pública</h4>
-
-<p>
-
-Primeira versão pública
-para utilizadores.
-
-</p>
-
-</div>
-
-<div class="step future">
-
-<h4>🌍 Lançamento Global</h4>
-
-<p>
-
-Disponibilização internacional
-da plataforma.
-
-</p>
-
-</div>
-
-</div>
-
-</section>
-
-<footer>
-
-<div class="footer-brand">
-
-<h2>VALTHORIS</h2>
-
-<p>
-
-Artificial Intelligence • Cybersecurity • Blockchain • Internet Computer
-
-</p>
-
-</div>
-
-<!-- SECÇÃO DE PARTILHA E SELO DE SEGURANÇA BY DESIGN -->
-<div class="share-container">
-  <h4>Partilhe o Valthoris</h4>
-  <p>Ajude a proteger mais pessoas contra fraudes.</p>
-
-  <div class="share-icons">
-    <!-- WhatsApp -->
-    <a href="https://api.whatsapp.com/send?text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!%20https://valthoris.com" target="_blank" class="share-btn" title="WhatsApp">
-      <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-    </a>
-
-    <!-- TikTok -->
-    <a href="https://www.tiktok.com" target="_blank" class="share-btn" title="TikTok">
-      <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.31 1.56-1.26 2.55.02.83.43 1.63 1.08 2.15.74.6 1.74.83 2.67.65.98-.17 1.83-.87 2.22-1.78.3-.67.41-1.42.39-2.16.02-5.11.01-10.22.01-15.33z"/></svg>
-    </a>
-
-    <!-- X / Twitter -->
-    <a href="https://twitter.com/intent/tweet?text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!&url=https://valthoris.com" target="_blank" class="share-btn" title="X (Twitter)">
-      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-    </a>
-
-    <!-- Telegram -->
-    <a href="https://t.me/share/url?url=https://valthoris.com&text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!" target="_blank" class="share-btn" title="Telegram">
-      <svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.198 1.006.128.832.941z"/></svg>
-    </a>
-
-    <!-- Instagram -->
-    <a href="https://instagram.com" target="_blank" class="share-btn" title="Instagram">
-      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-    </a>
-
-    <!-- Facebook -->
-    <a href="https://www.facebook.com/sharer/sharer.php?u=https://valthoris.com" target="_blank" class="share-btn" title="Facebook">
-      <svg viewBox="0 0 24 24"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.5 5H18V0h-3.808C10.592 0 9 1.583 9 4.615V8z"/></svg>
-    </a>
-
-    <!-- Email -->
-    <a href="mailto:?subject=Conhe%C3%A7a%20o%20Valthoris&body=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!%20https://valthoris.com" class="share-btn" title="Email">
-      <svg viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.036l-9.518 7.713-9.518-7.713zm5.694 6.8 3.824 3.1 3.825-3.1 5.68 7.021h-19.01l5.681-7.021zm9.201 1.129l4.623-3.746v9.458l-4.623-5.712z"/></svg>
-    </a>
-
-    <!-- Share Link / Outros -->
-    <a href="#" class="share-btn" title="Partilhar">
-      <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77l-7.13-4.15c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7l-7.05 4.11c-.54-.5-1.25-.81-2.04-.81-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-    </a>
-
-    <!-- GitHub -->
-    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank" class="share-btn" title="GitHub">
-      <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-    </a>
-  </div>
-
-  <!-- Selo Segurança by Design -->
-  <div class="security-badge">
-    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-    <span>Segurança by design</span>
-  </div>
-</div>
-
-<div class="footer-links">
-
-<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
-
-GitHub Oficial do Projeto
-
-</a>
-
-</div>
-
-<div class="footer-mails">
-
-<a href="mailto:info@valthoris.com">
-
-📧 info@valthoris.com
-
-</a>
-
-<a href="mailto:support@valthoris.com">
-
-💬 support@valthoris.com
-
-</a>
-
-<a href="mailto:security@valthoris.com">
-
-🛡 security@valthoris.com
-
-</a>
-
-</div>
-
-<div class="security">
-
-⚡ Powered by Internet Computer Protocol (ICP)
-
-</div>
-
-<div class="small">
-
-<p>
-
-© 2026 🇵🇹 Valthoris • HCenterprise
-
-</p>
-
-<br>
-
-<p>
-
-Designed with European cybersecurity and privacy principles,
-
-inspired by the NIS2 Directive and GDPR.
-
-</p>
-
-</div>
-
-</footer>
-
-<script>
-
-/* ======================================================
-   ADVANCED CYBERPUNK / QUANTUM FIBER OPTIC ENGINE
-   ====================================================== */
-
-const canvas = document.getElementById("cyber-bg");
-const ctx = canvas.getContext("2d");
-
-let width, height;
-
-function resize() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-}
-
-resize();
-window.addEventListener("resize", resize);
-
-// 1. Cabos de Fibra Óptica Curvados no Fundo
-class FiberCable {
-  constructor() {
-    this.reset();
-  }
-  
-  reset() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.length = Math.random() * 300 + 200;
-    this.angle = Math.random() * Math.PI * 2;
-    this.speed = Math.random() * 0.4 + 0.2;
-    this.cp1x = this.x + (Math.random() - 0.5) * 300;
-    this.cp1y = this.y + (Math.random() - 0.5) * 300;
-    this.endX = this.x + Math.cos(this.angle) * this.length;
-    this.endY = this.y + Math.sin(this.angle) * this.length;
-    this.color = Math.random() > 0.5 ? "rgba(0, 240, 255, 0.15)" : "rgba(189, 0, 255, 0.12)";
-    this.pulseColor = Math.random() > 0.5 ? "#00f0ff" : "#ff00ea";
-    this.progress = Math.random();
-    this.pulseSpeed = Math.random() * 0.008 + 0.003;
-  }
-
-  draw() {
-    // Desenha a fibra óptica
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.quadraticCurveTo(this.cp1x, this.cp1y, this.endX, this.endY);
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    // Pulso de luz laser a percorrer a fibra
-    this.progress += this.pulseSpeed;
-    if (this.progress > 1) this.progress = 0;
-
-    const t = this.progress;
-    // Bezier ponto no tempo t
-    const px = (1 - t) * (1 - t) * this.x + 2 * (1 - t) * t * this.cp1x + t * t * this.endX;
-    const py = (1 - t) * (1 - t) * this.y + 2 * (1 - t) * t * this.cp1y + t * t * this.endY;
-
-    ctx.beginPath();
-    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = this.pulseColor;
-    ctx.shadowColor = this.pulseColor;
-    ctx.shadowBlur = 12;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-}
-
-// 2. Neutrões & Átomos Quânticos com Halos Neon
-class QuantumParticle {
-  constructor() {
-    this.reset();
-  }
-
-  reset() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.z = Math.random() * 3 + 0.5; // profundidade 3D
-    this.vx = (Math.random() - 0.5) * (0.8 / this.z);
-    this.vy = (Math.random() - 0.5) * (0.8 / this.z);
-    this.radius = (Math.random() * 2.2 + 1) / (this.z * 0.5);
-    this.orbitRadius = Math.random() * 15 + 5;
-    this.orbitAngle = Math.random() * Math.PI * 2;
-    this.orbitSpeed = (Math.random() - 0.5) * 0.04;
-    
-    const colors = ["#00f0ff", "#bd00ff", "#00ff88", "#7000ff", "#ff00aa"];
-    this.color = colors[Math.floor(Math.random() * colors.length)];
-    this.hasOrbit = Math.random() > 0.65; // Alguns neutrões têm órbitas/elétrões
-  }
-
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.orbitAngle += this.orbitSpeed;
-
-    if (this.x < -50) this.x = width + 50;
-    if (this.x > width + 50) this.x = -50;
-    if (this.y < -50) this.y = height + 50;
-    if (this.y > height + 50) this.y = -50;
-  }
-
-  draw() {
-    // Halo do Neutrão
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 14 / this.z;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Se for um Átomo completo, desenha a fusão quântica em órbita
-    if (this.hasOrbit) {
-      const ox = this.x + Math.cos(this.orbitAngle) * this.orbitRadius;
-      const oy = this.y + Math.sin(this.orbitAngle) * (this.orbitRadius * 0.4);
-
-      ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.orbitRadius, this.orbitRadius * 0.4, this.orbitAngle * 0.2, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 / this.z})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(ox, oy, this.radius * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "#00f0ff";
-      ctx.shadowBlur = 8;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-  }
-}
-
-// Inicialização dos elementos
-const fibers = Array.from({ length: 18 }, () => new FiberCable());
-const particles = Array.from({ length: 65 }, () => new QuantumParticle());
-
-// Animação Principal com Sensação de Flutuação Tridimensional
-function animate() {
-  ctx.clearRect(0, 0, width, height);
-
-  // 1. Renderizar Fibra Óptica
-  fibers.forEach(fiber => fiber.draw());
-
-  // 2. Desenhar Teia de Emaranhamento Quântico entre neutrões próximos
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const p1 = particles[i];
-      const p2 = particles[j];
-      const dx = p1.x - p2.x;
-      const dy = p1.y - p2.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 130) {
-        const alpha = (1 - dist / 130) * 0.35;
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        
-        // Gradiente de fusão entre neutrões
-        const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
-        grad.addColorStop(0, p1.color);
-        grad.addColorStop(1, p2.color);
-
-        ctx.strokeStyle = grad;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
-      }
-    }
-  }
-
-  // 3. Atualizar e desenhar Partículas / Átomos
-  particles.forEach(p => {
-    p.update();
-    p.draw();
-  });
-
-  requestAnimationFrame(animate);
-}
-
-animate();
-
-</script>
+  <canvas id="cyber-bg"></canvas>
+  <div class="bg-overlay"></div>
+
+  <nav class="menu">
+    <a href="#inicio">Início</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#tecnologia">Tecnologia</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub</a>
+  </nav>
+
+  <header id="inicio">
+    <div class="badge">⚠ Aplicação em Construção</div>
+    <img class="logo" src="https://raw.githubusercontent.com/Valthoris-code/Valthoris-llm/main/documentos/valthoris-logo.png" alt="Valthoris Logo">
+    <h1>VALTHORIS</h1>
+    <h2>Artificial Intelligence • Cybersecurity • Internet Computer • Blockchain</h2>
+    <p>
+      Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online, engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial, Blockchain e Internet Computer Protocol.
+    </p>
+    <a class="button" href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">Ver Projeto</a>
+  </header>
+
+  <section id="modulos">
+    <h3>Principais Módulos</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>🛡 AutoShield</h4>
+        <p>Proteção inteligente em tempo real contra phishing, engenharia social, malware, burlas online e ataques digitais, utilizando Inteligência Artificial.</p>
+      </div>
+      <div class="card">
+        <h4>🤖 AI Assistant</h4>
+        <p>Assistente especializado em Cibersegurança, capaz de analisar mensagens, URLs, emails, SMS, chamadas e fornecer recomendações.</p>
+      </div>
+      <div class="card">
+        <h4>🌍 Radar Global</h4>
+        <p>Mapa colaborativo mundial com denúncias de fraude digital, números suspeitos, websites maliciosos e campanhas ativas.</p>
+      </div>
+      <div class="card">
+        <h4>📍 Safe Location</h4>
+        <p>Partilha segura de localização, protegida por criptografia e Internet Computer Protocol.</p>
+      </div>
+      <div class="card">
+        <h4>💰 Crypto Intelligence</h4>
+        <p>Análise inteligente de carteiras, tokens, contratos inteligentes, rug pulls e esquemas fraudulentos.</p>
+      </div>
+      <div class="card">
+        <h4>⚠ Threat Intelligence</h4>
+        <p>Motor avançado de inteligência capaz de correlacionar ameaças, fontes públicas e informação comunitária.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tecnologia">
+    <h3>Tecnologia</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>☁ Internet Computer</h4>
+        <p>Infraestrutura totalmente preparada para execução em Canisters ICP, garantindo descentralização, segurança e elevada disponibilidade.</p>
+      </div>
+      <div class="card">
+        <h4>⚛ React + TypeScript</h4>
+        <p>Frontend moderno preparado para Website, Progressive Web App (PWA) e futuras aplicações móveis.</p>
+      </div>
+      <div class="card">
+        <h4>🗄 Supabase</h4>
+        <p>Base de dados em tempo real, autenticação, sincronização, armazenamento e APIs.</p>
+      </div>
+      <div class="card">
+        <h4>🧠 Artificial Intelligence</h4>
+        <p>Modelo próprio especializado em Fraude Digital, Engenharia Social, Blockchain e Cibersegurança.</p>
+      </div>
+      <div class="card">
+        <h4>🔒 Blockchain Security</h4>
+        <p>Proteção On-chain, assinaturas digitais, integridade dos dados e validação descentralizada.</p>
+      </div>
+      <div class="card">
+        <h4>🌐 Open Intelligence</h4>
+        <p>Integração futura com Threat Intelligence, OSINT, comunidade e APIs externas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <h3>Roadmap</h3>
+    <div class="timeline">
+      <div class="step done">
+        <h4>✅ Arquitetura</h4>
+        <p>Arquitetura geral concluída.</p>
+      </div>
+      <div class="step done">
+        <h4>✅ ICP</h4>
+        <p>Preparação dos Canisters Internet Computer.</p>
+      </div>
+      <div class="step done">
+        <h4>✅ Blockchain</h4>
+        <p>Estrutura Blockchain integrada.</p>
+      </div>
+      <div class="step progress">
+        <h4>🔄 Inteligência Artificial</h4>
+        <p>Treino do modelo Valthoris AI.</p>
+      </div>
+      <div class="step progress">
+        <h4>🔄 Frontend</h4>
+        <p>Interface Web, PWA e experiência do utilizador.</p>
+      </div>
+      <div class="step progress">
+        <h4>🔄 Backend</h4>
+        <p>Integração completa dos módulos e APIs.</p>
+      </div>
+      <div class="step future">
+        <h4>🚀 Beta Pública</h4>
+        <p>Primeira versão pública para utilizadores.</p>
+      </div>
+      <div class="step future">
+        <h4>🌍 Lançamento Global</h4>
+        <p>Disponibilização internacional da plataforma.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-brand">
+      <h2>VALTHORIS</h2>
+      <p>Artificial Intelligence • Cybersecurity • Blockchain • Internet Computer</p>
+    </div>
+
+    <!-- SECÇÃO DE PARTILHA COM SELO COMPACTO NO CANTO DIREITO -->
+    <div class="share-container">
+      <h4>Partilhe o Valthoris</h4>
+      <p>Ajude a proteger mais pessoas contra fraudes.</p>
+
+      <div class="share-icons">
+        <a href="https://api.whatsapp.com/send?text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!%20https://valthoris.com" target="_blank" class="share-btn" title="WhatsApp">
+          <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        </a>
+        <a href="https://www.tiktok.com" target="_blank" class="share-btn" title="TikTok">
+          <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.31 1.56-1.26 2.55.02.83.43 1.63 1.08 2.15.74.6 1.74.83 2.67.65.98-.17 1.83-.87 2.22-1.78.3-.67.41-1.42.39-2.16.02-5.11.01-10.22.01-15.33z"/></svg>
+        </a>
+        <a href="https://twitter.com/intent/tweet?text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!&url=https://valthoris.com" target="_blank" class="share-btn" title="X (Twitter)">
+          <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://t.me/share/url?url=https://valthoris.com&text=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!" target="_blank" class="share-btn" title="Telegram">
+          <svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.198 1.006.128.832.941z"/></svg>
+        </a>
+        <a href="https://instagram.com" target="_blank" class="share-btn" title="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https://valthoris.com" target="_blank" class="share-btn" title="Facebook">
+          <svg viewBox="0 0 24 24"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.5 5H18V0h-3.808C10.592 0 9 1.583 9 4.615V8z"/></svg>
+        </a>
+        <a href="mailto:?subject=Conhe%C3%A7a%20o%20Valthoris&body=Junte-se%20%C3%A0%20prote%C3%A7%C3%A3o%20contra%20fraudes%20com%20o%20Valthoris!%20https://valthoris.com" class="share-btn" title="Email">
+          <svg viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.036l-9.518 7.713-9.518-7.713zm5.694 6.8 3.824 3.1 3.825-3.1 5.68 7.021h-19.01l5.681-7.021zm9.201 1.129l4.623-3.746v9.458l-4.623-5.712z"/></svg>
+        </a>
+        <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank" class="share-btn" title="GitHub">
+          <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+      </div>
+
+      <!-- SELO DISCRETO E PEQUENO NO CANTO INFERIOR DIREITO -->
+      <div class="security-badge-corner">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        <span>Segurança by design</span>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">GitHub Oficial do Projeto</a>
+    </div>
+
+    <div class="footer-mails">
+      <a href="mailto:info@valthoris.com">📧 info@valthoris.com</a>
+      <a href="mailto:support@valthoris.com">💬 support@valthoris.com</a>
+      <a href="mailto:security@valthoris.com">🛡 security@valthoris.com</a>
+    </div>
+
+    <div class="security">⚡ Powered by Internet Computer Protocol (ICP)</div>
+
+    <div class="small">
+      <p>© 2026 🇵🇹 Valthoris • HTenterprise</p>
+      <br>
+      <p>Designed with European cybersecurity and privacy principles, inspired by the NIS2 Directive and GDPR.</p>
+    </div>
+  </footer>
 
 </body>
-
 </html>
