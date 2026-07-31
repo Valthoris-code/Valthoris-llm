@@ -32,7 +32,7 @@ body{
 
 font-family:'Segoe UI',Arial,sans-serif;
 
-background:#050b17;
+background:#030712;
 
 color:white;
 
@@ -43,7 +43,7 @@ position:relative;
 }
 
 /* ===========================
-CYBER BACKGROUND
+CYBER BACKGROUND (Quantum & Fiber Optics)
 =========================== */
 
 #cyber-bg{
@@ -59,6 +59,8 @@ width:100%;
 height:100%;
 
 z-index:-2;
+
+background: #02050e;
 
 }
 
@@ -78,11 +80,12 @@ z-index:-1;
 
 background:
 
-radial-gradient(circle at 20% 20%,rgba(0,240,255,.10),transparent 45%),
+radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08), transparent 60%),
+radial-gradient(circle at 80% 70%, rgba(189, 0, 255, 0.08), transparent 50%),
+radial-gradient(circle at 20% 80%, rgba(0, 100, 255, 0.06), transparent 50%),
+linear-gradient(180deg, rgba(3, 7, 18, 0.4) 0%, rgba(5, 11, 23, 0.8) 100%);
 
-radial-gradient(circle at 80% 80%,rgba(189,0,255,.12),transparent 40%),
-
-linear-gradient(180deg,#050b17,#08172d,#091d35);
+pointer-events: none;
 
 }
 
@@ -1022,111 +1025,188 @@ inspired by the NIS2 Directive and GDPR.
 
 <script>
 
-const canvas=document.getElementById("cyber-bg");
+/* ======================================================
+   ADVANCED CYBERPUNK / QUANTUM FIBER OPTIC ENGINE
+   ====================================================== */
 
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("cyber-bg");
+const ctx = canvas.getContext("2d");
 
-function resize(){
+let width, height;
 
-canvas.width=window.innerWidth;
-
-canvas.height=window.innerHeight;
-
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
 }
 
 resize();
+window.addEventListener("resize", resize);
 
-window.addEventListener("resize",resize);
+// 1. Cabos de Fibra Óptica Curvados no Fundo
+class FiberCable {
+  constructor() {
+    this.reset();
+  }
+  
+  reset() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.length = Math.random() * 300 + 200;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = Math.random() * 0.4 + 0.2;
+    this.cp1x = this.x + (Math.random() - 0.5) * 300;
+    this.cp1y = this.y + (Math.random() - 0.5) * 300;
+    this.endX = this.x + Math.cos(this.angle) * this.length;
+    this.endY = this.y + Math.sin(this.angle) * this.length;
+    this.color = Math.random() > 0.5 ? "rgba(0, 240, 255, 0.15)" : "rgba(189, 0, 255, 0.12)";
+    this.pulseColor = Math.random() > 0.5 ? "#00f0ff" : "#ff00ea";
+    this.progress = Math.random();
+    this.pulseSpeed = Math.random() * 0.008 + 0.003;
+  }
 
-const particles=[];
+  draw() {
+    // Desenha a fibra óptica
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.quadraticCurveTo(this.cp1x, this.cp1y, this.endX, this.endY);
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 
-const amount=Math.min(Math.floor(window.innerWidth/18),90);
+    // Pulso de luz laser a percorrer a fibra
+    this.progress += this.pulseSpeed;
+    if (this.progress > 1) this.progress = 0;
 
-for(let i=0;i<amount;i++){
+    const t = this.progress;
+    // Bezier ponto no tempo t
+    const px = (1 - t) * (1 - t) * this.x + 2 * (1 - t) * t * this.cp1x + t * t * this.endX;
+    const py = (1 - t) * (1 - t) * this.y + 2 * (1 - t) * t * this.cp1y + t * t * this.endY;
 
-particles.push({
-
-x:Math.random()*canvas.width,
-
-y:Math.random()*canvas.height,
-
-vx:(Math.random()-.5)*.5,
-
-vy:(Math.random()-.5)*.5,
-
-r:Math.random()*2+1,
-
-c:Math.random()>.5?"#00f0ff":"#bd00ff"
-
-});
-
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = this.pulseColor;
+    ctx.shadowColor = this.pulseColor;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
 }
 
-function draw(){
+// 2. Neutrões & Átomos Quânticos com Halos Neon
+class QuantumParticle {
+  constructor() {
+    this.reset();
+  }
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
+  reset() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.z = Math.random() * 3 + 0.5; // profundidade 3D
+    this.vx = (Math.random() - 0.5) * (0.8 / this.z);
+    this.vy = (Math.random() - 0.5) * (0.8 / this.z);
+    this.radius = (Math.random() * 2.2 + 1) / (this.z * 0.5);
+    this.orbitRadius = Math.random() * 15 + 5;
+    this.orbitAngle = Math.random() * Math.PI * 2;
+    this.orbitSpeed = (Math.random() - 0.5) * 0.04;
+    
+    const colors = ["#00f0ff", "#bd00ff", "#00ff88", "#7000ff", "#ff00aa"];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.hasOrbit = Math.random() > 0.65; // Alguns neutrões têm órbitas/elétrões
+  }
 
-for(let i=0;i<particles.length;i++){
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.orbitAngle += this.orbitSpeed;
 
-let p=particles[i];
+    if (this.x < -50) this.x = width + 50;
+    if (this.x > width + 50) this.x = -50;
+    if (this.y < -50) this.y = height + 50;
+    if (this.y > height + 50) this.y = -50;
+  }
 
-p.x+=p.vx;
+  draw() {
+    // Halo do Neutrão
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 14 / this.z;
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
-p.y+=p.vy;
+    // Se for um Átomo completo, desenha a fusão quântica em órbita
+    if (this.hasOrbit) {
+      const ox = this.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+      const oy = this.y + Math.sin(this.orbitAngle) * (this.orbitRadius * 0.4);
 
-if(p.x<0||p.x>canvas.width)p.vx*=-1;
+      ctx.beginPath();
+      ctx.ellipse(this.x, this.y, this.orbitRadius, this.orbitRadius * 0.4, this.orbitAngle * 0.2, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 / this.z})`;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
 
-if(p.y<0||p.y>canvas.height)p.vy*=-1;
-
-ctx.beginPath();
-
-ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-
-ctx.fillStyle=p.c;
-
-ctx.shadowColor=p.c;
-
-ctx.shadowBlur=12;
-
-ctx.fill();
-
-ctx.shadowBlur=0;
-
-for(let j=i+1;j<particles.length;j++){
-
-let q=particles[j];
-
-let dx=p.x-q.x;
-
-let dy=p.y-q.y;
-
-let d=Math.sqrt(dx*dx+dy*dy);
-
-if(d<140){
-
-ctx.beginPath();
-
-ctx.moveTo(p.x,p.y);
-
-ctx.lineTo(q.x,q.y);
-
-ctx.strokeStyle="rgba(0,240,255,"+(1-d/140)+")";
-
-ctx.lineWidth=.5;
-
-ctx.stroke();
-
+      ctx.beginPath();
+      ctx.arc(ox, oy, this.radius * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#00f0ff";
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
 }
 
+// Inicialização dos elementos
+const fibers = Array.from({ length: 18 }, () => new FiberCable());
+const particles = Array.from({ length: 65 }, () => new QuantumParticle());
+
+// Animação Principal com Sensação de Flutuação Tridimensional
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+
+  // 1. Renderizar Fibra Óptica
+  fibers.forEach(fiber => fiber.draw());
+
+  // 2. Desenhar Teia de Emaranhamento Quântico entre neutrões próximos
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const p1 = particles[i];
+      const p2 = particles[j];
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 130) {
+        const alpha = (1 - dist / 130) * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        
+        // Gradiente de fusão entre neutrões
+        const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+        grad.addColorStop(0, p1.color);
+        grad.addColorStop(1, p2.color);
+
+        ctx.strokeStyle = grad;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
+    }
+  }
+
+  // 3. Atualizar e desenhar Partículas / Átomos
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+
+  requestAnimationFrame(animate);
 }
 
-}
-
-requestAnimationFrame(draw);
-
-}
-
-draw();
+animate();
 
 </script>
 
