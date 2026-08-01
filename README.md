@@ -3513,38 +3513,10 @@ Every improvement strengthens the ecosystem.
 
   <br><br>
 
-  <!-- Logótipo Completo Principal -->
-  <img src="documentos/valthoris-logo.png" width="260" alt="Valthoris Logo">
-
-  <br><br>
-
-  <!-- Escudo Centralizado -->
-  <p align="center">
-    <img src="documentos/valthoris-shield.png" width="45" height="45" alt="Valthoris Shield">
-  </p>
-
-  <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
-  <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
-
-  <br>
-
-  <!-- Badges -->
-  <p align="center">
-    <img src="https://img.shields.io/badge/Status-Under%20Construction%20%2F%20Active%20Development-yellow?style=for-the-badge&logo=github" alt="Project Status">
-    <img src="https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=for-the-badge" alt="Alpha Version">
-  </p>
-
-</div>
-
 ---
 
 > ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
 
----
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
 
 ---
 
