@@ -1,24 +1,27 @@
 <div align="center">
 
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
+  <!-- Banner Animado -->
+  <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
 
-<br>
+  <br><br>
 
-<img src="documentos/valthoris-logo.png" width="240" alt="Valthoris Logo">
+  <!-- Logótipo Centralizado -->
+  <img src="documentos/valthoris-logo.png" width="240" alt="Valthoris Logo">
 
+  <br><br>
 
+  <!-- Título e Subtítulo Centralizados -->
+  <h2>🛡️ VALTHORIS</h2>
+  <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
+  <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
 
-🛡️ VALTHORIS
-
-### **INTELLIGENCE • PREVENTION • PROTECTION**
-
-#### CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER
+</div>
 
 ---
 
-A next-generation Artificial Intelligence platform focused on **Fraud Prevention**, **Cybersecurity**, **Threat Intelligence** and **Digital Identity Protection**.
-
-Designed to detect threats **before they become victims**.
+<p align="center">
+  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
+</p>
 
 ---
 
