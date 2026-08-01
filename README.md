@@ -10,12 +10,24 @@
 
   <br><br>
 
-  <!-- Título e Subtítulo Centralizados -->
-  <h2>🛡️ VALTHORIS</h2>
+  <!-- Título com o Escudo Valthoris em Ícone + Subtítulos -->
+  <h2>
+    <img src="documentos/valthoris-logo.png" width="35" vertical-align="middle" style="display:inline; vertical-align:middle; margin-right: 8px;" alt="Valthoris Shield">
+    VALTHORIS
+  </h2>
   <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
   <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
 
 </div>
+
+---
+
+<p align="center">
+  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
+</p>
+
+---
+
 
 ---
 
