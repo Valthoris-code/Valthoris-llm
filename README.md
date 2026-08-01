@@ -6,27 +6,40 @@
   <br><br>
 
   <!-- Logótipo Completo Centralizado -->
-  <img src="documentos/valthoris-logo.png" width="240" alt="Valthoris Logo">
+  <img src="documentos/valthoris-logo.png" width="260" alt="Valthoris Logo">
 
   <br><br>
 
-  <!-- Título com o Escudo Ícone + Subtítulos -->
-  <h2>
-    <img src="documentos/escudo-valthoris.png" width="32" style="display:inline; vertical-align:middle; margin-right: 6px;" alt="Valthoris Shield">
-    VALTHORIS
-  </h2>
+  <!-- Escudo como Elemento Visual Centrado -->
+  <p align="center">
+    <img src="documentos/escudo-valthoris.png" width="40" height="40" alt="Valthoris Shield">
+  </p>
+
   <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
   <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
 
   <br>
 
-  <!-- Badges / Selos de Estado -->
+  <!-- Badges / Selos de Estado em Inglês -->
   <p align="center">
-    <img src="https://img.shields.io/badge/Status-Em%20Constru%C3%A7%C3%A3o%20%2F%20Desenvolvimento%20Ativo-yellow?style=for-the-badge&logo=github" alt="Estado do Projeto">
-    <img src="https://img.shields.io/badge/Vers%C3%A3o-v0.1.0--alpha-blue?style=for-the-badge" alt="Versão Alpha">
+    <img src="https://img.shields.io/badge/Status-Under%20Construction%20%2F%20Active%20Development-yellow?style=for-the-badge&logo=github" alt="Project Status">
+    <img src="https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=for-the-badge" alt="Alpha Version">
   </p>
 
 </div>
+
+---
+
+> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
+
+---
+
+<p align="center">
+  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
+</p>
+
+---
+
 
 ---
 
