@@ -39,18 +39,6 @@
 </p>
 
 
-
----
-
-> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
-
----
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
-
-
 ---
 
 <p align="center">
