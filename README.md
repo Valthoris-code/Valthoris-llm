@@ -49,7 +49,6 @@
 
 ### Official Valthoris Manifesto
 
-</div>
 
 ---
 
