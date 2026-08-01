@@ -3506,29 +3506,92 @@ Every report protects someone.
 Every improvement strengthens the ecosystem.
 
 ---
+<div align="center">
 
-# 🌍 Official Motto
+  <!-- Banner Animado -->
+  <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
+
+  <br><br>
+
+  <!-- Logótipo Completo Principal -->
+  <img src="documentos/valthoris-logo.png" width="260" alt="Valthoris Logo">
+
+  <br><br>
+
+  <!-- Escudo Centralizado -->
+  <p align="center">
+    <img src="documentos/valthoris-shield.png" width="45" height="45" alt="Valthoris Shield">
+  </p>
+
+  <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
+  <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
+
+  <br>
+
+  <!-- Badges -->
+  <p align="center">
+    <img src="https://img.shields.io/badge/Status-Under%20Construction%20%2F%20Active%20Development-yellow?style=for-the-badge&logo=github" alt="Project Status">
+    <img src="https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=for-the-badge" alt="Alpha Version">
+  </p>
+
+</div>
+
+---
+
+> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
+
+---
+
+<p align="center">
+  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
+</p>
+
+---
 
 <div align="center">
 
-# 🛡 VALTHORIS
+  <h2>📫 Contact & Official Channels</h2>
+  <p>For inquiries, support, or vulnerability disclosures, please reach out via our official domain channels:</p>
 
-## INTELLIGENCE • PREVENTION • PROTECTION
+  <br>
 
-### CYBERSECURITY • AI • BLOCKCHAIN • ICP
+  <table>
+    <tr>
+      <td align="center">ℹ️ <b>General & Information</b></td>
+      <td><a href="mailto:info@valthoris.com"><code>info@valthoris.com</code></a></td>
+    </tr>
+    <tr>
+      <td align="center">🛠️ <b>Technical Support</b></td>
+      <td><a href="mailto:support@valthoris.com"><code>support@valthoris.com</code></a></td>
+    </tr>
+    <tr>
+      <td align="center">🛡️ <b>Security & Responsible Disclosure</b></td>
+      <td><a href="mailto:security@valthoris.com"><code>security@valthoris.com</code></a></td>
+    </tr>
+  </table>
+
+</div>
 
 ---
 
-*"The best fraud is the one that never happens."*
+<div align="center">
 
----
+  <br>
 
-**Designed by Hermínio Coragem**
+  <img src="documentos/valthoris-shield.png" width="35" height="35" alt="Valthoris Shield Footer">
 
----
+  <h2>VALTHORIS</h2>
+  <h3>INTELIGÊNCIA • PREVENÇÃO • PROTEÇÃO</h3>
+  <h4>CIBERSEGURANÇA • IA • BLOCKCHAIN • ICP</h4>
 
-© 2026 Valthoris
+  <br>
 
-All Rights Reserved.
+  <p><i>"A melhor fraude é aquela que nunca acontece."</i></p>
+
+  <br>
+
+  <hr width="30%">
+
+  <p>© 2026 <b>Valthoris</b>. Todos os direitos reservados.</p>
 
 </div>
