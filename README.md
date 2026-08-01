@@ -3511,14 +3511,13 @@ Every improvement strengthens the ecosystem.
   <!-- Banner Animado -->
   <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
 
-  <br><br>
+<br>
+  ⚠️ **Development Notice:**
+The
+**Valthoris platform is currently under active development and model training**.
+ Modules and features are being progressively deployed.
 
----
-
-> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
-
-
----
+<br>
 
 <div align="center">
 
