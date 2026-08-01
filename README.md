@@ -1,22 +1,22 @@
 <div align="center">
 
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=240&color=0:020617,10:071B3A,20:0B2E59,35:0047AB,50:00C8FF,65:0047AB,80:0B2E59,100:020617&text=VALTHORIS&fontColor=ffffff&fontSize=64&fontAlignY=38&animation=twinkling"/>
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
 
 <br>
 
-<img src="documentos/valthoris-logo.png" width="260">
+<img src="documentos/valthoris-logo.png" width="240" alt="Valthoris Logo">
 
 # 🛡️ VALTHORIS
 
-### INTELLIGENCE • PREVENTION • PROTECTION
+### **INTELLIGENCE • PREVENTION • PROTECTION**
 
-#### CYBERSECURITY • AI • BLOCKCHAIN • ICP
+#### CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER
 
 ---
 
-A próxima geração de Inteligência Artificial especializada em prevenção de fraude, cibersegurança, proteção digital e análise inteligente de risco em tempo real.
+A next-generation Artificial Intelligence platform focused on **Fraud Prevention**, **Cybersecurity**, **Threat Intelligence** and **Digital Identity Protection**.
 
-Desenvolvido por **Hermínio Coragem**
+Designed to detect threats **before they become victims**.
 
 ---
 
@@ -26,11 +26,13 @@ Desenvolvido por **Hermínio Coragem**
 
 <img src="https://img.shields.io/badge/AI-VALTHORIS_CORE-00E5FF?style=for-the-badge"/>
 
-<img src="https://img.shields.io/badge/SECURITY-NIS2_READY-00BFFF?style=for-the-badge"/>
-
 <img src="https://img.shields.io/badge/BLOCKCHAIN-INTERNET_COMPUTER-6F42C1?style=for-the-badge"/>
 
 <img src="https://img.shields.io/badge/SUPABASE-POSTGRESQL-3ECF8E?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/NIS2-READY-0078D7?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/GDPR-COMPLIANT-009688?style=for-the-badge"/>
 
 <img src="https://img.shields.io/badge/LICENSE-MIT-blue?style=for-the-badge"/>
 
@@ -38,301 +40,389 @@ Desenvolvido por **Hermínio Coragem**
 
 ---
 
-# 🌍 Valthoris
+> **"The best fraud is the one that never happens."**
 
-Não é apenas uma aplicação.
+### Official Valthoris Manifesto
 
-Não é apenas uma Inteligência Artificial.
-
-Não é apenas uma plataforma.
-
-A Valthoris representa uma nova geração de sistemas inteligentes concebidos para proteger pessoas, empresas e instituições antes que a fraude aconteça.
-
-A filosofia da plataforma baseia-se em três pilares fundamentais:
-
-🧠 Inteligência
-
-🛡️ Prevenção
-
-🌐 Proteção
-
-Enquanto a maioria dos sistemas reage depois do ataque, a Valthoris foi concebida para antecipar comportamentos suspeitos, identificar padrões invisíveis ao ser humano e fornecer informação útil antes que exista prejuízo.
+</div>
 
 ---
 
-# 🎯 Objetivo
+# 🌍 Why Valthoris?
 
-Criar o maior ecossistema europeu de Inteligência Artificial dedicado à prevenção da fraude digital.
+Traditional cybersecurity solutions react **after** an attack.
 
-A plataforma combinará:
+**Valthoris was designed to act before the attack succeeds.**
 
-• Inteligência Artificial
+Using Artificial Intelligence, Behaviour Analysis, Blockchain and Threat Intelligence, the platform continuously evaluates digital interactions and provides risk assessments in real time.
 
-• Blockchain
+The objective is simple:
 
-• Internet Computer Protocol (ICP)
-
-• Threat Intelligence
-
-• Machine Learning
-
-• Análise Comportamental
-
-• Geolocalização Inteligente
-
-• Reputação Digital
-
-• Segurança Distribuída
-
-num único ecossistema capaz de proteger utilizadores em tempo real.
+> **Protect people before they become victims.**
 
 ---
 
-> "The best fraud is the one that never happens."
+# ⚡ Core Platform
 
-— Valthoris Manifesto
+| Module | Description |
+|:-------|:------------|
+| 🛡 AutoShield | Real-time fraud prevention engine |
+| 🌍 Global Radar | Worldwide fraud intelligence |
+| 🧠 AI Core | Transformer-based language model |
+| 📡 Threat Intelligence | Global threat feeds |
+| 💰 Crypto Intelligence | Wallet & blockchain analysis |
+| 👤 Identity Intelligence | Reputation & trust scoring |
+| 📍 Safe Location | Secure family location system |
+| 🏢 Enterprise | Business security platform |
 
----
----
+------
 
-# 📑 Índice
+# 🚀 Platform Overview
 
-## 🌍 Apresentação
+<div align="center">
 
-1. Visão Geral
-2. Origem da Palavra Valthoris
-3. Manifesto
-4. Missão
-5. Visão
-6. Valores
+| 🛡️ Protection | 🧠 Intelligence | 🌍 Global | ⚡ Real-Time |
+|:-------------:|:--------------:|:---------:|:-----------:|
+| Fraud Prevention | AI Engine | Threat Intelligence | Instant Analysis |
 
----
+| 🔐 Privacy | ⛓ Blockchain | 📡 Detection | 🏢 Enterprise |
+|:----------:|:------------:|:-----------:|:------------:|
+| GDPR by Design | Internet Computer | Behaviour Analysis | Corporate Security |
 
-## 🧠 Inteligência Artificial
-
-7. Arquitetura IA
-
-8. Large Language Model (LLM)
-
-9. Machine Learning
-
-10. Deep Learning
-
-11. Classificador de Fraude
-
-12. Pipeline de Treino
-
-13. Dataset
-
-14. Avaliação do Modelo
-
-15. Inferência
+</div>
 
 ---
 
-## 🛡️ Plataforma
+# 🌐 Ecosystem
 
-16. AutoShield
+```text
+                    🌍 USERS
 
-17. Radar Global
+        Android • iPhone • Web • Desktop
 
-18. Scanner Universal
+                        │
+                        ▼
 
-19. Safe Location
+             ┌──────────────────────┐
+             │   VALTHORIS CORE AI  │
+             └──────────────────────┘
 
-20. Identity Intelligence
+      ┌──────────┬──────────┬──────────┐
 
-21. Threat Intelligence
+      ▼          ▼          ▼
 
-22. Crypto Intelligence
+ AutoShield   Threat AI   Reputation
 
-23. Community Intelligence
+      ▼          ▼          ▼
 
-24. Dashboard Global
+ Crypto AI   Identity AI  Geo AI
 
-25. Enterprise
+      └──────────┬──────────┘
 
----
+                 ▼
 
-## 🌐 Infraestrutura
+        Internet Computer (ICP)
 
-26. Internet Computer Protocol (ICP)
+                 ▼
 
-27. Supabase
+        Immutable Security Layer
 
-28. PostgreSQL
+                 ▼
 
-29. Blockchain
-
-30. Canisters
-
-31. Storage
-
-32. API
-
-33. Segurança
+          Supabase PostgreSQL
+```
 
 ---
 
-## 📚 Documentação
+# ⭐ Main Capabilities
 
-34. Arquitetura
+| Feature | Description |
+|----------|-------------|
+| 🛡 **AutoShield** | Detects fraud before users interact with malicious content |
+| 🌍 **Global Radar** | Worldwide collaborative fraud intelligence |
+| 🧠 **LLM Engine** | Transformer model specialised in fraud detection |
+| 📡 **Threat Intelligence** | Aggregates multiple cybersecurity feeds |
+| 💰 **Crypto Intelligence** | Blockchain and wallet reputation analysis |
+| 👤 **Identity Intelligence** | Digital trust and reputation scoring |
+| 📍 **Safe Location** | Secure family and trusted contact tracking |
+| 🏢 **Enterprise Security** | Security platform for organisations |
 
-35. Roadmap
+---
+# 🎯 Mission
 
-36. Master Blueprint
+Valthoris was created with a single objective:
 
-37. Master Checklist
+> **Prevent digital fraud before victims exist.**
 
-38. Licença
+Unlike traditional cybersecurity platforms that analyse incidents after they occur, Valthoris continuously evaluates digital interactions in real time, calculating risk before damage happens.
 
-39. Contribuições
+Every component of the platform follows three immutable principles:
 
-40. Créditos
+- 🧠 Intelligence
+- 🛡 Prevention
+- 🔒 Protection
 
 ---
 
-<a name="origem"></a>
+# 💡 Why Valthoris Exists
 
-# 🏛️ A Origem da Palavra Valthoris
+Digital fraud is evolving faster than traditional security systems.
 
-A palavra **Valthoris** foi criada originalmente por **Hermínio Coragem** durante o desenvolvimento da nova geração da plataforma AntiFraudapp.
+Every day millions of people are exposed to:
 
-Não existe em qualquer idioma conhecido.
+- Phishing campaigns
+- Social engineering
+- Fake investment platforms
+- Cryptocurrency scams
+- Identity theft
+- Business Email Compromise (BEC)
+- QR Code attacks
+- Voice cloning
+- Deepfake scams
 
-Não foi retirada de livros.
+Current security solutions usually react **after** the attack.
 
-Não pertence a nenhuma empresa.
+Valthoris changes this paradigm.
 
-Não foi gerada automaticamente por Inteligência Artificial.
+Its mission is simple:
 
-É um nome completamente original.
-
-Nasceu para representar algo muito maior do que uma aplicação.
-
-Representa uma filosofia tecnológica.
-
-Representa confiança.
-
-Representa segurança.
-
-Representa proteção.
-
-Representa Inteligência Artificial ética.
-
-Representa prevenção.
-
-Representa o futuro.
+> **Predict. Detect. Protect.**
 
 ---
 
-# A construção da palavra
+# 🧠 The Valthoris Philosophy
 
-## VAL
+Traditional cybersecurity asks:
 
-O prefixo **VAL** representa simultaneamente vários conceitos fundamentais.
+> *"How do we respond after the attack?"*
 
-### Validation
+Valthoris asks:
 
-Toda a segurança começa pela validação.
+> **"How do we stop the attack before it succeeds?"**
 
-Sem validação não existe confiança.
+This philosophy guides every decision inside the platform.
 
-Sem confiança não existe segurança.
+Artificial Intelligence is not the objective.
 
-A Valthoris valida:
+Artificial Intelligence is only the tool.
 
-• Identidades
-
-• Websites
-
-• Emails
-
-• Chamadas
-
-• SMS
-
-• QR Codes
-
-• IBAN
-
-• Criptomoedas
-
-• Empresas
-
-• Domínios
-
-• Certificados
-
-• Fontes públicas
+The real objective is protecting people.
 
 ---
 
-### Value
+# 🛡 The Three Pillars
 
-Protegemos aquilo que tem valor.
+<div align="center">
 
-Valor financeiro.
+| 🧠 Intelligence | 🛡 Prevention | 🔒 Protection |
+|:---------------:|:------------:|:-------------:|
+| Understand threats | Predict attacks | Protect users |
 
-Valor humano.
-
-Valor empresarial.
-
-Valor institucional.
-
-Valor tecnológico.
+</div>
 
 ---
 
-### Vigilance
+## 🧠 Intelligence
 
-A vigilância inteligente substitui a reação tardia.
+Artificial Intelligence analyses context.
 
-A Valthoris procura antecipar ameaças antes que provoquem danos.
+Not just keywords.
 
----
+Not just blacklists.
 
-### Virtue
+But behaviour.
 
-A tecnologia deve existir para servir pessoas.
+Patterns.
 
-Nunca para as manipular.
+Intent.
 
-A IA da Valthoris será construída segundo princípios éticos, transparência e responsabilidade.
+Relationships.
 
----
-
-## THORIS
-
-O elemento **THORIS** foi criado para transmitir robustez e autoridade.
-
-A sua sonoridade inspira:
-
-• Força
-
-• Robustez
-
-• Estabilidade
-
-• Proteção
-
-• Confiança
-
-• Resistência
-
-• Inteligência
-
-Não representa nenhuma personagem existente.
-
-Não pertence a nenhuma mitologia específica.
-
-Foi desenhado para transmitir a ideia de um sistema sólido capaz de proteger milhões de pessoas.
+Confidence.
 
 ---
 
-# O significado completo
+## 🛡 Prevention
 
-Quando unidos,
+The safest fraud is the one that never reaches the victim.
+
+Every Valthoris engine is designed to warn the user **before** interacting with malicious content.
+
+---
+
+## 🔒 Protection
+
+When prevention is no longer possible,
+
+the protection layer activates automatically.
+
+Examples:
+
+- Smart Alerts
+- Risk Scoring
+- Reputation Analysis
+- Threat Intelligence
+- Blockchain Validation
+- Behaviour Analysis
+
+---
+
+# 🌍 Designed for Everyone
+
+Valthoris is built for:
+
+👤 Citizens
+
+🏢 Companies
+
+🏦 Financial Institutions
+
+🎓 Universities
+
+🏥 Healthcare
+
+🏛 Governments
+
+👮 Security Agencies
+
+🌐 International Organizations
+
+---
+
+# ❤️ Human-Centric AI
+
+Artificial Intelligence should never replace human judgement.
+
+Instead,
+
+it should provide enough information for people to make safer decisions.
+
+Technology exists to protect people.
+
+Never to manipulate them.
+
+---
+
+> **"Technology evolves every day. Principles remain forever."**
+
+— Valthoris
+---
+
+# 🏛 The Origin of Valthoris
+
+Every great technology begins with a question.
+
+Google wanted to organise the world's information.
+
+OpenAI wanted to democratise Artificial Intelligence.
+
+Cloudflare wanted to make the Internet faster and safer.
+
+**Valthoris was created to answer a different question.**
+
+> **"How can we stop digital fraud before there is a victim?"**
+
+---
+
+## A Name Created From Scratch
+
+**Valthoris** is not a dictionary word.
+
+It does not belong to any language.
+
+It was not generated by Artificial Intelligence.
+
+It was not purchased.
+
+It was not adapted.
+
+It was conceived and created by **Hermínio Coragem** to represent a completely new vision for digital protection.
+
+A name designed to become synonymous with trust, intelligence and cybersecurity.
+
+---
+
+# VAL
+
+The first part of the name represents four fundamental principles.
+
+### ✔ Validation
+
+Trust begins with verification.
+
+Every interaction should be validated.
+
+Every identity should be verified.
+
+Every digital action should be analysed.
+
+---
+
+### ✔ Value
+
+Technology should protect what truly matters.
+
+People.
+
+Businesses.
+
+Institutions.
+
+Data.
+
+Identity.
+
+Trust.
+
+---
+
+### ✔ Vigilance
+
+Security is not passive.
+
+Threats evolve every second.
+
+Valthoris remains vigilant every second.
+
+---
+
+### ✔ Virtue
+
+Artificial Intelligence should never manipulate people.
+
+It should empower them.
+
+Ethics is not an optional feature.
+
+It is part of the architecture.
+
+---
+
+# THORIS
+
+The second part of the name was created to transmit strength.
+
+Not physical strength.
+
+Digital strength.
+
+Resilience.
+
+Authority.
+
+Protection.
+
+Reliability.
+
+Stability.
+
+Its sound immediately evokes confidence without depending on mythology, fiction or existing brands.
+
+---
+
+# More Than A Name
+
+When combined,
 
 **VAL**
 
@@ -340,776 +430,721 @@ Quando unidos,
 
 **THORIS**
 
-criam uma identidade única.
+becomes more than a brand.
 
-Uma identidade capaz de representar uma plataforma mundial dedicada exclusivamente à proteção digital.
+It becomes a philosophy.
 
-A Valthoris não pretende ser apenas uma aplicação.
+A commitment.
 
-Pretende tornar-se uma referência internacional em Inteligência Artificial aplicada à prevenção da fraude.
+A mission.
 
----
-
-> **"A confiança não se impõe. Conquista-se através da validação."**
-
-**— Filosofia Valthoris**
----
-
-<a name="manifesto"></a>
-
-# 📜 Manifesto Oficial da Valthoris
-
-## A Tecnologia Deve Proteger.
-
-Vivemos numa era em que a fraude digital evolui mais rapidamente do que a capacidade humana para a reconhecer.
-
-Todos os dias, milhões de pessoas recebem chamadas fraudulentas, mensagens falsas, emails maliciosos, websites clonados, códigos QR manipulados e tentativas sofisticadas de engenharia social.
-
-O cibercrime deixou de ser um problema exclusivamente tecnológico.
-
-Hoje é um problema humano.
-
-A Valthoris nasce para inverter essa realidade.
+A platform designed to protect millions of people across the world.
 
 ---
 
-# A Nossa Convicção
+<div align="center">
 
-Acreditamos que:
+## 🧠 Intelligence
 
-- A Inteligência Artificial deve existir para proteger pessoas, nunca para as manipular.
-- A tecnologia deve ser transparente.
-- A privacidade é um direito fundamental.
-- A confiança conquista-se através da validação.
-- A prevenção é sempre superior à reação.
-- A inovação só tem valor quando melhora a vida das pessoas.
-
-Cada linha de código da Valthoris é escrita com esse propósito.
+Understanding before reacting.
 
 ---
 
-# O Nosso Compromisso
+## 🛡 Prevention
 
-Comprometemo-nos a desenvolver uma plataforma que:
-
-• antecipe ameaças antes que causem danos;
-
-• utilize Inteligência Artificial de forma ética e responsável;
-
-• respeite integralmente a privacidade dos utilizadores;
-
-• nunca comercialize dados pessoais;
-
-• explique sempre os motivos das classificações de risco;
-
-• evolua continuamente com base em conhecimento técnico e científico.
+Stopping fraud before damage exists.
 
 ---
 
-# O Que Não Somos
+## 🔒 Protection
 
-A Valthoris **não é**:
+Technology at the service of people.
 
-❌ uma rede social;
-
-❌ uma plataforma publicitária;
-
-❌ um sistema de vigilância;
-
-❌ um software de espionagem;
-
-❌ uma ferramenta para recolha massiva de dados pessoais;
-
-❌ um substituto das autoridades policiais ou judiciais.
-
-A nossa missão é complementar a proteção digital, nunca substituir as instituições competentes.
+</div>
 
 ---
 
-# O Que Queremos Construir
+> **"Trust should never be assumed. Trust must always be validated."**
 
-Pretendemos criar um ecossistema onde:
-
-- cidadãos possam comunicar com maior segurança;
-- empresas reduzam o risco de fraude;
-- instituições reforcem a proteção dos seus utilizadores;
-- comunidades colaborem na identificação de novas ameaças;
-- a Inteligência Artificial funcione como primeira linha de defesa.
-
----
-
-# Missão
-
-Desenvolver a plataforma europeia de referência em Inteligência Artificial para prevenção de fraude digital, protegendo pessoas, empresas e instituições através de tecnologias avançadas, éticas e transparentes.
-
----
-
-# Visão
-
-Ser reconhecida internacionalmente como uma das plataformas mais inovadoras na prevenção da fraude digital, combinando Inteligência Artificial, Blockchain, Internet Computer Protocol (ICP) e Threat Intelligence num ecossistema seguro, escalável e descentralizado.
-
----
-
-# Valores Fundamentais
-
-## 🛡️ Segurança
-
-A segurança está presente desde a conceção da plataforma (*Security by Design*).
-
----
-
-## 🔒 Privacidade
-
-Os dados pertencem aos utilizadores.
-
-A Valthoris aplica os princípios de *Privacy by Design* e *Privacy by Default*.
-
----
-
-## ⚖️ Ética
-
-A Inteligência Artificial deve ser imparcial, auditável e responsável.
-
----
-
-## 🌍 Transparência
-
-Os algoritmos devem ser compreensíveis.
-
-Sempre que possível, o utilizador deverá perceber porque motivo determinado risco foi identificado.
-
----
-
-## 🚀 Inovação
-
-A melhoria contínua faz parte do ADN da plataforma.
-
-Cada nova versão deverá tornar a Valthoris mais inteligente, mais segura e mais útil.
-
----
-
-## 🤝 Colaboração
-
-A prevenção da fraude depende da colaboração entre cidadãos, empresas, investigadores, universidades e entidades públicas.
-
-A comunidade é parte integrante da plataforma.
+### — Valthoris Philosophy
 
 ---
 ---
 
-<a name="filosofia"></a>
+# 🌍 Vision
 
-# 🛡️ Filosofia da Plataforma
+Valthoris was never designed to become just another cybersecurity application.
 
-## A Segurança Não Deve Ser Uma Reação.
+It was conceived as an intelligent ecosystem capable of protecting people, businesses and institutions through Artificial Intelligence, Behaviour Analysis, Blockchain and Threat Intelligence.
 
-Deve Ser Uma Antecipação.
+The long-term objective is ambitious.
 
-Durante décadas, praticamente todas as soluções de cibersegurança foram construídas com uma filosofia semelhante:
+To become one of the world's leading AI platforms dedicated exclusively to fraud prevention.
 
-> Esperar que o ataque aconteça.
->
-> Depois tentar minimizar os danos.
+Not by replacing existing security solutions.
 
-A Valthoris rompe completamente com esse paradigma.
-
-O objetivo nunca foi construir apenas mais uma aplicação de segurança.
-
-O objetivo sempre foi construir um sistema inteligente capaz de identificar sinais invisíveis antes que uma fraude aconteça.
-
-É precisamente essa diferença que define a identidade da plataforma.
+But by complementing them with predictive intelligence.
 
 ---
 
-# Os Cinco Pilares da Valthoris
+# 🎯 Mission
 
-## ① Inteligência
+Our mission is simple.
 
-Toda a plataforma gira em torno da Inteligência Artificial.
+Build an Artificial Intelligence capable of reducing digital fraud before financial, operational or reputational damage occurs.
 
-Não apenas modelos LLM.
+Every component of Valthoris follows the same objective:
 
-Mas vários motores especializados.
-
-Cada um responsável por resolver um problema específico.
-
-Por exemplo:
-
-• deteção de phishing
-
-• análise comportamental
-
-• classificação de risco
-
-• análise linguística
-
-• reputação digital
-
-• previsão de padrões
-
-Cada motor comunica entre si.
-
-Todos aprendem continuamente.
+- Detect threats earlier.
+- Explain risks clearly.
+- Protect users ethically.
+- Learn continuously.
+- Improve every single day.
 
 ---
 
-## ② Prevenção
+# 🚀 Vision Statement
 
-Na Valthoris, prevenir vale sempre mais do que remediar.
+We believe the future of cybersecurity will not depend only on stronger passwords or larger firewalls.
 
-Sempre que possível o utilizador deverá ser avisado antes de:
+It will depend on intelligent systems capable of understanding context.
 
-• abrir um link
+Understanding behaviour.
 
-• responder a uma mensagem
+Understanding intention.
 
-• atender uma chamada
+Understanding trust.
 
-• instalar uma aplicação
-
-• realizar uma transferência
-
-• enviar criptomoedas
-
-• partilhar dados pessoais
-
-A prevenção será sempre a prioridade máxima.
+That future is what Valthoris is being built for.
 
 ---
 
-## ③ Proteção
+# ❤️ Core Values
 
-Quando a prevenção não for suficiente,
+## 🧠 Intelligence
 
-entra em funcionamento a camada de proteção.
+Knowledge always comes before action.
 
-Exemplos:
-
-• bloqueio inteligente
-
-• alerta em tempo real
-
-• quarentena
-
-• reputação dinâmica
-
-• confirmação dupla
-
-• validação cruzada
+Artificial Intelligence exists to assist human judgement, never replace it.
 
 ---
 
-## ④ Confiança
+## 🛡 Prevention
 
-A confiança nunca será assumida.
+The safest cyberattack is the one that never reaches the victim.
 
-Será sempre calculada.
-
-Cada elemento possui um Score de Confiança.
-
-Exemplos:
-
-Telefone
-
-Email
-
-Website
-
-Empresa
-
-Pessoa
-
-Wallet
-
-IBAN
-
-Domínio
-
-Aplicação
-
-Rede Wi-Fi
-
-QR Code
-
-Todos recebem um score baseado em centenas de indicadores.
+Everything inside Valthoris is designed around prediction instead of reaction.
 
 ---
 
-## ⑤ Evolução
+## 🔒 Protection
 
-A Valthoris nunca estará "terminada".
+Technology only has value when it protects people.
 
-Cada novo ataque ensina algo.
+Every algorithm.
 
-Cada nova fraude melhora os modelos.
+Every model.
 
-Cada nova denúncia fortalece toda a comunidade.
+Every decision.
 
-A plataforma aprende continuamente.
+Must contribute to a safer digital world.
+
+---
+
+## ⚖ Ethics
+
+Artificial Intelligence must always remain accountable.
+
+Transparent.
+
+Auditable.
+
+Explainable.
+
+Responsible.
+
+Users should understand why a risk exists.
+
+Not simply receive a warning.
+
+---
+
+## 🌍 Privacy
+
+Privacy is not a feature.
+
+It is a fundamental right.
+
+Valthoris follows:
+
+- Privacy by Design
+- Privacy by Default
+- Security by Design
+- Zero Trust Architecture
+
+from the very beginning.
+
+---
+
+## 🚀 Innovation
+
+Cybercrime evolves every day.
+
+So must we.
+
+Research.
+
+Learning.
+
+Improvement.
+
+Continuous innovation is part of the Valthoris DNA.
+
+---
+
+## 🤝 Collaboration
+
+No organisation can fight digital fraud alone.
+
+Real protection requires collaboration between:
+
+- Citizens
+- Businesses
+- Universities
+- Researchers
+- CERTs
+- CSIRTs
+- Financial Institutions
+- Governments
+
+Valthoris is designed to become the bridge between all of them.
+
+---
+
+> **"Technology should never replace trust.
+Technology should strengthen it."**
+
+— Valthoris Principles
+
+---
+---
+
+# 🛡 Platform Philosophy
+
+## Security Should Never Be Reactive.
+
+It Should Be Predictive.
+
+For decades, cybersecurity has largely followed the same pattern.
+
+A cyberattack happens.
+
+The victim discovers the damage.
+
+Only then does the investigation begin.
+
+Logs are analysed.
+
+Evidence is collected.
+
+Recovery starts.
+
+By that point, the damage has already been done.
+
+Valthoris challenges that paradigm.
+
+Its philosophy is fundamentally different.
+
+The objective is not simply to detect fraud.
+
+The objective is to prevent fraud before a victim exists.
+
+That single principle influences every architectural decision made within the platform.
+
+---
+
+# The Five Foundations of Valthoris
+
+Every component of the ecosystem has been designed around five fundamental pillars.
+
+---
+
+# 🧠 Intelligence
+
+Artificial Intelligence is the foundation of Valthoris.
+
+Not as a marketing feature.
+
+Not as a chatbot.
+
+But as a distributed network of specialised engines capable of analysing context, behaviour, reputation and threat intelligence simultaneously.
+
+Every decision is based on evidence.
+
+Every model has a purpose.
+
+Every prediction contributes to reducing uncertainty.
+
+---
+
+# 🛡 Prevention
+
+Traditional cybersecurity reacts.
+
+Valthoris anticipates.
+
+Whenever possible, users should receive a warning before interacting with potentially dangerous content.
+
+Examples include:
+
+- Suspicious phone calls
+- Fraudulent SMS
+- Phishing emails
+- Fake websites
+- QR codes
+- Cryptocurrency scams
+- Fake investment platforms
+- Social engineering attempts
+
+The safest incident is the one that never happens.
+
+---
+
+# 🔒 Protection
+
+When prevention is no longer sufficient, protection takes over.
+
+Multiple security layers work together to minimise exposure.
+
+Examples include:
+
+- Intelligent warnings
+- Reputation scoring
+- Behaviour analysis
+- Risk validation
+- Multi-source verification
+- Dynamic threat correlation
+
+Security is never provided by a single mechanism.
+
+Protection comes from combining many independent layers.
+
+---
+
+# 🌍 Trust
+
+Trust should never be assumed.
+
+Every entity receives a continuously updated Trust Score.
+
+Examples include:
+
+- Phone numbers
+- Email addresses
+- Domains
+- Websites
+- Companies
+- Wallet addresses
+- IBANs
+- IP addresses
+- Applications
+
+Trust is calculated.
+
+Never presumed.
+
+---
+
+# 🚀 Evolution
+
+Cybercrime evolves every day.
+
+Therefore Valthoris must evolve every day.
+
+Every confirmed report.
+
+Every detected campaign.
+
+Every analysed behaviour.
+
+Every validated threat.
+
+Strengthens the intelligence of the platform.
+
+Learning never stops.
 
 ---
 
 # Security by Design
 
-Toda a arquitetura segue o princípio internacional:
+Security is not added after development.
 
-## Security by Design
+It exists before development begins.
 
-Ou seja,
+Authentication.
 
-a segurança não é adicionada no final.
+Encryption.
 
-Ela nasce juntamente com o software.
+Authorisation.
 
-Isto significa que:
+Logging.
 
-✔ autenticação segura
+Validation.
 
-✔ encriptação
+Auditing.
 
-✔ validação
+Monitoring.
 
-✔ logs
-
-✔ auditoria
-
-✔ permissões
-
-✔ proteção de APIs
-
-✔ isolamento de serviços
-
-são definidos antes mesmo da primeira funcionalidade.
+All security mechanisms are considered during architectural design rather than being integrated afterwards.
 
 ---
 
 # Privacy by Design
 
-A Valthoris foi igualmente concebida segundo o princípio europeu:
+Privacy follows exactly the same philosophy.
 
-## Privacy by Design
+The platform only processes the information that is strictly necessary.
 
-Sempre que possível:
+Where possible:
 
-• mínimo de dados
+- Minimal collection
+- Minimal retention
+- Minimal exposure
+- Maximum transparency
+- User control by default
 
-• mínimo de retenção
-
-• mínimo de exposição
-
-• máximo controlo do utilizador
-
-Os dados pertencem sempre ao utilizador.
-
-Nunca à plataforma.
+Privacy is treated as an engineering principle rather than a legal obligation.
 
 ---
 
 # Zero Trust Architecture
 
-A Valthoris adota igualmente o modelo:
+Valthoris follows the Zero Trust model.
 
-## Zero Trust
+**Never Trust. Always Verify.**
 
-Princípio:
+No device.
 
-"Nunca confiar.
+No user.
 
-Verificar sempre."
+No application.
 
-Nenhum dispositivo.
+No API.
 
-Nenhum utilizador.
+No service.
 
-Nenhuma API.
+Is automatically trusted simply because it has already connected before.
 
-Nenhum serviço.
+Every request is verified.
 
-Nenhuma aplicação.
+Every interaction is validated.
 
-é considerada segura apenas porque já entrou anteriormente.
-
-Cada pedido volta a ser validado.
+Every decision is contextual.
 
 ---
 
-# Defesa em Profundidade
+# Defence in Depth
 
-Toda a plataforma utiliza várias camadas independentes de segurança.
+Security exists across multiple independent layers.
 
-Exemplo simplificado:
-
-Camada 1
-
-Autenticação
+```text
+User
 
 ↓
 
-Camada 2
-
-Autorização
+Authentication
 
 ↓
 
-Camada 3
-
-Motor IA
+Authorisation
 
 ↓
 
-Camada 4
+API Gateway
+
+↓
+
+Artificial Intelligence
+
+↓
 
 Threat Intelligence
 
 ↓
 
-Camada 5
-
-Blockchain ICP
+Risk Engine
 
 ↓
 
-Camada 6
-
-Logs Imutáveis
+Blockchain Validation
 
 ↓
 
-Camada 7
+Immutable Audit Logs
 
-Monitorização Global
+↓
 
-Mesmo que uma camada falhe,
-
-as restantes continuam a proteger o sistema.
-
----
-
-# Filosofia Operacional
-
-A Valthoris foi concebida para responder a uma pergunta muito simples:
-
-> "Como impedir que uma fraude aconteça antes de existir uma vítima?"
-
-Toda a evolução futura da plataforma será guiada por esta única pergunta.
-
----
-
-> **"A verdadeira inovação não está em reagir mais depressa. Está em impedir que o ataque aconteça."**
-
-**— Filosofia Oficial da Valthoris**
-
-## ❤️ Humanidade
-
-A tecnologia só faz sentido quando protege pessoas.
-
-Este continuará a ser o princípio mais importante da Valthoris.
-
----
-
-> **"A melhor fraude é aquela que nunca chega a acontecer."**
-
-**— Manifesto Oficial da Valthoris**
----
-
-<a name="arquitetura-global"></a>
-
-# 🏗️ Arquitetura Global da Plataforma Valthoris
-
-## Uma Plataforma.
-## Um Ecossistema.
-## Uma Inteligência Distribuída.
-
-A Valthoris não foi concebida como uma aplicação isolada.
-
-Foi desenhada desde o primeiro dia como um ecossistema global de Inteligência Artificial, Cibersegurança e Blockchain, preparado para crescer durante muitos anos sem necessidade de alterar a sua arquitetura fundamental.
-
-Ao contrário das aplicações tradicionais, onde tudo depende de um único servidor, a Valthoris distribui responsabilidades por vários componentes especializados, independentes e altamente escaláveis.
-
----
-
-# Visão Geral da Arquitetura
-
-```
-                     🌍 UTILIZADORES
-
-              Android • iPhone • Web • Desktop
-
-                         │
-                         ▼
-
-                ┌────────────────────┐
-                │  Frontend React    │
-                │  TypeScript        │
-                │  Capacitor         │
-                └────────────────────┘
-                         │
-                         ▼
-
-              ┌─────────────────────────┐
-              │ API Gateway Valthoris   │
-              └─────────────────────────┘
-                         │
-     ┌───────────────────┼───────────────────┐
-     ▼                   ▼                   ▼
-
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│ Supabase     │   │ IA Valthoris │   │ ICP          │
-│ PostgreSQL   │   │ LLM Engine   │   │ Blockchain   │
-└──────────────┘   └──────────────┘   └──────────────┘
-
-     │                   │                   │
-
-     ▼                   ▼                   ▼
-
-Threat Intelligence  AutoShield      Canisters ICP
-
-Radar Global         Prediction      Smart Storage
-
-Reputation           AI Engine       Immutable Logs
-
-Analytics            Detection       Cycles
-
+Monitoring
 ```
 
----
+Even if one layer fails,
 
-# Camada 1 — Frontend
-
-A primeira camada corresponde à interface utilizada pelos utilizadores.
-
-Será construída em:
-
-• React
-
-• TypeScript
-
-• Capacitor
-
-• Progressive Web App (PWA)
-
-Permitirá executar exatamente a mesma plataforma em:
-
-✔ Android
-
-✔ iPhone
-
-✔ Windows
-
-✔ macOS
-
-✔ Linux
-
-✔ Browser
-
-Toda a lógica crítica permanecerá no backend.
-
-O frontend terá apenas funções de apresentação e interação.
+the remaining layers continue protecting the platform.
 
 ---
 
-# Camada 2 — API Gateway
+# Human-Centred Artificial Intelligence
 
-Toda a comunicação da plataforma passará por um único Gateway.
+Artificial Intelligence should never replace human judgement.
 
-Este componente terá como responsabilidades:
+Its role is different.
 
-• autenticação
+To provide better information.
 
-• autorização
+Earlier.
 
-• rate limiting
+More accurately.
 
-• validação
+More transparently.
 
-• encaminhamento
-
-• auditoria
-
-• monitorização
-
-Nenhum módulo comunicará diretamente com outro sem passar pelo Gateway.
+Every recommendation generated by Valthoris should help people make better decisions rather than making decisions for them.
 
 ---
 
-# Camada 3 — Supabase
+> **"True innovation is not reacting faster.
+It is preventing the attack from happening."**
 
-O Supabase será responsável pela componente relacional.
+### — Valthoris Platform Philosophy
 
-Entre outras funções:
+---
+---
 
-• autenticação
+# 🏗 Global Architecture
 
-• utilizadores
+## One Platform.
 
-• empresas
+## One Ecosystem.
 
-• permissões
+## One Distributed Intelligence.
 
-• auditoria
+Valthoris has never been designed as a standalone application.
 
-• denúncias
+From its very first blueprint, it was envisioned as a distributed cybersecurity ecosystem capable of protecting individuals, organisations and public institutions on a global scale.
 
-• estatísticas
+Instead of concentrating every service inside a single server, the platform distributes intelligence across specialised components.
 
-• configurações
+Each module has a single responsibility.
 
-• dashboards
+Each component can evolve independently.
 
-• subscriptions
+Each service contributes to a collective intelligence greater than the sum of its parts.
 
-• notificações
+This architecture provides:
 
-Toda a informação operacional será armazenada aqui.
+- Scalability
+- High Availability
+- Fault Tolerance
+- Security by Design
+- Modular Evolution
+- Global Expansion
 
 ---
 
-# Camada 4 — Inteligência Artificial
+# High-Level Architecture
 
-Este será o verdadeiro cérebro da plataforma.
+```text
+                    🌍 USERS
 
-O motor de IA será composto por vários modelos especializados.
+        Android • iPhone • Web • Desktop
 
-Por exemplo:
+                        │
+                        ▼
 
-## Fraud Detection Engine
+        ┌──────────────────────────────────┐
+        │       React + TypeScript         │
+        │         Capacitor / PWA          │
+        └──────────────────────────────────┘
 
-Analisa:
+                        │
 
-SMS
+                        ▼
 
-Emails
+        ┌──────────────────────────────────┐
+        │      VALTHORIS API GATEWAY       │
+        └──────────────────────────────────┘
 
-Chamadas
+          │             │             │
 
-Mensagens
+          ▼             ▼             ▼
 
-QR Codes
+   ┌────────────┐ ┌────────────┐ ┌────────────┐
 
-Links
+   │ Supabase   │ │ AI Engines │ │ ICP Chain │
 
-IBAN
+   └────────────┘ └────────────┘ └────────────┘
 
-Wallets
+          │             │             │
 
----
+          ▼             ▼             ▼
 
-## Behaviour Engine
+   PostgreSQL      Threat AI      Canisters
 
-Analisa padrões de comportamento.
+   Auth            Prediction     Immutable Logs
 
-Deteta:
+   Storage         Reputation     Distributed Storage
 
-anomalias
-
-tentativas de fraude
-
-mudanças suspeitas
-
-engenharia social
-
----
-
-## Reputation Engine
-
-Calcula continuamente a reputação de:
-
-• pessoas
-
-• empresas
-
-• websites
-
-• emails
-
-• números
-
-• wallets
-
-• domínios
+   Realtime        Behaviour      Smart Contracts
+```
 
 ---
 
-## Prediction Engine
+# Layer One
 
-Prevê riscos antes que aconteçam.
+## User Experience
 
-Por exemplo:
+The first layer represents every interaction with the platform.
 
-"Esta campanha de phishing deverá crescer nas próximas horas."
+The objective is to provide exactly the same experience regardless of the device being used.
 
----
+Supported platforms include:
 
-# Camada 5 — Blockchain ICP
+- Android
+- iOS
+- Windows
+- macOS
+- Linux
+- Progressive Web App
 
-A blockchain será utilizada apenas quando realmente acrescentar valor.
+Only presentation logic exists within the client.
 
-Exemplos:
-
-✔ logs imutáveis
-
-✔ provas de integridade
-
-✔ assinaturas
-
-✔ certificados
-
-✔ hash de denúncias
-
-✔ auditoria
-
-✔ armazenamento distribuído
-
-✔ validação de evidências
+Sensitive processing never occurs inside the user interface.
 
 ---
 
-# Canisters ICP
+# Layer Two
 
-A arquitetura prevê dezenas de canisters especializados.
+## API Gateway
 
-Exemplos:
+Every request passes through a central gateway.
 
-Auth Canister
+This gateway performs:
 
-Users Canister
+- Authentication
+- Authorisation
+- Validation
+- Rate Limiting
+- Monitoring
+- Request Routing
+- Logging
+- Security Policies
 
-Reports Canister
+No internal service communicates directly without passing through this gateway.
 
-Threat Canister
-
-Crypto Canister
-
-IBAN Canister
-
-Domains Canister
-
-SafeLocation Canister
-
-Community Canister
-
-AI Gateway Canister
-
-Notifications Canister
-
-Statistics Canister
-
-Enterprise Canister
-
-Licensing Canister
-
-Audit Canister
-
-Cada um poderá evoluir independentemente.
+This simplifies security auditing and greatly reduces the attack surface.
 
 ---
 
-# Comunicação Entre Componentes
+# Layer Three
 
-Nenhum componente terá acesso direto à base de dados.
+## Operational Data Layer
 
-Fluxo:
+Operational information is managed through Supabase.
 
+Responsibilities include:
+
+- User Accounts
+- Authentication
+- Sessions
+- Permissions
+- Reports
+- Notifications
+- Analytics
+- Configuration
+- Community Data
+- Dashboards
+
+The relational database stores operational information while maintaining strong consistency and high performance.
+
+---
+
+# Layer Four
+
+## Artificial Intelligence Layer
+
+This layer represents the cognitive core of the platform.
+
+Instead of relying on a single monolithic model, Valthoris distributes intelligence across specialised engines.
+
+Each engine performs a different task.
+
+Examples include:
+
+- Fraud Detection
+- Behaviour Analysis
+- Threat Prediction
+- Reputation Analysis
+- Identity Intelligence
+- Crypto Intelligence
+- Conversation Intelligence
+
+The AI Gateway coordinates communication between every model.
+
+---
+
+# Layer Five
+
+## Internet Computer Protocol
+
+The Internet Computer Protocol provides decentralisation where decentralisation genuinely creates value.
+
+Rather than replacing traditional databases, ICP complements them.
+
+Typical responsibilities include:
+
+- Immutable audit logs
+- Digital evidence
+- Hash validation
+- Certificates
+- Distributed storage
+- Cryptographic verification
+- Long-term integrity
+
+Sensitive evidence can therefore be verified independently from any single organisation.
+
+---
+
+# Distributed Canisters
+
+The architecture anticipates multiple specialised canisters.
+
+Examples include:
+
+- Authentication
+- Users
+- Reports
+- Threat Intelligence
+- Safe Location
+- Community
+- Crypto Intelligence
+- Notifications
+- Audit
+- Enterprise
+- Statistics
+- AI Gateway
+
+Each canister remains independent.
+
+Each can be upgraded individually.
+
+Each scales independently.
+
+---
+
+# Communication Model
+
+Every component communicates through clearly defined interfaces.
+
+```text
 Frontend
 
 ↓
@@ -1118,931 +1153,1821 @@ API Gateway
 
 ↓
 
-Autorização
+Authentication
 
 ↓
 
-Serviço Especializado
+Service Layer
 
 ↓
 
-Supabase
+Artificial Intelligence
 
 ↓
 
-Resposta
-
-Quando necessário:
+Database
 
 ↓
 
-Canister ICP
+Blockchain Validation
 
 ↓
 
-Resposta
-
----
-
-# Alta Disponibilidade
-
-Toda a arquitetura foi desenhada para permitir:
-
-✔ escalabilidade horizontal
-
-✔ redundância
-
-✔ recuperação automática
-
-✔ atualização sem interrupções
-
-✔ distribuição geográfica
-
-✔ baixa latência
-
----
-
-# Preparação para o Futuro
-
-A arquitetura foi concebida para suportar:
-
-• milhões de utilizadores
-
-• milhões de denúncias
-
-• milhares de consultas por segundo
-
-• processamento IA em tempo real
-
-• expansão internacional
-
-• integração com entidades públicas
-
-• integração com bancos
-
-• integração com operadoras
-
-• integração com CERTs
-
-• integração com forças policiais (quando legalmente aplicável)
-
----
-
-> **"Uma arquitetura sólida não é aquela que suporta o presente. É aquela que continua preparada para o futuro."**
-
-**— Arquitetura Oficial da Valthoris**
----
-
-<a name="ecossistema-ia"></a>
-
-# 🧠 Ecossistema de Inteligência Artificial Valthoris
-
-## Uma IA.
-## Múltiplos Cérebros.
-## Um Único Objetivo.
-
-A Valthoris não utilizará apenas um modelo de Inteligência Artificial.
-
-Utilizará um conjunto de motores especializados que trabalham em conjunto, cada um responsável por resolver um problema específico.
-
-Em vez de depender de uma única IA generalista, a plataforma distribui a inteligência por vários módulos independentes, aumentando significativamente a precisão, a velocidade e a robustez das decisões.
-
----
-
-# Arquitetura Cognitiva
-
+Response
 ```
-                 Utilizador
 
-                      │
+The result is a predictable, secure and highly maintainable architecture.
 
-                      ▼
+---
 
-          ┌──────────────────────┐
-          │ AI Gateway Valthoris │
-          └──────────────────────┘
+# High Availability
 
-      ┌────────┬────────┬────────┬────────┬────────┐
+The platform has been designed with resilience as a primary objective.
 
-      ▼        ▼        ▼        ▼        ▼
+Future deployments are expected to support:
 
- Fraud     Identity  Reputation Behaviour Prediction
+- Horizontal Scaling
+- Geographic Distribution
+- Automatic Failover
+- Redundant Services
+- Continuous Deployment
+- Rolling Updates
+- Disaster Recovery
 
- Engine     Engine      Engine     Engine     Engine
+No single component should become a single point of failure.
 
-      └────────┴────────┴────────┴────────┴────────┘
+---
 
-                      ▼
+# Designed For The Future
+
+The architecture is intended to support:
+
+- Millions of users
+- Millions of fraud reports
+- Thousands of requests per second
+- Real-time Artificial Intelligence
+- International expansion
+- Government integration
+- Banking integrations
+- Telecommunications operators
+- CERTs
+- Law Enforcement cooperation (where legally applicable)
+
+Every architectural decision has been taken with long-term evolution in mind.
+
+---
+
+> **"Great architecture is not the one that solves today's problems.
+It is the one that remains prepared for tomorrow's challenges."**
+
+### — Valthoris Architecture
+---
+---
+
+# 🧠 Artificial Intelligence Ecosystem
+
+## One Intelligence.
+
+## Multiple Brains.
+
+## One Mission.
+
+Artificial Intelligence is the beating heart of Valthoris.
+
+But unlike traditional AI platforms, Valthoris is not built around a single model.
+
+Instead, it relies on a distributed ecosystem of specialised AI engines.
+
+Each engine has one responsibility.
+
+Each engine becomes exceptionally good at solving a specific problem.
+
+Together they form a collaborative intelligence capable of understanding, analysing and predicting digital threats before they become real incidents.
+
+---
+
+# Cognitive Architecture
+
+```text
+                    User Request
+
+                         │
+
+                         ▼
+
+                 AI Gateway Core
+
+                         │
+
+ ┌──────────┬──────────┬──────────┬──────────┬──────────┐
+
+ ▼          ▼          ▼          ▼          ▼
+
+Fraud    Behaviour  Reputation Identity Prediction
+
+Engine      AI          AI          AI          AI
+
+ └──────────┴──────────┴──────────┴──────────┴──────────┘
+
+                         │
+
+                         ▼
 
               Risk Decision Engine
 
-                      ▼
+                         │
 
-               Resultado Final
+                         ▼
+
+                Final Intelligent Result
 ```
 
 ---
 
 # AI Gateway
 
-O AI Gateway é o coordenador de toda a inteligência.
+The AI Gateway is the coordinator of the entire cognitive ecosystem.
 
-É responsável por:
+Rather than performing analysis itself, it distributes tasks to specialised engines and combines their conclusions into a unified response.
 
-• distribuir pedidos
+Responsibilities include:
 
-• escolher o modelo correto
+- Model orchestration
+- Context management
+- Confidence calculation
+- Decision aggregation
+- Explainability
+- Request optimisation
+- Security validation
 
-• combinar resultados
-
-• validar respostas
-
-• calcular confiança
-
-• gerar a resposta final
-
-Nenhum utilizador comunica diretamente com um modelo.
-
-Toda a comunicação passa pelo Gateway.
+Every AI request passes through this gateway.
 
 ---
 
 # Fraud Detection Engine
 
-Primeiro motor especializado.
+The first specialised intelligence engine.
 
-Responsável por analisar:
+Designed specifically to detect fraud indicators.
 
-✔ SMS
-
-✔ Emails
-
-✔ URLs
-
-✔ QR Codes
-
-✔ PDFs
-
-✔ Documentos
-
-✔ Chamadas
-
-✔ Mensagens
-
-✔ Redes Sociais
-
-✔ Wallets
-
-✔ IBAN
-
-✔ Domínios
-
-Objetivo:
-
-Identificar fraude antes da interação do utilizador.
-
----
-
-# Identity Intelligence Engine
-
-Especializado em identidade digital.
-
-Analisa:
-
-• reputação
-
-• histórico
-
-• padrões públicos
-
-• coerência
-
-• consistência
-
-• atividade
-
-Nunca identifica pessoas.
-
-Nunca faz reconhecimento facial.
-
-Nunca tenta descobrir identidades privadas.
-
-Apenas calcula indicadores públicos de risco.
-
----
-
-# Reputation Engine
-
-Calcula continuamente a reputação de qualquer entidade.
-
-Exemplos:
-
-Telefone
-
-Email
-
-Website
-
-Empresa
-
-Wallet
-
-IBAN
-
-IP
-
-Aplicação
-
-Perfil Social
-
-Cada entidade possui um Score de Reputação Dinâmico.
-
-Esse score altera-se automaticamente sempre que chegam novos dados.
-
----
-
-# Behaviour Engine
-
-Este motor observa padrões.
-
-Não observa pessoas.
-
-Observa comportamentos.
-
-Por exemplo:
-
-mudanças repentinas
-
-sequências suspeitas
-
-engenharia social
-
-pressão psicológica
-
-urgência
-
-coerência
-
-tentativas de manipulação
-
-É um dos motores mais importantes da plataforma.
-
----
-
-# Prediction Engine
-
-Enquanto os restantes motores analisam o presente,
-
-este tenta prever o futuro.
-
-Exemplos:
-
-"Esta campanha deverá crescer."
-
-"Este domínio poderá tornar-se malicioso."
-
-"Esta carteira poderá estar associada a fraude."
-
-"Este ataque poderá atingir Portugal."
-
-A IA deixa de apenas responder.
-
-Passa a antecipar.
-
----
-
-# Conversation Intelligence
-
-Motor especializado em conversas.
-
-Analisa:
-
-WhatsApp
-
-Telegram
-
-Signal
-
-Messenger
-
-SMS
-
-Email
-
-Discord
-
-Chat interno
-
-Nunca guarda permanentemente o conteúdo das conversas sem necessidade.
-
-Sempre que possível,
-
-a análise será feita localmente no dispositivo.
-
----
-
-# Audio Intelligence
-
-Especializado em voz.
-
-Deteta:
-
-tentativas de burla
-
-voz sintética
-
-deepfake
-
-engenharia social
-
-pressão emocional
-
-chantagem
-
-spoofing
-
-O objetivo não é gravar chamadas.
-
-O objetivo é ajudar o utilizador enquanto fala.
-
----
-
-# Image Intelligence
-
-Analisa:
-
-capturas de ecrã
-
-emails
-
-faturas
-
-cartões
-
-QR Codes
-
-documentos
-
-perfis
-
-identificando sinais de fraude.
-
----
-
-# Malware Intelligence
-
-Motor dedicado à análise de:
-
-APK
-
-ficheiros
-
-links
-
-downloads
-
-scripts
-
-hashes
-
-assinaturas
-
-malware conhecido
-
----
-
-# Crypto Intelligence
-
-Especializado em blockchain.
-
-Analisa:
-
-Wallets
-
-Tokens
-
-NFTs
-
-Contratos Inteligentes
-
-Transações
-
-Mixers
-
-Scams
-
-Rug Pulls
-
-Pump & Dump
-
----
-
-# Learning Engine
-
-A plataforma aprende continuamente.
-
-Sempre que:
-
-uma denúncia é confirmada
-
-um ataque é bloqueado
-
-uma fraude é validada
-
-os modelos podem melhorar.
-
-O treino nunca será automático sobre dados sensíveis.
-
-Existirá sempre validação humana quando necessário.
-
----
-
-# Human-in-the-Loop
-
-A Valthoris nunca dependerá exclusivamente da IA.
-
-Sempre que o nível de confiança for insuficiente,
-
-a decisão poderá ser encaminhada para:
-
-moderadores
-
-equipa técnica
-
-especialistas
-
-ou revisão manual.
-
----
-
-# Explicabilidade (Explainable AI)
-
-Cada decisão deverá poder ser explicada.
-
-Nunca apenas:
-
-"Risco elevado."
-
-Mas sim:
-
-• palavras encontradas
-
-• padrões detetados
-
-• histórico
-
-• reputação
-
-• fatores utilizados
-
-• nível de confiança
-
-O utilizador deve compreender porque motivo recebeu aquele alerta.
-
----
-
-# Objetivo Final
-
-A Inteligência Artificial da Valthoris não pretende substituir o ser humano.
-
-Pretende fornecer-lhe informação suficiente para tomar melhores decisões.
-
-A decisão continuará sempre a pertencer ao utilizador.
-
----
-
-> **"Uma Inteligência Artificial verdadeiramente útil não decide pelas pessoas. Dá-lhes conhecimento para decidirem melhor."**
-
-**— Arquitetura Cognitiva Oficial da Valthoris**
----
-
-# 🛡️ Arquitetura Técnica da Plataforma
-
-A arquitetura da Valthoris foi concebida para funcionar segundo um modelo distribuído, altamente resiliente e preparado para milhões de utilizadores.
-
-Todo o sistema encontra-se dividido em camadas independentes.
-
----
-
-<a name="inteligencia-artificial"></a>
-
-# 🧠 Inteligência Artificial, Threat Intelligence e Motor Global de Risco
-
-## O Cérebro da Valthoris
-
-A Inteligência Artificial da Valthoris foi concebida para funcionar como um ecossistema distribuído de motores especializados, trabalhando em conjunto para identificar, analisar, prever e mitigar ameaças digitais em tempo real.
-
-Ao contrário de soluções tradicionais baseadas apenas em listas negras ou regras estáticas, a Valthoris combina:
-
-- Inteligência Artificial (LLM + Machine Learning)
-- Threat Intelligence
-- Reputação dinâmica
-- Dados colaborativos
-- Blockchain ICP
-- Fontes públicas verificadas
-- Modelos comportamentais
-- Correlação contextual
-
-Cada análise resulta da combinação destes fatores, nunca de um único indicador.
-
----
-
-# Arquitetura Cognitiva
-
-```
-                 Pedido do Utilizador
-                         │
-                         ▼
-              AI Gateway Valthoris
-                         │
- ┌──────────┬──────────┬──────────┬──────────┬──────────┐
- ▼          ▼          ▼          ▼          ▼
-Fraud     Behaviour  Reputation Identity Prediction
-Engine      Engine      Engine     Engine     Engine
- └──────────┴──────────┴──────────┴──────────┴──────────┘
-                         │
-                         ▼
-             Risk Decision Engine
-                         │
-                         ▼
-               Score + Explicação
-```
-
----
-
-# Motores Inteligentes
-
-## 🛡 Fraud Detection Engine
-
-Especializado na deteção de fraude digital.
-
-Analisa:
+It analyses:
 
 - SMS
 - Emails
 - URLs
 - QR Codes
-- Chamadas
-- Wallets
-- IBAN
-- Redes Sociais
-- Mensagens
-- Domínios
-
-Objetivo:
-
-Identificar padrões conhecidos de fraude antes da interação do utilizador.
-
----
-
-## 📈 Reputation Engine
-
-Calcula continuamente um índice de confiança para:
-
-- Telefones
-- Emails
-- Empresas
-- Wallets
 - Websites
-- Domínios
-- IBAN
-- Endereços IP
-- Perfis públicos
+- PDF Documents
+- Phone Calls
+- Messages
+- Wallet Addresses
+- IBANs
+- Domains
 
-O score nunca é fixo.
+Its objective is simple:
 
-É atualizado dinamicamente sempre que surgem novos eventos.
-
----
-
-## 🧠 Behaviour Engine
-
-Este motor não observa pessoas.
-
-Observa comportamentos.
-
-Deteta:
-
-- urgência artificial
-- manipulação emocional
-- engenharia social
-- chantagem
-- spoofing
-- padrões repetitivos
-- inconsistências
-- tentativas de pressão psicológica
+Identify malicious intent before user interaction.
 
 ---
 
-## 🌍 Geo Intelligence
+# Behaviour Intelligence
 
-Cruza:
+Fraud rarely depends on technology alone.
 
-- localização
-- zonas de fraude
-- hotspots
-- campanhas ativas
-- histórico regional
-- alertas internacionais
+It depends on human manipulation.
 
-Sempre respeitando o RGPD.
+The Behaviour Engine analyses communication patterns rather than isolated words.
 
-A localização apenas é utilizada quando o utilizador autoriza.
+Examples include:
+
+- Artificial urgency
+- Emotional pressure
+- Fear induction
+- Fake authority
+- Financial coercion
+- Romance scams
+- Business Email Compromise
+- Social Engineering
+
+Instead of asking
+
+*"What was written?"*
+
+it asks
+
+*"Why was it written this way?"*
 
 ---
 
-## 💰 Crypto Intelligence
+# Reputation Intelligence
 
-Especializado em:
+Every digital entity accumulates a continuously evolving reputation.
 
-- Bitcoin
-- Ethereum
-- Solana
-- ICP
-- USDT
-- Wallets
+Entities include:
+
+- Telephone Numbers
+- Email Addresses
+- Domains
+- Companies
+- Cryptocurrency Wallets
+- Applications
+- Websites
+- IBANs
+- IP Addresses
+
+Reputation is never static.
+
+It evolves dynamically as new evidence becomes available.
+
+---
+
+# Identity Intelligence
+
+Identity Intelligence evaluates trust without attempting to identify private individuals.
+
+It focuses on publicly available technical indicators such as:
+
+- Domain history
+- Digital consistency
+- Public registrations
+- Certificate validity
+- Infrastructure quality
+- Historical behaviour
+
+Its purpose is not surveillance.
+
+Its purpose is validation.
+
+---
+
+# Prediction Engine
+
+Traditional security reacts.
+
+Valthoris predicts.
+
+Using historical patterns and behavioural models, the Prediction Engine estimates future risk.
+
+Examples include:
+
+- Emerging phishing campaigns
+- Newly weaponised domains
+- Coordinated scam operations
+- Fraud propagation
+- Cryptocurrency attacks
+- Social engineering trends
+
+Prediction transforms Artificial Intelligence into proactive defence.
+
+---
+
+# Conversation Intelligence
+
+Communication carries context.
+
+Conversation Intelligence analyses interactions across multiple platforms.
+
+Examples include:
+
+- WhatsApp
+- Signal
+- Telegram
+- Messenger
+- SMS
+- Email
+- Internal Chats
+
+Whenever technically possible, analysis is performed locally to maximise privacy.
+
+---
+
+# Audio Intelligence
+
+Fraud increasingly happens through voice.
+
+The Audio Engine detects:
+
+- Voice cloning
+- Deepfake speech
+- Telephone scams
+- Fake technical support
+- Emotional manipulation
+- Identity spoofing
+
+Its objective is assistance during communication rather than recording conversations.
+
+---
+
+# Visual Intelligence
+
+Images frequently contain hidden threats.
+
+The Visual Engine analyses:
+
+- Screenshots
+- Invoices
+- Documents
+- Identity Cards
+- QR Codes
+- Fake Interfaces
+- Banking Screens
+- Cryptocurrency Transactions
+
+Computer Vision complements language understanding.
+
+---
+
+# Malware Intelligence
+
+Files are analysed before execution.
+
+Supported content includes:
+
+- APK files
+- Executables
+- Scripts
+- PDFs
+- Office Documents
+- Archives
+- URLs
+- Hashes
+
+Known malware signatures are combined with behavioural analysis.
+
+---
+
+# Crypto Intelligence
+
+Blockchain ecosystems introduce entirely new fraud vectors.
+
+The Crypto Engine evaluates:
+
+- Wallet Addresses
 - Smart Contracts
-- Rug Pull
-- Honeypot
+- Tokens
+- NFTs
+- Transactions
+- Rug Pulls
+- Honeypots
 - Mixers
-- Tornado Cash
-- NFTs fraudulentos
+- Wash Trading
+- Scam Campaigns
 
-Cada carteira recebe um Risk Score próprio.
-
----
-
-## 🌐 Domain Intelligence
-
-Analisa:
-
-- idade do domínio
-- DNS
-- SSL
-- WHOIS
-- ASN
-- localização
-- reputação
-- blacklist
-- phishing conhecido
+Each wallet receives its own dynamic reputation score.
 
 ---
 
-## 📱 Phone Intelligence
+# Learning Engine
 
-Analisa:
+Artificial Intelligence must evolve continuously.
 
-- spam reports
-- spoofing
-- chamadas automáticas
-- fraude financeira
-- romance scam
-- suporte falso
-- Microsoft scam
-- falso banco
-- falso investimento
+The Learning Engine allows the platform to improve through:
 
----
+- Confirmed reports
+- Expert validation
+- Community contributions
+- Emerging attack patterns
+- Threat Intelligence feeds
 
-# Threat Intelligence
+Learning never occurs blindly.
 
-A plataforma agrega continuamente informação proveniente de:
-
-- CERT
-- CSIRT
-- feeds públicos
-- bases comunitárias
-- APIs verificadas
-- denúncias Valthoris
-- inteligência própria
-
-Cada ameaça recebe um identificador interno.
-
-Exemplo:
-
-```
-VT-THREAT-000001
-```
-
----
-
-# Sistema Global de Scoring
-
-O Score Final nunca depende apenas da IA.
-
-É calculado através de dezenas de fatores.
-
-Exemplo:
-
-```
-Fraud Engine ........ 28%
-
-Behaviour ........... 15%
-
-Reputation .......... 18%
-
-Threat Intelligence . 14%
-
-Community Reports ... 10%
-
-Blockchain .......... 5%
-
-Historical Analysis . 10%
-
-TOTAL = Dynamic Risk Score
-```
-
-O resultado final é apresentado numa escala entre:
-
-```
-0 — 99
-```
-
-A Valthoris nunca apresenta "100%".
-
----
-
-# Explicabilidade (Explainable AI)
-
-Cada classificação deve indicar ao utilizador:
-
-✔ fatores analisados
-
-✔ padrões encontrados
-
-✔ reputação
-
-✔ indicadores técnicos
-
-✔ fontes utilizadas
-
-✔ nível de confiança
-
-✔ histórico
-
-✔ data da última atualização
-
-A IA explica sempre porque chegou àquela conclusão.
-
----
-
-# Auto Aprendizagem
-
-O sistema melhora continuamente através de:
-
-- feedback validado
-- denúncias confirmadas
-- novos padrões
-- evolução das campanhas
-- aprendizagem supervisionada
-
-Nenhum modelo aprende automaticamente com dados não validados.
-
-Existe sempre controlo humano quando necessário.
+Human validation remains essential.
 
 ---
 
 # Human-in-the-Loop
 
-Quando a IA não possui confiança suficiente:
+Artificial Intelligence should assist human judgement.
 
-A decisão poderá ser enviada para:
+Never replace it.
 
-- Moderadores
+Whenever confidence becomes insufficient:
+
+Requests may be escalated to:
+
 - Fraud Analysts
-- Security Analysts
-- Equipa Técnica
+- Security Researchers
+- Moderators
+- Technical Specialists
 
-O objetivo é reduzir falsos positivos e falsos negativos.
-
----
-
-# Objetivo Final
-
-A Inteligência Artificial da Valthoris não pretende substituir o julgamento humano.
-
-Pretende fornecer informação suficiente para que pessoas, empresas e instituições tomem decisões mais seguras, rápidas e fundamentadas.
+Human expertise remains the final authority.
 
 ---
 
-> **"A Inteligência Artificial mais poderosa não é aquela que pensa por nós. É aquela que nos ajuda a pensar melhor."**
+# Explainable Artificial Intelligence
 
-**— Arquitetura Oficial da Inteligência Artificial Valthoris**
+Every decision should be understandable.
+
+Instead of returning:
+
+> High Risk
+
+Valthoris explains:
+
+- Indicators detected
+- Reputation changes
+- Behavioural patterns
+- Threat sources
+- Confidence level
+- Historical evidence
+
+Transparency builds trust.
+
 ---
 
-<a name="seguranca-global"></a>
+# Cognitive Principles
 
-# 🌍 Ecossistema Global de Segurança, Conformidade e Resiliência
+Every AI engine follows the same philosophy.
 
-## Segurança como Princípio Fundamental
+Think before reacting.
 
-A Valthoris não foi concebida apenas para identificar fraudes.
+Validate before trusting.
 
-Foi concebida para proteger pessoas, empresas e instituições críticas através de uma arquitetura de segurança inspirada nas melhores práticas internacionais de cibersegurança.
+Explain before deciding.
 
-Toda a plataforma segue uma filosofia de **proteção por camadas**, onde cada componente reforça os restantes.
+Learn before evolving.
 
-Nenhum mecanismo isolado é considerado suficiente.
+Protect before damage exists.
+
+---
+
+> **"Artificial Intelligence becomes truly valuable when it helps people understand risk rather than simply calculating it."**
+
+### — Valthoris Cognitive Architecture
+
+---
+---
+
+# 🌐 Threat Intelligence
+
+## Global Intelligence.
+
+## Continuous Awareness.
+
+## Real-Time Protection.
+
+Artificial Intelligence alone is not enough.
+
+The most advanced AI model cannot identify a threat it has never seen before.
+
+That is why Valthoris combines Artificial Intelligence with continuously updated Threat Intelligence.
+
+Every analysis is enriched with information collected from trusted cybersecurity sources around the world.
+
+The objective is simple.
+
+Always know more than the attacker.
+
+---
+
+# What Is Threat Intelligence?
+
+Threat Intelligence is the process of collecting, validating and correlating information about cyber threats.
+
+Instead of relying exclusively on historical data,
+
+Valthoris continuously incorporates fresh intelligence from multiple independent sources.
+
+This allows the platform to identify:
+
+- Active phishing campaigns
+- Emerging malware
+- Compromised domains
+- Fraudulent infrastructure
+- Cryptocurrency scams
+- Fake identities
+- Botnet activity
+- Command & Control servers
+- Malicious IP addresses
+
+before traditional blacklists are updated.
+
+---
+
+# Multi-Source Intelligence
+
+No single provider possesses complete visibility.
+
+For that reason, Valthoris aggregates intelligence from multiple trusted sources.
+
+Examples include:
+
+- AbuseIPDB
+- VirusTotal
+- PhishTank
+- OpenPhish
+- URLHaus
+- Spamhaus
+- AlienVault OTX
+- CISA Advisories
+- ENISA
+- CERT Portugal
+- MITRE ATT&CK
+- CVE Database
+
+Additional proprietary intelligence generated by the platform itself further strengthens detection capabilities.
+
+---
+
+# Threat Correlation
+
+Threat Intelligence is not simply stored.
+
+It is correlated.
+
+Every indicator is evaluated against hundreds of contextual signals.
+
+Examples include:
+
+- Domain reputation
+- SSL certificates
+- WHOIS history
+- DNS records
+- Hosting infrastructure
+- ASN ownership
+- Geographic distribution
+- Previous reports
+- AI behavioural analysis
+
+A single suspicious indicator rarely defines a threat.
+
+Correlation creates confidence.
+
+---
+
+# Threat Categories
+
+The platform classifies threats across multiple categories.
+
+### 🎣 Phishing
+
+Credential harvesting.
+
+Fake login pages.
+
+Bank impersonation.
+
+Corporate impersonation.
+
+---
+
+### 💰 Financial Fraud
+
+Investment scams.
+
+Fake brokers.
+
+Advance-fee fraud.
+
+Business Email Compromise.
+
+---
+
+### 🦠 Malware
+
+Ransomware.
+
+Spyware.
+
+Remote Access Trojans.
+
+Information stealers.
+
+Malicious APKs.
+
+---
+
+### 🌍 Infrastructure
+
+Compromised domains.
+
+Malicious IP addresses.
+
+Suspicious hosting providers.
+
+Botnet infrastructure.
+
+---
+
+### 💳 Cryptocurrency
+
+Fake exchanges.
+
+Wallet scams.
+
+Smart contract exploits.
+
+Rug Pulls.
+
+Ponzi schemes.
+
+---
+
+# Dynamic Threat Scoring
+
+Every threat receives its own continuously updated score.
+
+The score considers:
+
+- Freshness
+- Confidence
+- Source credibility
+- Historical behaviour
+- Community validation
+- AI analysis
+- Reputation changes
+
+Threat intelligence is therefore never static.
+
+It evolves continuously.
+
+---
+
+# Community Intelligence
+
+Users also contribute.
+
+Every validated report strengthens the platform.
+
+Community reports include:
+
+- Scam phone numbers
+- Fake websites
+- Fraudulent emails
+- Cryptocurrency scams
+- Fake companies
+- Suspicious wallets
+
+Each report undergoes automatic validation before affecting the global reputation database.
+
+Quality is always prioritised over quantity.
+
+---
+
+# Real-Time Updates
+
+Threat Intelligence never sleeps.
+
+Feeds are continuously synchronised.
+
+Indicators are updated automatically.
+
+Artificial Intelligence immediately benefits from every newly discovered threat.
+
+This creates a constantly evolving defence network.
+
+---
+
+# Threat Decision Engine
+
+The Threat Intelligence Engine works alongside every AI model.
+
+```text
+Threat Intelligence
+
+          │
+
+          ▼
+
+Reputation Analysis
+
+          │
+
+          ▼
+
+Behaviour Analysis
+
+          │
+
+          ▼
+
+Artificial Intelligence
+
+          │
+
+          ▼
+
+Global Risk Score
+```
+
+No decision depends on a single source.
+
+Confidence comes from multiple independent layers working together.
+
+---
+
+# Global Threat Map
+
+Future versions of Valthoris will include a live global threat map.
+
+It will visualise:
+
+- Active phishing campaigns
+- Scam hotspots
+- Malware outbreaks
+- Fraud trends
+- Community reports
+- Geographic distribution
+
+Providing situational awareness in real time.
+
+---
+
+# Continuous Evolution
+
+Threat Intelligence changes every minute.
+
+Therefore Valthoris continuously:
+
+- Collects
+- Validates
+- Correlates
+- Learns
+- Predicts
+
+Every confirmed threat improves the intelligence available to every user.
+
+---
+
+> **"Information becomes intelligence only when it helps prevent the next attack."**
+
+### — Valthoris Threat Intelligence
+
+---
+---
+
+# 🛡 AutoShield
+
+## Protection That Never Sleeps.
+
+Traditional cybersecurity solutions wait for users to make mistakes.
+
+Valthoris does not.
+
+AutoShield is the platform's real-time protection layer, designed to analyse digital interactions before they become incidents.
+
+Rather than functioning as a passive antivirus or simple blacklist, AutoShield continuously evaluates risk using Artificial Intelligence, Threat Intelligence and behavioural analysis.
+
+Its objective is straightforward.
+
+Protect users before they become victims.
+
+---
+
+# How AutoShield Works
+
+Every interaction follows the same intelligent pipeline.
+
+```text
+Incoming Event
+
+        │
+
+        ▼
+
+Threat Intelligence
+
+        │
+
+        ▼
+
+Artificial Intelligence
+
+        │
+
+        ▼
+
+Behaviour Analysis
+
+        │
+
+        ▼
+
+Reputation Engine
+
+        │
+
+        ▼
+
+Risk Decision Engine
+
+        │
+
+        ▼
+
+Protection Recommendation
+```
+
+Every stage contributes to the final decision.
+
+No single indicator is ever considered sufficient.
+
+---
+
+# Continuous Monitoring
+
+AutoShield continuously evaluates:
+
+- SMS messages
+- Phone calls
+- Emails
+- URLs
+- QR Codes
+- Files
+- Cryptocurrency wallets
+- Bank information
+- Applications
+- Browser activity
+- Downloads
+
+Monitoring happens in real time whenever technically possible.
+
+---
+
+# Intelligent Warnings
+
+Instead of generating unnecessary alerts,
+
+AutoShield prioritises quality over quantity.
+
+Warnings include:
+
+🟢 Safe
+
+🟡 Suspicious
+
+🟠 High Risk
+
+🔴 Critical Threat
+
+Every warning is accompanied by an explanation.
+
+Users should always understand why something has been classified as dangerous.
+
+---
+
+# Multi-Layer Protection
+
+AutoShield combines several independent protection mechanisms.
+
+### Behaviour Analysis
+
+Detects manipulation techniques.
+
+---
+
+### Reputation Verification
+
+Checks historical trust.
+
+---
+
+### Threat Intelligence
+
+Searches active campaigns.
+
+---
+
+### Artificial Intelligence
+
+Evaluates linguistic and contextual indicators.
+
+---
+
+### Blockchain Validation
+
+Verifies immutable evidence where applicable.
+
+---
+
+# Adaptive Protection
+
+Cybercriminals constantly change their tactics.
+
+AutoShield adapts accordingly.
+
+Its detection models evolve continuously through:
+
+- New intelligence feeds
+- Community reports
+- Human validation
+- Machine learning improvements
+- Behavioural feedback
+
+Protection therefore becomes progressively stronger over time.
+
+---
+
+# Privacy First
+
+AutoShield has been designed according to Privacy by Design principles.
+
+Whenever possible:
+
+- Analysis occurs locally.
+- Only essential information is processed.
+- Personal data is minimised.
+- Users remain in control.
+
+Protection never requires unnecessary surveillance.
+
+---
+
+# Future Capabilities
+
+Future versions of AutoShield will include:
+
+- Automatic scam call interception
+- Live browser protection
+- Real-time phishing blocking
+- QR Code verification
+- Cryptocurrency transaction validation
+- Smart notification prioritisation
+- Offline AI analysis
+- Enterprise security policies
+
+---
+
+> **"Protection should begin before the first click."**
+
+### — AutoShield Philosophy
+
+---
+
+# 🌍 Global Fraud Radar
+
+## Collective Intelligence Against Global Fraud.
+
+Fraud evolves through collaboration.
+
+Protection should do the same.
+
+The Global Fraud Radar transforms isolated reports into collective intelligence.
+
+Every validated report contributes to protecting every other user.
+
+---
+
+# Community-Driven Protection
+
+Every report submitted to Valthoris becomes part of a continuously evolving intelligence network.
+
+Examples include:
+
+- Scam phone numbers
+- Fraudulent domains
+- Fake companies
+- Phishing campaigns
+- Cryptocurrency scams
+- Social engineering attacks
+
+Reports are never accepted automatically.
+
+Every submission undergoes technical validation before becoming part of the intelligence database.
+
+---
+
+# Dynamic Risk Mapping
+
+The Global Fraud Radar continuously maps threats across regions.
+
+Future visualisations will display:
+
+- Active phishing campaigns
+- Fraud concentration
+- Emerging scam trends
+- Cryptocurrency attacks
+- Malicious infrastructure
+- Community alerts
+
+Users gain situational awareness before becoming targets.
+
+---
+
+# Reputation Through Evidence
+
+Every validated report influences reputation scores.
+
+Confidence increases through:
+
+- Multiple independent reports
+- Threat Intelligence
+- Artificial Intelligence
+- Historical consistency
+- Human validation
+
+False reports are automatically filtered whenever possible.
+
+---
+
+# Collaborative Security
+
+Security improves when knowledge is shared.
+
+The Global Fraud Radar enables collaboration between:
+
+- Citizens
+- Businesses
+- Security researchers
+- CERTs
+- Universities
+- Public institutions
+
+Each participant strengthens the ecosystem.
+
+---
+
+# Designed For Scale
+
+The architecture has been designed to support:
+
+- Millions of reports
+- Global contributors
+- Real-time synchronisation
+- Distributed validation
+- International expansion
+
+Community intelligence becomes stronger as adoption increases.
+
+---
+
+> **"One validated report can protect millions."**
+
+### — Global Fraud Radar
+
+---
+---
+
+# 🔎 Universal Intelligence Scanner
+
+## One Scan.
+
+## Complete Visibility.
+
+The Universal Scanner is designed to analyse virtually every digital element a user may encounter.
+
+Rather than requiring multiple specialised tools, Valthoris provides a single intelligent scanner capable of evaluating different types of content using the same security ecosystem.
+
+Every scan combines Artificial Intelligence, Threat Intelligence, Reputation Analysis and Behavioural Intelligence.
+
+---
+
+# Supported Objects
+
+The scanner is designed to analyse:
+
+- URLs
+- Websites
+- Domains
+- QR Codes
+- Email Addresses
+- Phone Numbers
+- SMS
+- Images
+- PDF Documents
+- Office Files
+- APK Applications
+- Cryptocurrency Wallets
+- Smart Contracts
+- IBANs
+- Bank Accounts
+- IP Addresses
+
+Future versions will continuously expand supported formats.
+
+---
+
+# Unified Analysis Pipeline
+
+Every object follows the same verification process.
+
+```text
+Input
+
+      │
+
+      ▼
+
+Format Detection
+
+      │
+
+      ▼
+
+Threat Intelligence
+
+      │
+
+      ▼
+
+Artificial Intelligence
+
+      │
+
+      ▼
+
+Behaviour Analysis
+
+      │
+
+      ▼
+
+Reputation Engine
+
+      │
+
+      ▼
+
+Risk Score
+
+      │
+
+      ▼
+
+Recommendation
+```
+
+This unified architecture guarantees consistent decision making across every module.
+
+---
+
+# Intelligent Reports
+
+Instead of displaying raw technical information,
+
+the scanner produces structured reports including:
+
+- Overall Risk Score
+- Threat Classification
+- Reputation
+- Technical Indicators
+- AI Explanation
+- Confidence Level
+- Recommended Action
+
+The objective is clarity.
+
+Users should immediately understand the level of risk.
+
+---
+
+# QR Code Analysis
+
+QR Codes have become one of the fastest growing fraud vectors.
+
+The scanner validates:
+
+- Destination URL
+- Hidden redirects
+- Reputation
+- Domain age
+- SSL configuration
+- Previous reports
+- Active phishing campaigns
+
+Before the QR Code is opened.
+
+---
+
+# Email Intelligence
+
+Emails are analysed using multiple layers.
+
+Detection includes:
+
+- Domain spoofing
+- Display-name impersonation
+- Urgency indicators
+- Malicious attachments
+- Embedded URLs
+- Language manipulation
+- AI-generated fraud patterns
+
+---
+
+# Document Inspection
+
+Documents can hide malicious content.
+
+Supported formats include:
+
+- PDF
+- DOCX
+- XLSX
+- PPTX
+
+The scanner evaluates:
+
+- Embedded links
+- Macros
+- Scripts
+- Metadata
+- Suspicious behaviour
+- Hidden payloads
+
+---
+
+# Cryptocurrency Verification
+
+The scanner validates:
+
+- Wallet reputation
+- Token legitimacy
+- Smart contract risks
+- Rug Pull indicators
+- Honeypot behaviour
+- Known scam databases
+
+Helping users make safer blockchain transactions.
+
+---
+
+# Explainable Results
+
+Every result answers three questions.
+
+**What was analysed?**
+
+**What was detected?**
+
+**Why was this classified as risky?**
+
+Transparency is always prioritised over black-box decisions.
+
+---
+
+# Future Vision
+
+The Universal Scanner is expected to become the primary entry point into the Valthoris ecosystem.
+
+One scan.
+
+One report.
+
+One intelligent decision.
+
+---
+
+> **"Knowledge is the first layer of protection."**
+
+### — Universal Scanner
+
+---
+
+# 💰 Crypto Intelligence
+
+## Securing The Decentralised Economy.
+
+Blockchain technology has transformed finance.
+
+Unfortunately,
+
+it has also transformed fraud.
+
+Every day thousands of malicious wallets, fake tokens, phishing websites and fraudulent smart contracts appear across multiple blockchains.
+
+Crypto Intelligence was created to reduce that risk.
+
+---
+
+# Supported Networks
+
+Future support includes:
+
+- Internet Computer
+- Bitcoin
+- Ethereum
+- Solana
+- Polygon
+- BNB Chain
+- Avalanche
+- Arbitrum
+- Optimism
+- Base
+
+The architecture remains blockchain agnostic.
+
+---
+
+# Wallet Analysis
+
+Every wallet receives a continuously updated reputation profile.
+
+Evaluation considers:
+
+- Transaction history
+- Previous reports
+- Mixer interaction
+- Scam databases
+- AI behavioural analysis
+- Network relationships
+- Contract interaction
+
+The result becomes a dynamic Trust Score.
+
+---
+
+# Smart Contract Analysis
+
+Contracts are inspected before interaction.
+
+The engine searches for:
+
+- Honeypots
+- Hidden permissions
+- Unlimited approvals
+- Rug Pull indicators
+- Ownership risks
+- Suspicious functions
+- External dependencies
+
+Helping users avoid malicious decentralised applications.
+
+---
+
+# Token Intelligence
+
+Every token is evaluated using multiple indicators.
+
+Examples include:
+
+- Liquidity
+- Holder concentration
+- Mint permissions
+- Trading restrictions
+- Ownership decentralisation
+- Historical behaviour
+- Community reputation
+
+The objective is identifying abnormal risk before investment decisions are made.
+
+---
+
+# Blockchain Threat Intelligence
+
+Crypto Intelligence combines:
+
+- On-chain analysis
+- Artificial Intelligence
+- Public threat databases
+- Community reports
+- Behavioural models
+
+Producing significantly stronger results than isolated blockchain explorers.
+
+---
+
+# Risk Categories
+
+Crypto assets may receive classifications such as:
+
+🟢 Trusted
+
+🟡 Low Risk
+
+🟠 Suspicious
+
+🔴 High Risk
+
+⚫ Confirmed Scam
+
+Each classification includes technical justification.
+
+---
+
+# Future Development
+
+Future versions will include:
+
+- Live transaction simulation
+- MEV risk detection
+- DeFi protocol analysis
+- NFT verification
+- Wallet monitoring
+- Portfolio Risk Dashboard
+- AI investment scam detection
+
+---
+
+> **"Blockchain removes intermediaries.
+It should never remove security."**
+
+### — Crypto Intelligence
+
+---
+---
+
+# 🏢 Enterprise Intelligence
+
+## Cybersecurity Beyond The Individual.
+
+Modern cyber threats rarely target only individuals.
+
+Organised cybercriminals increasingly focus on businesses, hospitals, municipalities, financial institutions and critical infrastructure.
+
+Enterprise Intelligence extends the Valthoris ecosystem beyond personal protection, providing organisations with an intelligent platform capable of monitoring, analysing and mitigating digital risk across their entire infrastructure.
+
+---
+
+# Designed For Organisations
+
+Enterprise Intelligence has been designed for:
+
+- Small Businesses
+- Medium Enterprises
+- Large Corporations
+- Financial Institutions
+- Government Agencies
+- Healthcare Organisations
+- Universities
+- Telecommunications Providers
+- Critical Infrastructure Operators
+
+Every deployment remains modular and scalable.
+
+---
+
+# Central Security Dashboard
+
+Administrators gain access to a unified operational dashboard providing complete visibility over organisational security.
+
+Features include:
+
+- Active Threats
+- Incident Timeline
+- User Alerts
+- Reputation Monitoring
+- AI Decisions
+- Threat Intelligence
+- Device Status
+- API Health
+- Infrastructure Monitoring
+
+The dashboard becomes the central command centre of the organisation.
+
+---
+
+# Role-Based Access Control
+
+Enterprise environments require precise permission management.
+
+Supported roles include:
+
+- Administrator
+- Security Analyst
+- SOC Operator
+- Auditor
+- Investigator
+- Compliance Officer
+- Read-Only Observer
+
+Every action is controlled through granular permissions.
+
+---
+
+# Security Policies
+
+Organisations may define their own protection policies.
+
+Examples include:
+
+- Block High Risk URLs
+- Warn Before Crypto Transfers
+- Require Multi-Factor Confirmation
+- Restrict External Attachments
+- Validate QR Codes
+- Prevent Suspicious Downloads
+
+Policies are centrally managed and automatically enforced.
+
+---
+
+# Incident Management
+
+Every detected event generates a structured incident.
+
+Each incident includes:
+
+- Timestamp
+- Severity
+- AI Explanation
+- Technical Evidence
+- Threat Intelligence
+- Recommended Actions
+- Investigation History
+
+Incidents remain fully traceable.
+
+---
+
+# Security Analytics
+
+Enterprise Intelligence continuously generates operational metrics.
+
+Examples include:
+
+- Threat Volume
+- Detection Accuracy
+- Attack Categories
+- User Exposure
+- Response Times
+- False Positive Rates
+- Security Trends
+
+Historical analytics support strategic decision making.
+
+---
+
+# Compliance Support
+
+The platform has been designed to assist organisations in meeting regulatory obligations.
+
+Future compliance support includes:
+
+- GDPR
+- NIS2
+- DORA
+- ISO 27001
+- ISO 22301
+- AI Act
+- eIDAS
+
+Compliance reporting becomes significantly simpler through automated evidence collection.
+
+---
+
+# Audit Logs
+
+Every administrative operation is recorded.
+
+Examples include:
+
+- Login
+- Configuration Changes
+- User Management
+- Security Policy Updates
+- Investigation Actions
+- AI Decisions
+- Report Validation
+
+Logs may later be anchored on the Internet Computer Protocol for immutable verification.
+
+---
+
+# Enterprise API
+
+Large organisations frequently require integration with existing infrastructure.
+
+Future APIs will support integration with:
+
+- SIEM Platforms
+- SOAR Solutions
+- Identity Providers
+- Ticketing Systems
+- Banking Systems
+- Government Services
+- Internal Security Platforms
+
+The objective is interoperability rather than replacement.
+
+---
+
+# Future Vision
+
+Enterprise Intelligence is expected to evolve into a complete cybersecurity platform capable of protecting organisations through intelligent automation, explainable Artificial Intelligence and decentralised trust.
+
+---
+
+> **"Cybersecurity is no longer only about protecting systems.
+It is about protecting trust."**
+
+### — Enterprise Intelligence
+
+---
+
+# 📊 Security Dashboard
+
+## One View.
+
+## Complete Awareness.
+
+The Security Dashboard transforms complex cybersecurity information into clear operational intelligence.
+
+Rather than displaying isolated alerts, the dashboard correlates every source of information into a single operational view.
+
+---
+
+# Live Overview
+
+The dashboard provides real-time visibility into:
+
+- Active Threats
+- Recent Alerts
+- Community Reports
+- AI Activity
+- Threat Intelligence
+- Infrastructure Health
+- Blockchain Status
+- API Performance
+
+Everything updates continuously.
+
+---
+
+# Risk Indicators
+
+Every monitored entity receives its own dynamic score.
+
+Examples include:
+
+- Users
+- Devices
+- Domains
+- Wallets
+- Companies
+- Networks
+- Applications
+
+Scores evolve automatically as new evidence appears.
+
+---
+
+# Global Metrics
+
+Typical metrics include:
+
+- Protected Users
+- Analysed URLs
+- Blocked Threats
+- AI Predictions
+- Community Reports
+- Reputation Changes
+- Threat Intelligence Updates
+
+Metrics focus on operational value rather than vanity numbers.
+
+---
+
+# Visual Analytics
+
+The dashboard supports multiple visualisations.
+
+Examples include:
+
+- Threat Timeline
+- Geographic Distribution
+- Category Breakdown
+- Risk Evolution
+- Community Activity
+- Infrastructure Status
+
+Every chart is designed to simplify decision making.
+
+---
+
+# Executive Reporting
+
+Future versions will generate automated reports suitable for:
+
+- Executives
+- Compliance Officers
+- Security Teams
+- Auditors
+- Government Agencies
+
+Reports remain clear, objective and technically verifiable.
+
+---
+
+# Designed For Humans
+
+Cybersecurity information should never overwhelm users.
+
+The dashboard prioritises:
+
+- Simplicity
+- Clarity
+- Transparency
+- Actionable Information
+
+Complexity remains behind the scenes.
+
+---
+
+> **"Information becomes valuable only when it supports better decisions."**
+
+### — Valthoris Dashboard
+
+---
+---
+
+# 🔐 Security, Privacy & Compliance
+
+## Trust Must Be Built.
+
+## Not Assumed.
+
+Cybersecurity is not a feature.
+
+It is the foundation upon which Valthoris is built.
+
+Every architectural decision, every AI model and every future module follows internationally recognised security principles designed to protect users by default.
 
 ---
 
 # Security by Design
 
-Toda a plataforma segue o princípio internacional:
+Security exists before functionality.
 
-## Security by Design
+Every component is designed with protection as its first requirement.
 
-Cada funcionalidade nasce já protegida.
+Examples include:
 
-Antes de qualquer linha de código existir são definidos:
+- Authentication
+- Authorization
+- Encryption
+- Validation
+- Audit Logging
+- Threat Monitoring
+- API Protection
+- Secure Development Lifecycle
 
-• autenticação
+Security is never added afterwards.
 
-• autorização
-
-• auditoria
-
-• validação
-
-• encriptação
-
-• monitorização
-
-• recuperação
-
-• logging
-
-A segurança nunca será adicionada posteriormente.
+It is part of the architecture itself.
 
 ---
 
 # Privacy by Design
 
-Toda a arquitetura respeita os princípios europeus:
+Privacy is treated as a fundamental right.
 
-✔ Minimização de dados
+Valthoris follows European privacy principles from the very beginning.
 
-✔ Finalidade específica
+Whenever technically possible:
 
-✔ Transparência
+- Minimum data collection
+- Minimum retention
+- Local processing
+- User control
+- Transparent consent
+- Secure storage
+- End-to-end encryption
 
-✔ Consentimento
+Personal information always belongs to the user.
 
-✔ Direito ao esquecimento
-
-✔ Portabilidade
-
-✔ Controlo pelo utilizador
-
-✔ Privacidade por defeito
+Never to the platform.
 
 ---
 
 # Zero Trust Architecture
 
-A plataforma adota o modelo:
+Valthoris adopts a Zero Trust security model.
 
-## Never Trust.
-## Always Verify.
+Its philosophy is simple.
 
-Nenhum pedido é considerado seguro.
+> Never Trust.
 
-Cada operação volta a ser validada.
+> Always Verify.
 
-Mesmo utilizadores autenticados.
+Every request is validated.
 
-Mesmo administradores.
+Every session is verified.
 
-Mesmo APIs internas.
+Every API call is authenticated.
+
+Every permission is checked.
+
+Nothing is automatically trusted.
 
 ---
 
-# Defesa em Profundidade
+# Defence In Depth
 
-A segurança distribui-se por várias camadas.
+Security is distributed across multiple independent layers.
 
-```
-Utilizador
-
-↓
-
-Autenticação
+```text
+User
 
 ↓
 
-Autorização
+Authentication
 
 ↓
 
-Gateway
+Authorization
 
 ↓
 
-Rate Limit
+API Gateway
 
 ↓
 
-Motor IA
+Rate Limiting
+
+↓
+
+Artificial Intelligence
 
 ↓
 
@@ -2050,7 +2975,7 @@ Threat Intelligence
 
 ↓
 
-Supabase
+Database
 
 ↓
 
@@ -2058,385 +2983,532 @@ ICP Blockchain
 
 ↓
 
-Logs
-
-↓
-
-Monitorização
+Immutable Audit Logs
 ```
 
-Mesmo que uma camada seja comprometida,
+If one layer fails,
 
-as restantes continuam a proteger o sistema.
-
----
-
-# Alta Disponibilidade
-
-A infraestrutura deverá suportar:
-
-✔ Failover automático
-
-✔ Balanceamento
-
-✔ Redundância
-
-✔ Backups
-
-✔ Recuperação automática
-
-✔ Disaster Recovery
-
-✔ Escalabilidade horizontal
+the remaining layers continue protecting the platform.
 
 ---
 
-# Auditoria Permanente
+# Encryption
 
-Todos os eventos relevantes ficam registados.
+Sensitive information is protected through modern cryptographic standards.
 
-Exemplos:
+Future implementations include:
 
-Login
+- AES-256
+- TLS 1.3
+- SHA-256
+- Ed25519
+- Secure Key Management
+- Digital Signatures
 
-Logout
-
-Pesquisa
-
-Denúncia
-
-Exportação
-
-Criação
-
-Remoção
-
-Atualização
-
-Administração
-
-IA
-
-Threat Intelligence
-
-Cada registo possui:
-
-• Timestamp UTC
-
-• Utilizador
-
-• Origem
-
-• IP
-
-• Device
-
-• Browser
-
-• País
-
-• Sessão
-
-• Resultado
+Cryptography becomes the basis of trust.
 
 ---
 
-# Monitorização Global
+# Secure Authentication
 
-O Centro de Operações da Valthoris (SOC Lite) monitoriza continuamente:
+Future authentication mechanisms include:
 
-• disponibilidade
+- Multi-Factor Authentication
+- Passwordless Authentication
+- WebAuthn
+- Hardware Security Keys
+- Biometric Authentication
+- Session Validation
 
-• APIs
-
-• IA
-
-• Blockchain
-
-• Base de Dados
-
-• Canisters
-
-• Utilizadores ativos
-
-• Tentativas de ataque
-
-• Eventos críticos
-
-• Performance
+Identity verification continuously evolves with technology.
 
 ---
 
-# Threat Intelligence Internacional
+# Immutable Audit
 
-A plataforma poderá integrar informação proveniente de:
+Every critical action generates an audit event.
 
-• CERT Portugal
+Examples include:
 
-• ENISA
+- Login
+- Logout
+- Threat Detection
+- Report Submission
+- Administrative Changes
+- AI Decisions
+- Security Policy Updates
 
-• Europol EC3
-
-• MITRE ATT&CK
-
-• CVE
-
-• CISA
-
-• AbuseIPDB
-
-• PhishTank
-
-• VirusTotal
-
+Future versions will optionally anchor critical audit records on the Internet Computer Protocol for tamper resistance.
 
 ---
 
-<a name="roadmap-futuro"></a>
+# Regulatory Compliance
 
-# 🚀 Visão Estratégica de Longo Prazo
+Valthoris has been designed with future regulatory compliance in mind.
 
-A Valthoris não foi concebida apenas como uma aplicação.
+Relevant frameworks include:
 
-Foi concebida como uma infraestrutura global de Inteligência Artificial para proteção digital.
+- GDPR
+- AI Act
+- NIS2
+- DORA
+- eIDAS
+- ISO 27001
+- ISO 22301
 
-O objetivo é evoluir continuamente durante muitos anos, acompanhando a evolução da fraude digital, da inteligência artificial e da computação descentralizada.
-
-A plataforma foi desenhada para crescer de forma modular, permitindo incorporar novos serviços sem necessidade de reconstruir a arquitetura principal.
-
----
-
-# 🌍 Expansão Internacional
-
-A visão da Valthoris é disponibilizar uma plataforma verdadeiramente global.
-
-A expansão está prevista em várias fases:
-
-## Fase 1
-
-🇵🇹 Portugal
-
-## Fase 2
-
-🇪🇸 Espanha
-
-🇫🇷 França
-
-🇮🇹 Itália
-
-## Fase 3
-
-União Europeia
-
-## Fase 4
-
-América do Norte
-
-## Fase 5
-
-América Latina
-
-## Fase 6
-
-Ásia
-
-## Fase 7
-
-Cobertura Global
-
-Toda a plataforma será preparada para:
-
-- múltiplos idiomas
-- fusos horários
-- moedas
-- legislação local
-- integração com entidades nacionais
+Compliance should become a natural consequence of good engineering.
 
 ---
 
-# 🤝 Cooperação Institucional
+# Responsible Artificial Intelligence
 
-A Valthoris pretende estabelecer cooperação com:
+Artificial Intelligence should remain accountable.
 
-- Universidades
-- Centros de Investigação
-- CERTs
-- CSIRTs
-- Centros de Cibersegurança
-- Autoridades competentes
-- Organizações Internacionais
-- Empresas privadas
-- Instituições Financeiras
-- Operadores de Telecomunicações
+Valthoris therefore adopts the following principles:
 
-Estas colaborações terão como objetivo reforçar a prevenção da fraude digital e promover boas práticas de segurança.
+- Transparency
+- Explainability
+- Fairness
+- Human Oversight
+- Privacy Protection
+- Bias Reduction
+- Continuous Validation
 
----
-
-# 🎓 Investigação & Desenvolvimento
-
-A Valthoris será um projeto em evolução permanente.
-
-Áreas de investigação futura:
-
-- Inteligência Artificial Explicável (XAI)
-- Federated Learning
-- Edge AI
-- IA Offline
-- Agentes Inteligentes
-- Deteção de Deepfakes
-- Computação Quântica (Quantum-safe Cryptography)
-- Modelos Multimodais
-- Segurança de Modelos LLM
-- Análise Comportamental Avançada
+Technology should always remain under human responsibility.
 
 ---
 
-# 📜 Compromisso Ético
+# Security Philosophy
 
-A Valthoris compromete-se a desenvolver tecnologia segundo princípios éticos.
+Security is not measured by the number of detected attacks.
 
-A plataforma nunca terá como objetivo:
-
-❌ vigilância massiva
-
-❌ perseguição
-
-❌ discriminação
-
-❌ manipulação
-
-❌ censura
-
-❌ exploração de vulnerabilidades humanas
-
-A tecnologia deve proteger pessoas.
-
-Nunca controlá-las.
+Security is measured by the number of attacks that never succeed.
 
 ---
 
-# 🌱 Sustentabilidade Tecnológica
+> **"The strongest security system is the one users never notice because it prevents problems before they exist."**
 
-Sempre que possível serão privilegiadas soluções que promovam:
-
-- eficiência energética
-- redução de consumo computacional
-- otimização de recursos
-- reutilização de componentes
-- código aberto quando adequado
-- interoperabilidade
+### — Security Principles of Valthoris
 
 ---
 
-# 🛡️ Missão Permanente
+# 🛣️ Roadmap
 
-A missão da Valthoris permanecerá inalterada independentemente da evolução tecnológica.
+## Building The Future Step By Step.
 
-Proteger pessoas.
+Valthoris is being developed as a long-term project.
 
-Proteger empresas.
+Rather than rushing features,
 
-Proteger instituições.
-
-Proteger a confiança digital.
+the platform follows a structured roadmap where every stage strengthens the next.
 
 ---
 
-# 📖 Filosofia Valthoris
+# Phase I
 
-A palavra **Valthoris** representa três pilares fundamentais:
+## Foundation
 
-## 🧠 Intelligence
+Completed
 
-Conhecimento antes da ação.
-
----
-
-## 🛡 Prevention
-
-A melhor fraude é aquela que nunca acontece.
-
----
-
-## 🔒 Protection
-
-A tecnologia deve estar ao serviço das pessoas.
+- Brand Identity
+- Vision
+- Architecture
+- GitHub Repository
+- Documentation
+- AI Specification
 
 ---
 
-# 👤 Fundador
+# Phase II
 
-**Hermínio Coragem**
+## Artificial Intelligence
 
-Criador da marca **Valthoris**.
+In Progress
 
-Autor da visão estratégica, identidade conceptual e arquitetura funcional da plataforma.
-
-A palavra **Valthoris** é uma criação original, desenvolvida especificamente para identificar este ecossistema de Inteligência Artificial, Cibersegurança e Blockchain.
-
----
-
-# ⚖️ Declaração de Transparência
-
-A plataforma encontra-se em desenvolvimento ativo.
-
-Alguns módulos descritos neste documento representam a visão estratégica do projeto e serão implementados progressivamente ao longo da sua evolução.
-
-O README distingue claramente entre funcionalidades existentes, funcionalidades em desenvolvimento e objetivos futuros, promovendo transparência perante utilizadores, parceiros e entidades institucionais.
+- Dataset Preparation
+- Tokenizer
+- Transformer Architecture
+- Training Pipeline
+- Evaluation Framework
+- Inference Engine
 
 ---
 
-# ❤️ Agradecimento
+# Phase III
 
-A todos os utilizadores, investigadores, programadores, parceiros e membros da comunidade que contribuam para melhorar a segurança digital.
+## Infrastructure
 
-Cada denúncia validada.
+Planned
 
-Cada fraude evitada.
-
-Cada utilizador protegido.
-
-Representa mais um passo para uma Internet mais segura.
-
----
-
-# 🌍 Lema Oficial
-
-> **INTELLIGENCE • PREVENTION • PROTECTION**
+- Internet Computer Canisters
+- Supabase Integration
+- Authentication
+- API Gateway
+- Storage Layer
+- Security Monitoring
 
 ---
 
-# 🔐 Assinatura Tecnológica
+# Phase IV
 
-**CYBERSECURITY • AI • BLOCKCHAIN**
+## Core Platform
 
----
+Planned
 
-# ⭐ Mensagem Final
-
-A Valthoris acredita que o futuro da segurança digital não será construído apenas com algoritmos.
-
-Será construído com ética.
-
-Com transparência.
-
-Com colaboração.
-
-Com inovação.
-
-E, acima de tudo,
-
-com a confiança das pessoas.
+- AutoShield
+- Global Fraud Radar
+- Universal Scanner
+- Threat Intelligence
+- Crypto Intelligence
+- Safe Location
 
 ---
 
-> **"A tecnologia muda todos os dias. Os princípios permanecem para sempre."**
+# Phase V
 
-**— Valthoris**
+## Enterprise Platform
+
+Planned
+
+- Security Dashboard
+- Multi-Tenant Architecture
+- Enterprise Policies
+- API Integrations
+- Compliance Center
+- Reporting
 
 ---
 
-© 2026 Valthoris — Todos os direitos reservados.
+# Phase VI
 
-Documento sujeito a evolução contínua durante o desenvolvimento da plataforma.
+## Mobile Ecosystem
+
+Planned
+
+- Android
+- iOS
+- Progressive Web App
+- Desktop
+- Offline Artificial Intelligence
+
+---
+
+# Phase VII
+
+## International Expansion
+
+Future
+
+- European Union
+- North America
+- Latin America
+- Asia
+- Global Threat Intelligence Network
+
+---
+
+# Continuous Development
+
+The roadmap is intentionally flexible.
+
+Technology evolves.
+
+Cybercrime evolves.
+
+Artificial Intelligence evolves.
+
+Valthoris will evolve with them.
+
+---
+
+> **"Innovation is not a destination.
+It is a continuous process."**
+
+### — Valthoris Development Roadmap
+
+---
+
+---
+
+# 📂 Repository Structure
+
+The Valthoris repository has been designed to remain modular, scalable and easy to maintain as the platform evolves.
+
+Every component has a clearly defined responsibility.
+
+```
+Valthoris/
+
+├── README.md
+├── LICENSE
+├── requirements.txt
+│
+├── docs/
+│   ├── architecture/
+│   ├── modules/
+│   ├── specifications/
+│   ├── roadmap/
+│   └── vision/
+│
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   ├── datasets/
+│   └── corpus/
+│
+├── tokenizer/
+│
+├── model/
+│   ├── architecture.py
+│   ├── training.py
+│   ├── evaluation.py
+│   └── inference.py
+│
+├── backend/
+│
+├── frontend/
+│
+├── mobile/
+│
+├── canisters/
+│
+├── api/
+│
+├── storage/
+│
+├── scripts/
+│
+└── assets/
+```
+
+The repository will continue to evolve while preserving a clear separation between documentation, Artificial Intelligence, infrastructure and applications.
+
+---
+
+# 🚀 Quick Start
+
+## Clone Repository
+
+```bash
+git clone https://github.com/Valthoris-code/Valthoris.git
+
+cd Valthoris
+```
+
+---
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Prepare Dataset
+
+```bash
+python prepare_data.py
+```
+
+---
+
+## Train Tokenizer
+
+```bash
+python tokenizer/train_tokenizer.py
+```
+
+---
+
+## Train AI Model
+
+```bash
+python train.py
+```
+
+---
+
+## Evaluate Model
+
+```bash
+python evaluate.py
+```
+
+---
+
+## Run Inference
+
+```bash
+python inference.py
+```
+
+---
+
+Future versions will include Docker containers, automated CI/CD pipelines and one-command deployment.
+
+---
+
+# 📈 Performance Targets
+
+The objective of Valthoris is not only accuracy.
+
+Performance must remain practical for real-world deployment.
+
+| Metric | Target |
+|---------|--------|
+| Accuracy | >98% |
+| Precision | >97% |
+| Recall | >97% |
+| F1 Score | >97% |
+| False Positive Rate | <1% |
+| Average Inference Time | <100 ms |
+| AI Confidence | Dynamic |
+
+Performance will continuously improve as additional datasets become available.
+
+---
+
+# 💻 Example Inference
+
+Example message:
+
+```text
+Dear customer,
+
+Your bank account has been temporarily suspended.
+
+Click the link below immediately to restore access.
+
+https://secure-bank-login-example.com
+```
+
+Output:
+
+```text
+Classification
+
+PHISHING
+
+Risk Score
+
+96 / 100
+
+Confidence
+
+99.2%
+
+Detected Indicators
+
+✔ Urgency
+
+✔ Credential Request
+
+✔ Suspicious Domain
+
+✔ Brand Impersonation
+
+✔ Behaviour Pattern Match
+
+Recommendation
+
+Do NOT open the link.
+Report immediately.
+```
+
+Every prediction is accompanied by technical justification.
+
+The objective is to help users understand the decision, not simply display a warning.
+
+---
+
+# 🤝 Contributing
+
+Valthoris welcomes responsible contributions from:
+
+- Developers
+- Security Researchers
+- AI Engineers
+- Universities
+- CERT Teams
+- Cybersecurity Professionals
+
+Contributions should respect the project's ethical principles.
+
+Before submitting a Pull Request:
+
+- Follow the coding guidelines.
+- Document significant changes.
+- Maintain compatibility.
+- Prioritise security.
+
+Quality is always preferred over quantity.
+
+---
+
+# 📜 License
+
+This project is distributed under the **MIT License**.
+
+See the `LICENSE` file for complete details.
+
+---
+
+# 👤 Founder
+
+## Hermínio Coragem
+
+Creator of the Valthoris platform.
+
+Author of:
+
+- Concept
+- Brand
+- Architecture
+- Artificial Intelligence Vision
+- Cybersecurity Strategy
+- Documentation
+
+Valthoris is an original project created to redefine how Artificial Intelligence can prevent digital fraud.
+
+---
+
+# ❤️ Acknowledgements
+
+This project exists thanks to the continuous evolution of cybersecurity knowledge, open-source technologies and the global security community.
+
+Special recognition to every researcher, developer and ethical hacker working towards a safer digital world.
+
+Every contribution matters.
+
+Every report protects someone.
+
+Every improvement strengthens the ecosystem.
+
+---
+
+# 🌍 Official Motto
+
+<div align="center">
+
+# 🛡 VALTHORIS
+
+## INTELLIGENCE • PREVENTION • PROTECTION
+
+### CYBERSECURITY • AI • BLOCKCHAIN • ICP
+
+---
+
+*"The best fraud is the one that never happens."*
+
+---
+
+**Designed by Hermínio Coragem**
+
+---
+
+© 2026 Valthoris
+
+All Rights Reserved.
+
+</div>
