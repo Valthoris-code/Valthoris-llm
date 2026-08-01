@@ -5,12 +5,12 @@
 
   <br><br>
 
-  <!-- Logótipo Completo Centralizado -->
+  <!-- Logótipo Completo Principal -->
   <img src="documentos/valthoris-logo.png" width="260" alt="Valthoris Logo">
 
   <br><br>
 
-  <!-- Escudo como Elemento Visual Centrado -->
+  <!-- Escudo Centralizado -->
   <p align="center">
     <img src="documentos/escudo-valthoris.png" width="40" height="40" alt="Valthoris Shield">
   </p>
@@ -20,7 +20,7 @@
 
   <br>
 
-  <!-- Badges / Selos de Estado em Inglês -->
+  <!-- Badges em Inglês -->
   <p align="center">
     <img src="https://img.shields.io/badge/Status-Under%20Construction%20%2F%20Active%20Development-yellow?style=for-the-badge&logo=github" alt="Project Status">
     <img src="https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=for-the-badge" alt="Alpha Version">
@@ -38,34 +38,6 @@
   A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
 </p>
 
----
-
-
----
-
-> ⚠️ **Aviso de Desenvolvimento:** A plataforma **Valthoris encontra-se atualmente em fase ativa de construção e treino de modelos**. Os módulos e funcionalidades estão a ser implementados progressivamente.
-
----
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
-
----
-
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
-
----
-
-
----
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
 
 ---
 
