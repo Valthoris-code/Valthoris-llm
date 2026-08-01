@@ -10,9 +10,9 @@
 
   <br><br>
 
-  <!-- Escudo Centralizado -->
+  <!-- Escudo Correto (valthoris-shield.png) -->
   <p align="center">
-    <img src="documentos/escudo-valthoris.png" width="40" height="40" alt="Valthoris Shield">
+    <img src="documentos/valthoris-shield.png" width="40" height="40" alt="Valthoris Shield">
   </p>
 
   <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
@@ -27,6 +27,18 @@
   </p>
 
 </div>
+
+---
+
+> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
+
+---
+
+<p align="center">
+  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
+</p>
+
+
 
 ---
 
