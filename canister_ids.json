@@ -1,0 +1,20 @@
+{
+  "frontend": {
+    "ic": "v63rh-lqaaa-aaaaa-qewvq-cai"
+  },
+  "backend": {
+    "ic": "c6sjf-tqaaa-aaaap-qsiea-cai"
+  },
+  "community": {
+    "ic": "7w5qg-6aaaa-aaaab-ael4a-cai"
+  },
+  "identity": {
+    "ic": "ezroe-caaaa-aaaac-bcdeq-cai"
+  },
+  "threat_intelligence": {
+    "ic": "e2m3q-yqaaa-aaaas-qekva-cai"
+  },
+  "safe_location": {
+    "ic": "sodv3-uiaaa-aaaak-qxubq-cai"
+  }
+}

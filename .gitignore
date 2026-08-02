@@ -51,8 +51,11 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Translations
+# Translations (compiled gettext binaries)
+# NOTE: *.mo also matches Motoko source files used by Internet Computer canisters.
+# The negation below ensures Motoko source files are always tracked by git.
 *.mo
+!src/**/*.mo
 *.pot
 
 # Django stuff:
