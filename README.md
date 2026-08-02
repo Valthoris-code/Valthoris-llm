@@ -6,13 +6,13 @@
   <br><br>
 
   <!-- Logótipo Completo Principal -->
-  <img src="documentos/valthoris-logo.png" width="260" alt="Valthoris Logo">
+  <img src="valthoris-desktop-scene.png" width="260" alt="Valthoris Logo">
 
   <br><br>
 
-  <!-- Escudo Correto (valthoris-shield.png) -->
+  <!-- Escudo Correto (valthoris-3d-shield.png) -->
   <p align="center">
-    <img src="documentos/valthoris-shield.png" width="40" height="40" alt="Valthoris Shield">
+    <img src="documentos/valthoris-3d-shield.png" width="40" height="40" alt="Valthoris Shield">
   </p>
 
   <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
