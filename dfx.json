@@ -3,57 +3,28 @@
   "canisters": {
     "frontend": {
       "type": "assets",
-      "source": ["src/frontend"],
-      "remote": {
-        "id": {
-          "ic": "v63rh-lqaaa-aaaaa-qewvq-cai"
-        }
-      }
+      "source": ["src/app/dist"],
+      "build": "npm --prefix src/app run build"
     },
     "backend": {
       "type": "motoko",
-      "main": "src/backend/main.mo",
-      "remote": {
-        "id": {
-          "ic": "c6sjf-tqaaa-aaaap-qsiea-cai"
-        }
-      }
+      "main": "src/backend/main.mo"
     },
     "community": {
       "type": "motoko",
-      "main": "src/community/main.mo",
-      "remote": {
-        "id": {
-          "ic": "7w5qg-6aaaa-aaaab-ael4a-cai"
-        }
-      }
+      "main": "src/community/main.mo"
     },
     "identity": {
       "type": "motoko",
-      "main": "src/identity/main.mo",
-      "remote": {
-        "id": {
-          "ic": "ezroe-caaaa-aaaac-bcdeq-cai"
-        }
-      }
+      "main": "src/identity/main.mo"
     },
     "threat_intelligence": {
       "type": "motoko",
-      "main": "src/threat_intelligence/main.mo",
-      "remote": {
-        "id": {
-          "ic": "e2m3q-yqaaa-aaaas-qekva-cai"
-        }
-      }
+      "main": "src/threat_intelligence/main.mo"
     },
     "safe_location": {
       "type": "motoko",
-      "main": "src/safe_location/main.mo",
-      "remote": {
-        "id": {
-          "ic": "sodv3-uiaaa-aaaak-qxubq-cai"
-        }
-      }
+      "main": "src/safe_location/main.mo"
     }
   },
   "networks": {
@@ -66,10 +37,5 @@
       "type": "persistent"
     }
   },
-  "output_env_file": ".env",
-  "defaults": {
-    "build": {
-      "packtool": "mops"
-    }
-  }
+  "output_env_file": ".env"
 }

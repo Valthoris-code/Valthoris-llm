@@ -1,0 +1,47 @@
+type IdentifierType = variant {
+  phone; email; domain; iban; walletAddress; nif; company;
+};
+
+type ReputationEntry = record {
+  identifier         : text;
+  identifierType     : IdentifierType;
+  reportCount        : nat;
+  trustScore         : nat;
+  riskScore          : nat;
+  isKnownScammer     : bool;
+  isVerifiedBusiness : bool;
+  firstSeen          : int;
+  lastUpdated        : int;
+  notes              : vec text;
+};
+
+type LookupResult = record {
+  found              : bool;
+  trustScore         : nat;
+  riskScore          : nat;
+  reportCount        : nat;
+  isKnownScammer     : bool;
+  isVerifiedBusiness : bool;
+  notes              : vec text;
+  lastSeen           : int;
+};
+
+type SuspiciousContactInput = record {
+  identifier     : text;
+  identifierType : IdentifierType;
+  reason         : text;
+};
+
+type VoidResult = variant { ok; err : text };
+
+service : {
+  lookupPhone          : (text)                      -> (LookupResult) query;
+  lookupEmail          : (text)                      -> (LookupResult) query;
+  lookupDomain         : (text)                      -> (LookupResult) query;
+  lookupIBAN           : (text)                      -> (LookupResult) query;
+  lookupWallet         : (text)                      -> (LookupResult) query;
+  registerSuspicious   : (SuspiciousContactInput)    -> (VoidResult);
+  getReputationEntry   : (text)                      -> (opt ReputationEntry) query;
+  lookupBatch          : (vec text)                  -> (vec LookupResult) query;
+  getDatabaseSize      : ()                          -> (nat) query;
+};
