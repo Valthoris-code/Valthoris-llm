@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useActors } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
 
+// Matches the backend UserProfile type exactly
 interface UserProfile {
   principal: string;
-  username: string;
-  email: string[];
-  reputation: bigint;
+  displayName: string;
+  createdAt: bigint;
+  updatedAt: bigint;
+  reputationScore: bigint;
   totalScans: bigint;
   totalReports: bigint;
-  registeredAt: bigint;
+  isActive: boolean;
 }
 
 export default function Profile() {
@@ -24,9 +26,8 @@ export default function Profile() {
   const [success, setSuccess]   = useState('');
 
   // Register form
-  const [username, setUsername] = useState('');
-  const [email, setEmail]       = useState('');
-  const [registering, setReg]   = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [registering, setReg]         = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/'); return; }
@@ -37,9 +38,10 @@ export default function Profile() {
     setLoading(true);
     try {
       const res = await actors.backend.getUserProfile();
-      if (res.length > 0 && res[0]) {
-        setProfile(res[0] as unknown as UserProfile);
+      if ('ok' in res) {
+        setProfile(res.ok as unknown as UserProfile);
       }
+      // If 'err' in res the user is simply not registered yet — that's fine
     } catch (e) {
       setError(String(e));
     } finally {
@@ -48,14 +50,11 @@ export default function Profile() {
   };
 
   const handleRegister = async () => {
-    if (!username.trim()) return;
+    if (!displayName.trim()) return;
     setReg(true);
     setError('');
     try {
-      const res = await actors.backend.registerUser(
-        username.trim(),
-        email.trim() ? [email.trim()] : []
-      );
+      const res = await actors.backend.registerUser(displayName.trim());
       if ('ok' in res) {
         setSuccess('Perfil criado com sucesso!');
         await loadProfile();
@@ -93,14 +92,10 @@ export default function Profile() {
           <p className="text-muted">Este é o seu primeiro acesso. Crie o seu perfil para aceder a todas as funcionalidades.</p>
           <div className="mt-2">
             <label className="text-muted" style={{ fontSize: '0.88rem' }}>Nome de utilizador *</label>
-            <input value={username} onChange={e => setUsername(e.target.value)} placeholder="valthoris_user" style={{ marginTop: '0.3rem' }} />
-          </div>
-          <div className="mt-2">
-            <label className="text-muted" style={{ fontSize: '0.88rem' }}>E-mail (opcional)</label>
-            <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="user@exemplo.com" style={{ marginTop: '0.3rem' }} />
+            <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="valthoris_user" style={{ marginTop: '0.3rem' }} />
           </div>
           <button className="btn-primary mt-2" onClick={handleRegister}
-            disabled={registering || !username.trim()}>
+            disabled={registering || !displayName.trim()}>
             {registering ? '⏳ A criar...' : '✅ Criar Perfil'}
           </button>
         </div>
@@ -109,16 +104,12 @@ export default function Profile() {
           <div className="flex items-center gap-2 mb-2">
             <div style={{ fontSize: '3rem' }}>👤</div>
             <div>
-              <h2 style={{ margin: 0 }}>{profile.username}</h2>
-              <span className={`badge mt-1 ${reputationColor(profile.reputation)}`}>
-                Reputação {String(profile.reputation)}/100
+              <h2 style={{ margin: 0 }}>{profile.displayName}</h2>
+              <span className={`badge mt-1 ${reputationColor(profile.reputationScore)}`}>
+                Reputação {String(profile.reputationScore)}/100
               </span>
             </div>
           </div>
-
-          {profile.email.length > 0 && (
-            <p className="text-muted" style={{ fontSize: '0.9rem' }}>📧 {profile.email[0]}</p>
-          )}
 
           <div className="stat-grid mt-2">
             <div className="card">
@@ -136,7 +127,7 @@ export default function Profile() {
           </div>
 
           <p className="text-muted mt-2" style={{ fontSize: '0.8rem' }}>
-            Membro desde {new Date(Number(profile.registeredAt / BigInt(1_000_000))).toLocaleDateString('pt-PT')}
+            Membro desde {new Date(Number(profile.createdAt / BigInt(1_000_000))).toLocaleDateString('pt-PT')}
           </p>
         </div>
       )}

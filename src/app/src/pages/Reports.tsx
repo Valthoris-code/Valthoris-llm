@@ -2,12 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useActors } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
 
+// Local view model mapped from the canister Report type
 interface Report {
   id: string;
   target: string;
-  targetType: string;
-  title: string;
+  category: string;      // derived from the canister category variant
   description: string;
+  evidence: string | null;
   riskScore: bigint;
   status: string;
   confirmVotes: bigint;
@@ -16,18 +17,20 @@ interface Report {
 }
 
 const TARGET_TYPES = [
-  { value: 'phone',   label: 'Telefone'  },
-  { value: 'email',   label: 'E-mail'    },
-  { value: 'url',     label: 'URL'       },
-  { value: 'wallet',  label: 'Carteira'  },
-  { value: 'iban',    label: 'IBAN'      },
-  { value: 'domain',  label: 'Domínio'   },
-  { value: 'profile', label: 'Perfil'    },
+  { value: 'phishing',      label: 'Phishing'      },
+  { value: 'smishing',      label: 'Smishing'       },
+  { value: 'scam',          label: 'Burla'          },
+  { value: 'malware',       label: 'Malware'        },
+  { value: 'spam',          label: 'Spam'           },
+  { value: 'fraud',         label: 'Fraude'         },
+  { value: 'impersonation', label: 'Personificação' },
+  { value: 'cryptoFraud',   label: 'Cripto-Fraude'  },
+  { value: 'other',         label: 'Outro'          },
 ];
 
 function statusBadge(s: string): string {
-  if (s === 'confirmed')   return 'badge-red';
-  if (s === 'rejected')    return 'badge-green';
+  if (s === 'confirmed')     return 'badge-red';
+  if (s === 'rejected')      return 'badge-green';
   if (s === 'investigating') return 'badge-amber';
   return 'badge-cyan';
 }
@@ -44,8 +47,7 @@ export default function Reports() {
   // Submit form state
   const [showForm, setShowForm] = useState(false);
   const [target, setTarget]     = useState('');
-  const [targetType, setType]   = useState('phone');
-  const [title, setTitle]       = useState('');
+  const [category, setCategory] = useState('phishing');
   const [desc, setDesc]         = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,11 +58,11 @@ export default function Reports() {
       const mapped: Report[] = raw.map((r: any) => ({
         id:           r.id,
         target:       r.target,
-        targetType:   Object.keys(r.targetType)[0],
-        title:        r.title,
+        category:     Object.keys(r.category)[0] ?? 'other',
         description:  r.description,
+        evidence:     r.evidence.length > 0 ? r.evidence[0] : null,
         riskScore:    r.riskScore,
-        status:       Object.keys(r.status)[0],
+        status:       Object.keys(r.status)[0] ?? 'pending',
         confirmVotes: r.confirmVotes,
         rejectVotes:  r.rejectVotes,
         createdAt:    r.createdAt,
@@ -76,16 +78,19 @@ export default function Reports() {
   useEffect(() => { loadReports(); }, [loadReports]);
 
   const handleSubmit = async () => {
-    if (!target || !title || !desc) return;
+    if (!target || !desc) return;
     setSubmitting(true);
     setError('');
     try {
       const res = await actors.community.submitReport(
-        target, { [targetType]: null } as any, title, desc, []
+        { [category]: null } as any,  // ReportCategory variant
+        target,                        // target identifier
+        desc,                          // description
+        [],                            // evidence (optional)
       );
       if ('ok' in res) {
         setSuccess('Denúncia submetida com ID: ' + res.ok);
-        setTarget(''); setTitle(''); setDesc('');
+        setTarget(''); setDesc('');
         setShowForm(false);
         await loadReports();
       } else {
@@ -129,8 +134,8 @@ export default function Reports() {
         <div className="card mb-2" style={{ maxWidth: 620 }}>
           <h3 className="mt-1">Submeter Denúncia</h3>
           <div className="mt-2">
-            <label className="text-muted" style={{ fontSize: '0.88rem' }}>Tipo de Alvo</label>
-            <select value={targetType} onChange={e => setType(e.target.value)} style={{ marginTop: '0.3rem' }}>
+            <label className="text-muted" style={{ fontSize: '0.88rem' }}>Categoria</label>
+            <select value={category} onChange={e => setCategory(e.target.value)} style={{ marginTop: '0.3rem' }}>
               {TARGET_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
@@ -139,14 +144,10 @@ export default function Reports() {
             <input style={{ marginTop: '0.3rem' }} value={target} onChange={e => setTarget(e.target.value)} placeholder="Alvo da denúncia" />
           </div>
           <div className="mt-2">
-            <label className="text-muted" style={{ fontSize: '0.88rem' }}>Título</label>
-            <input style={{ marginTop: '0.3rem' }} value={title} onChange={e => setTitle(e.target.value)} placeholder="Título breve" />
-          </div>
-          <div className="mt-2">
             <label className="text-muted" style={{ fontSize: '0.88rem' }}>Descrição</label>
-            <textarea style={{ marginTop: '0.3rem' }} rows={4} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descreva o incidente" />
+            <textarea style={{ marginTop: '0.3rem' }} rows={4} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descreva o incidente (mínimo 10 caracteres)" />
           </div>
-          <button className="btn-primary mt-2" onClick={handleSubmit} disabled={submitting || !target || !title || !desc}>
+          <button className="btn-primary mt-2" onClick={handleSubmit} disabled={submitting || !target || !desc}>
             {submitting ? '⏳ A submeter...' : '📤 Submeter'}
           </button>
         </div>
@@ -162,16 +163,15 @@ export default function Reports() {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-muted" style={{ fontSize: '0.8rem' }}>{r.id}</span>
                 <span className={`badge ${statusBadge(r.status)}`}>{r.status}</span>
-                <span className="badge badge-cyan">{r.targetType}</span>
+                <span className="badge badge-cyan">{r.category}</span>
                 <span style={{ marginLeft: 'auto', color: 'var(--accent-amber)', fontWeight: 700 }}>
                   Risco {String(r.riskScore)}%
                 </span>
               </div>
-              <h3 style={{ margin: '0 0 0.35rem' }}>{r.title}</h3>
-              <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>{r.description}</p>
-              <p className="text-muted" style={{ fontSize: '0.82rem', margin: '0.4rem 0 0' }}>
+              <p className="text-muted" style={{ fontSize: '0.82rem', margin: '0.2rem 0' }}>
                 Alvo: <code style={{ color: 'var(--accent-cyan)' }}>{r.target}</code>
               </p>
+              <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>{r.description}</p>
               {isAuthenticated && (
                 <div className="flex gap-1 mt-2">
                   <button className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.8rem' }}

@@ -5,15 +5,15 @@ import { useActors } from '../hooks/useActors';
 
 interface SystemStats {
   totalUsers: bigint;
-  totalScans: bigint;
-  totalReports: bigint;
-  activeThreats: bigint;
+  version: string;
+  startTime: bigint;
 }
 
 interface CommunityStats {
   totalReports: bigint;
-  confirmedReports: bigint;
+  confirmedThreats: bigint;
   pendingReports: bigint;
+  totalVotes: bigint;
 }
 
 export default function Dashboard() {
@@ -39,14 +39,14 @@ export default function Dashboard() {
         ]);
         setSysStats({
           totalUsers:   sys.totalUsers,
-          totalScans:   sys.totalScans,
-          totalReports: sys.totalReports,
-          activeThreats: BigInt(0), // fetched from threat_intelligence on next iteration
+          version:      sys.version,
+          startTime:    sys.startTime,
         });
         setComStats({
           totalReports:    com.totalReports,
-          confirmedReports: com.confirmedReports,
+          confirmedThreats: com.confirmedThreats,
           pendingReports:   com.pendingReports,
+          totalVotes:       com.totalVotes,
         });
       } catch (e) {
         setError('Erro ao carregar estatísticas: ' + String(e));
@@ -71,8 +71,7 @@ export default function Dashboard() {
           <h2 className="mt-3">Estatísticas do Sistema</h2>
           <div className="stat-grid">
             <StatCard label="Utilizadores" value={String(sysStats.totalUsers)} icon="👥" />
-            <StatCard label="Verificações"  value={String(sysStats.totalScans)}   icon="🔍" />
-            <StatCard label="Denúncias"     value={String(sysStats.totalReports)} icon="🚨" />
+            <StatCard label="Versão"        value={sysStats.version}            icon="🔖" />
           </div>
         </>
       )}
@@ -81,9 +80,10 @@ export default function Dashboard() {
         <>
           <h2 className="mt-3">Comunidade</h2>
           <div className="stat-grid">
-            <StatCard label="Total Denúncias"     value={String(comStats.totalReports)}     icon="📋" />
-            <StatCard label="Confirmadas"         value={String(comStats.confirmedReports)} icon="✅" />
-            <StatCard label="Em Investigação"     value={String(comStats.pendingReports)}   icon="🔎" />
+            <StatCard label="Total Denúncias"  value={String(comStats.totalReports)}      icon="📋" />
+            <StatCard label="Confirmadas"       value={String(comStats.confirmedThreats)}  icon="✅" />
+            <StatCard label="Em Investigação"   value={String(comStats.pendingReports)}    icon="🔎" />
+            <StatCard label="Votos"             value={String(comStats.totalVotes)}        icon="🗳" />
           </div>
         </>
       )}

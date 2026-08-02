@@ -47,29 +47,20 @@ export default function Scanner() {
     try {
       if (scanType === 'phone') {
         const res = await actors.identity.lookupPhone(query.trim());
-        if ('ok' in res) {
-          const entry = res.ok;
-          setPhoneResult(
-            `Tipo: ${Object.keys(entry.identifierType)[0]} | ` +
-            `Risco: ${entry.riskScore}/100 | ` +
-            `Confiança: ${Object.keys(entry.trustLevel)[0]} | ` +
-            `Denúncias: ${entry.reportCount}`
-          );
-        } else {
-          setPhoneResult('Sem registos para este número.');
-        }
+        setPhoneResult(
+          res.found
+            ? `Risco: ${String(res.riskScore)}/100 | Confiança: ${String(res.trustScore)}/100 | Denúncias: ${String(res.reportCount)}` +
+              (res.isKnownScammer ? ' ⚠ SCAMMER CONHECIDO' : '')
+            : 'Sem registos para este número.'
+        );
       } else if (scanType === 'domain_lookup') {
         const res = await actors.identity.lookupDomain(query.trim());
-        if ('ok' in res) {
-          const entry = res.ok;
-          setPhoneResult(
-            `Domínio: ${entry.identifier} | ` +
-            `Risco: ${entry.riskScore}/100 | ` +
-            `Denúncias: ${entry.reportCount}`
-          );
-        } else {
-          setPhoneResult('Sem registos para este domínio.');
-        }
+        setPhoneResult(
+          res.found
+            ? `Risco: ${String(res.riskScore)}/100 | Confiança: ${String(res.trustScore)}/100 | Denúncias: ${String(res.reportCount)}` +
+              (res.isKnownScammer ? ' ⚠ SCAMMER CONHECIDO' : '')
+            : 'Sem registos para este domínio.'
+        );
       } else {
         let res: ThreatResult;
         switch (scanType) {
