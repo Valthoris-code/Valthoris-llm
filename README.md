@@ -3552,6 +3552,78 @@ Every improvement strengthens the ecosystem.
   <h4>CIBERSEGURANÇA • IA • BLOCKCHAIN • ICP</h4>
 
   <br>
+/* Incluir os Ícones da FontAwesome se ainda não tiveres no <head> */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+.valthoris-footer-share {
+  background-color: #050b14;
+  border: 1px solid #102a45;
+  border-radius: 20px;
+  padding: 30px 20px;
+  text-align: center;
+  max-width: 500px;
+  margin: 20px auto;
+  color: #ffffff;
+}
+
+.valthoris-footer-share h3 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.valthoris-footer-share p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+
+.social-icons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.social-icons-grid a {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #1a3a5c;
+  background-color: #081426;
+  color: #00d8f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.social-icons-grid a:hover {
+  background-color: #00d8f6;
+  color: #020617;
+  box-shadow: 0 0 12px rgba(0, 216, 246, 0.6);
+  transform: translateY(-2px);
+}
+
+.github-direct-link a {
+  color: #00d8f6;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+}
+
+.github-direct-link a:hover {
+  color: #38ef7d;
+  text-decoration: underline;
+}
+
 
   <p><i>"A melhor fraude é aquela que nunca acontece."</i></p>
 
