@@ -70,7 +70,7 @@ Valthoris protection for the senior members of your family.
 
 <br>
 
-![Valthoris Desktop Scene](documentos/Valthoris-desktop-scene.png)
+<img src="documentos/valthoris-elderly-protection.png" alt="Valthoris Elderly Protection" width="100%">
 
 <br>
 
