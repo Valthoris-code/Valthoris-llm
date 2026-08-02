@@ -64,7 +64,7 @@
 
 <div align="center">
 
-# Valthoris Elderly Protection
+ Valthoris Elderly Protection
 
 Valthoris protection for the senior members of your family.
 
