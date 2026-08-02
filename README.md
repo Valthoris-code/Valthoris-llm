@@ -61,41 +61,26 @@
 </p>
 
 ---
+<div align="center">
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Valthoris</title>
-    <style>
-        .container {
-            text-align: center;
-            margin-top: 50px;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-    </style>
-</head>
-<body>
+# Proteção Valthoris para Idosos
 
-    <div class="container">
-        <h1>Valthoris Elderly Protection</h1>
-        <p>Valthoris protection for the senior members of your family.</p>
-        
-        <img src="documentos/valthoris-elderly-protection.png" alt="An elderly person holding a smartphone running the Valthoris app">
+A proteção Valthoris para os membros mais seniores da sua família.
 
-        <p>Ensuring digital security for your loved ones.</p>
-    </div>
+<br>
 
-</body>
-</html>
+![Proteção Valthoris](documentos/valthoris-elderly-protection.png)
+
+<br>
+
+*Garantindo a segurança digital para quem mais ama.*
+
+</div>
 
 
-> **"The best fraud is the one that never happens."**
+
+
+ **"The best fraud is the one that never happens."**
 
 ### Official Valthoris Manifesto
 
