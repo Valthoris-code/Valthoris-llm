@@ -3552,40 +3552,47 @@ Every improvement strengthens the ecosystem.
   <h4>CIBERSEGURANÇA • IA • BLOCKCHAIN • ICP</h4>
 
   <br>
-<style>
-  @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
-  .valthoris-footer-share { 
-    background-color: #050b14; 
-    border: 1px solid #102a45; 
-    border-radius: 20px; 
-    padding: 30px 20px; 
-    text-align: center; 
-    max-width: 500px; 
-    margin: 20px auto; 
-    color: #ffffff; 
-  }
+---
 
-  .valthoris-footer-share h3 { 
-    font-size: 1.5rem; 
-    margin-bottom: 8px; 
-    color: #ffffff; 
-  }
+<div align="center">
 
-  .valthoris-footer-share p { 
-    color: #94a3b8; 
-    font-size: 0.95rem; 
-    margin-bottom: 25px; 
-  }
+### Partilhe o Valthoris
+*Ajude a proteger mais pessoas contra fraudes.*
 
-  .social-icons-grid { 
-    display: flex; 
-    flex-wrap: wrap; 
-    justify-content: center; 
-    gap: 15px; 
-    margin-bottom: 25px; 
-  }
-</style>
+<br>
+
+<!-- Botões de Partilha e Redes -->
+<a href="https://api.whatsapp.com/send?text=Conhe%C3%A7a%20o%20Valthoris%20-%20Plataforma%20de%20Ciberseguran%C3%A7a%20e%20IA:%20https://valthoris.com" target="_blank">
+  <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp">
+</a>
+<a href="https://twitter.com/intent/tweet?text=Conhe%C3%A7a%20o%20Valthoris&url=https://valthoris.com" target="_blank">
+  <img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white" alt="X">
+</a>
+<a href="https://t.me/share/url?url=https://valthoris.com&text=Conhe%C3%A7a%20o%20Valthoris" target="_blank">
+  <img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram">
+</a>
+<a href="https://www.facebook.com/sharer/sharer.php?u=https://valthoris.com" target="_blank">
+  <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook">
+</a>
+<a href="https://www.linkedin.com/sharing/share-offsite/?url=https://valthoris.com" target="_blank">
+  <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+</a>
+<a href="mailto:?subject=Valthoris%20-%20Prote%C3%A7%C3%A3o%20Digital&body=Descobre%20o%20projeto%20Valthoris%20em%20https://valthoris.com">
+  <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email">
+</a>
+<a href="https://www.youtube.com" target="_blank">
+  <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube">
+</a>
+
+<br><br>
+
+<!-- Link Direto GitHub -->
+<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
+  <img src="https://img.shields.io/badge/GitHub_Oficial_do_Projeto-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+</a>
+
+</div>
 
 
 
