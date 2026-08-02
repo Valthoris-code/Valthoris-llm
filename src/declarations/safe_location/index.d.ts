@@ -1,11 +1,11 @@
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface LocationData {
-  latitude  : number;
-  longitude : number;
-  accuracy  : [] | [number];
-  timestamp : bigint;
-  label     : [] | [string];
+  latitude      : number;
+  longitude     : number;
+  accuracy      : [] | [number];
+  timestamp     : bigint;
+  locationLabel : [] | [string];
 }
 
 export interface ShareInfo {

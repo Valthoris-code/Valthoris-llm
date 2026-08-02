@@ -59,8 +59,8 @@ export default function SafeLocation() {
         latitude, longitude,
         [],           // accuracy — optional
         ttlSec,
-        label ? [label] : [],
-        recipient ? [recipient] : []
+        recipient ? [recipient] : [],
+        label ? [label] : []
       );
       if ('ok' in res) {
         setSuccess('Partilha criada! Token: ' + res.ok);

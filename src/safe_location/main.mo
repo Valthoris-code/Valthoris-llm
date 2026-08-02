@@ -20,11 +20,11 @@ actor SafeLocation {
   // ──────────────────────────────────────────────────────────────────────
 
   public type LocationData = {
-    latitude  : Float;
-    longitude : Float;
-    accuracy  : ?Float;
-    timestamp : Int;
-    label     : ?Text;
+    latitude      : Float;
+    longitude     : Float;
+    accuracy      : ?Float;
+    timestamp     : Int;
+    locationLabel : ?Text;
   };
 
   public type ShareInfo = {
@@ -136,12 +136,12 @@ actor SafeLocation {
   /// Create a new location share. Returns a unique access token.
   /// `ttlSeconds` must be 1–2592000 (30 days max).
   public shared(msg) func shareLocation(
-    lat        : Float,
-    lng        : Float,
-    accuracy   : ?Float,
-    ttlSeconds : Nat,
-    recipient  : ?Text,
-    label      : ?Text,
+    lat           : Float,
+    lng           : Float,
+    accuracy      : ?Float,
+    ttlSeconds    : Nat,
+    recipient     : ?Text,
+    locationLabel : ?Text,
   ) : async ShareResult {
     if (ttlSeconds == 0 or ttlSeconds > 2_592_000) return #err("TTL must be 1 s – 30 days");
     if (lat < -90.0 or lat > 90.0)                 return #err("Latitude out of range");
@@ -158,11 +158,11 @@ actor SafeLocation {
       isActive  = true;
     });
     locations.put(token, {
-      latitude  = lat;
-      longitude = lng;
-      accuracy  = accuracy;
-      timestamp = now;
-      label     = label;
+      latitude      = lat;
+      longitude     = lng;
+      accuracy      = accuracy;
+      timestamp     = now;
+      locationLabel = locationLabel;
     });
     #ok(token)
   };
@@ -181,10 +181,10 @@ actor SafeLocation {
         if (not s.isActive or expired(s))   return #err("Share is no longer active");
         if (lat < -90.0 or lat > 90.0)      return #err("Latitude out of range");
         if (lng < -180.0 or lng > 180.0)    return #err("Longitude out of range");
-        let prevLabel = switch (locations.get(token)) { case (?l) l.label; case null null };
+        let prevLabel = switch (locations.get(token)) { case (?l) l.locationLabel; case null null };
         locations.put(token, {
-          latitude  = lat; longitude = lng;
-          accuracy  = accuracy; timestamp = Time.now(); label = prevLabel;
+          latitude = lat; longitude = lng;
+          accuracy = accuracy; timestamp = Time.now(); locationLabel = prevLabel;
         });
         #ok(())
       };

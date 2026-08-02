@@ -1,10 +1,10 @@
 export const idlFactory = ({ IDL }) => {
   const LocationData = IDL.Record({
-    latitude  : IDL.Float64,
-    longitude : IDL.Float64,
-    accuracy  : IDL.Opt(IDL.Float64),
-    timestamp : IDL.Int,
-    label     : IDL.Opt(IDL.Text),
+    latitude      : IDL.Float64,
+    longitude     : IDL.Float64,
+    accuracy      : IDL.Opt(IDL.Float64),
+    timestamp     : IDL.Int,
+    locationLabel : IDL.Opt(IDL.Text),
   });
   const ShareInfo = IDL.Record({
     token     : IDL.Text,
