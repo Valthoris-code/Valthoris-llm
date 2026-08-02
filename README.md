@@ -61,22 +61,22 @@
 </p>
 
 ---
+
 <div align="center">
 
-# Proteção Valthoris para Idosos
+# Valthoris Elderly Protection
 
-A proteção Valthoris para os membros mais seniores da sua família.
-
-<br>
-
-![Proteção Valthoris](documentos/valthoris-elderly-protection.png)
+Valthoris protection for the senior members of your family.
 
 <br>
 
-*Garantindo a segurança digital para quem mais ama.*
+![Valthoris Desktop Scene](documentos/Valthoris-desktop-scene.png)
+
+<br>
+
+*Ensuring digital security for your loved ones.*
 
 </div>
-
 
 
 
