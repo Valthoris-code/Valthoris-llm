@@ -10,6 +10,7 @@ Este script utiliza a biblioteca tokenizers da Hugging Face para:
 """
 
 import os
+import sys
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
@@ -293,4 +294,4 @@ def main():
 
 if __name__ == "__main__":
     success = main()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)
