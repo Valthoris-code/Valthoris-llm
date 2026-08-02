@@ -419,9 +419,11 @@ class GPTModel(nn.Module):
         # =====================================================================
         # MÁSCARA CAUSAL
         # =====================================================================
-        # Expandir máscara para o tamanho da batch
-        mask = self.causal_mask[:seq_length, :seq_length].unsqueeze(0).to(device)
-        mask = mask.expand(batch_size, -1, -1)
+        # Expandir máscara para o tamanho da batch e número de heads
+        # Shape: (batch_size, 1, seq_length, seq_length) para broadcast com
+        # os scores de atenção (batch_size, num_heads, seq_length, seq_length)
+        mask = self.causal_mask[:seq_length, :seq_length].unsqueeze(0).unsqueeze(0).to(device)
+        mask = mask.expand(batch_size, 1, -1, -1)
         
         # =====================================================================
         # BLOCOS TRANSFORMER

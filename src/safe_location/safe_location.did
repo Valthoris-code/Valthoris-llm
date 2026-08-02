@@ -1,0 +1,54 @@
+type LocationData = record {
+  latitude  : float64;
+  longitude : float64;
+  accuracy  : opt float64;
+  timestamp : int;
+  label     : opt text;
+};
+
+type ShareInfo = record {
+  token     : text;
+  owner     : text;
+  recipient : opt text;
+  createdAt : int;
+  expiresAt : int;
+  isActive  : bool;
+};
+
+type GeofenceZone = record {
+  id           : text;
+  owner        : text;
+  name         : text;
+  centerLat    : float64;
+  centerLng    : float64;
+  radiusMeters : float64;
+  alertOnEnter : bool;
+  alertOnExit  : bool;
+  createdAt    : int;
+  isActive     : bool;
+};
+
+type GeofenceAlertType = variant { entered; exited };
+
+type GeofenceAlert = record {
+  zoneId    : text;
+  zoneName  : text;
+  alertType : GeofenceAlertType;
+  timestamp : int;
+};
+
+type ShareResult = variant { ok : text;         err : text };
+type LocResult   = variant { ok : LocationData; err : text };
+type VoidResult  = variant { ok;                err : text };
+
+service : {
+  shareLocation         : (float64, float64, opt float64, nat, opt text, opt text) -> (ShareResult);
+  updateSharedLocation  : (text, float64, float64, opt float64)                    -> (VoidResult);
+  getSharedLocation     : (text)                                                   -> (LocResult);
+  revokeShare           : (text)                                                   -> (VoidResult);
+  listMyShares          : ()                                                       -> (vec ShareInfo) query;
+  setGeofence           : (text, float64, float64, float64, bool, bool)            -> (ShareResult);
+  listMyGeofences       : ()                                                       -> (vec GeofenceZone) query;
+  deleteGeofence        : (text)                                                   -> (VoidResult);
+  checkGeofences        : (float64, float64)                                       -> (vec GeofenceAlert) query;
+};

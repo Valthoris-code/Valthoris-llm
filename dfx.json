@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "canisters": {
+    "frontend": {
+      "type": "assets",
+      "source": ["src/app/dist"],
+      "build": "npm --prefix src/app run build"
+    },
+    "backend": {
+      "type": "motoko",
+      "main": "src/backend/main.mo"
+    },
+    "community": {
+      "type": "motoko",
+      "main": "src/community/main.mo"
+    },
+    "identity": {
+      "type": "motoko",
+      "main": "src/identity/main.mo"
+    },
+    "threat_intelligence": {
+      "type": "motoko",
+      "main": "src/threat_intelligence/main.mo"
+    },
+    "safe_location": {
+      "type": "motoko",
+      "main": "src/safe_location/main.mo"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:4943",
+      "type": "ephemeral"
+    },
+    "ic": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent"
+    }
+  },
+  "output_env_file": ".env"
+}

@@ -1,0 +1,44 @@
+type ReportCategory = variant {
+  phishing; smishing; scam; malware; spam;
+  fraud; impersonation; cryptoFraud; other;
+};
+
+type ReportStatus = variant {
+  pending; confirmed; rejected; investigating;
+};
+
+type Report = record {
+  id           : text;
+  reporter     : text;
+  category     : ReportCategory;
+  target       : text;
+  description  : text;
+  evidence     : opt text;
+  status       : ReportStatus;
+  createdAt    : int;
+  updatedAt    : int;
+  confirmVotes : nat;
+  rejectVotes  : nat;
+  riskScore    : nat;
+};
+
+type CommunityStats = record {
+  totalReports     : nat;
+  confirmedThreats : nat;
+  pendingReports   : nat;
+  totalVotes       : nat;
+};
+
+type SubmitResult = variant { ok : text; err : text };
+type VoidResult   = variant { ok; err : text };
+
+service : {
+  submitReport        : (ReportCategory, text, text, opt text) -> (SubmitResult);
+  getReport           : (text)  -> (opt Report) query;
+  getReportsByTarget  : (text)  -> (vec Report) query;
+  listRecentReports   : (nat)   -> (vec Report) query;
+  voteConfirm         : (text)  -> (VoidResult);
+  voteReject          : (text)  -> (VoidResult);
+  getMyReports        : ()      -> (vec Report) query;
+  getStats            : ()      -> (CommunityStats) query;
+};

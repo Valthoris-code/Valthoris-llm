@@ -1,0 +1,68 @@
+type ThreatCategory = variant {
+  phishing; malware; ransomware; commandAndControl; spam;
+  cryptoMining; botnet; exploit; bruteForce; scam; other;
+};
+
+type ThreatSeverity = variant { low; medium; high; critical };
+
+type IndicatorType = variant {
+  url; ip; domain; fileHash; email; walletAddress;
+};
+
+type ThreatEntry = record {
+  id            : text;
+  indicator     : text;
+  indicatorType : IndicatorType;
+  category      : ThreatCategory;
+  severity      : ThreatSeverity;
+  description   : text;
+  reportedBy    : text;
+  reportedAt    : int;
+  lastSeen      : int;
+  confidence    : nat;
+  tags          : vec text;
+  isActive      : bool;
+};
+
+type ThreatResult = record {
+  isThreat          : bool;
+  severity          : opt ThreatSeverity;
+  category          : opt ThreatCategory;
+  confidence        : nat;
+  matchedIndicators : nat;
+  details           : vec text;
+  lastUpdated       : int;
+};
+
+type ThreatStats = record {
+  totalEntries    : nat;
+  activeThreats   : nat;
+  criticalThreats : nat;
+  highThreats     : nat;
+};
+
+type NewThreatInput = record {
+  indicator     : text;
+  indicatorType : IndicatorType;
+  category      : ThreatCategory;
+  severity      : ThreatSeverity;
+  description   : text;
+  confidence    : nat;
+  tags          : vec text;
+};
+
+type SubmitResult = variant { ok : text; err : text };
+type VoidResult   = variant { ok; err : text };
+
+service : {
+  checkUrl            : (text)           -> (ThreatResult) query;
+  checkIp             : (text)           -> (ThreatResult) query;
+  checkDomain         : (text)           -> (ThreatResult) query;
+  checkHash           : (text)           -> (ThreatResult) query;
+  checkEmail          : (text)           -> (ThreatResult) query;
+  submitThreat        : (NewThreatInput) -> (SubmitResult);
+  getThreat           : (text)           -> (opt ThreatEntry) query;
+  listActiveThreats   : (nat)            -> (vec ThreatEntry) query;
+  deactivateThreat    : (text)           -> (VoidResult);
+  getStats            : ()               -> (ThreatStats) query;
+};
