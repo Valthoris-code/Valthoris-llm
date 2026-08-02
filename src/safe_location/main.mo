@@ -7,7 +7,6 @@ import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 import Option "mo:base/Option";

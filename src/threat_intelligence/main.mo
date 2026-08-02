@@ -4,11 +4,8 @@ import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Char "mo:base/Char";
 import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Nat "mo:base/Nat";
-import Nat32 "mo:base/Nat32";
-import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 
 /// Threat Intelligence — IOC database with fast indicator lookup
@@ -138,7 +135,7 @@ actor ThreatIntelligence {
   func indexIndicator(indicator : Text, id : Text) {
     let key  = normalise(indicator);
     let prev = switch (indicatorIdx.get(key)) { case (?ids) ids; case null [] };
-    indicatorIdx.put(key, Array.append(prev, [id]));
+    indicatorIdx.put(key, { let b = Buffer.fromArray<Text>(prev); b.add(id); Buffer.toArray(b) });
   };
 
   func noThreat() : ThreatResult {

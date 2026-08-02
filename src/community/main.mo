@@ -6,7 +6,6 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Nat "mo:base/Nat";
-import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 
 /// Community — fraud reports, community voting, and reputation signals.
@@ -133,7 +132,7 @@ actor Community {
 
   func recordVote(reportId : Text, voter : Text) {
     let prev = switch (voters.get(reportId)) { case (?vs) vs; case null [] };
-    voters.put(reportId, Array.append(prev, [voter]));
+    voters.put(reportId, { let b = Buffer.fromArray<Text>(prev); b.add(voter); Buffer.toArray(b) });
   };
 
   // ──────────────────────────────────────────────────────────────────────

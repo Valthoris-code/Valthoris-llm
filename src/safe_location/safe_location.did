@@ -3,7 +3,7 @@ type LocationData = record {
   longitude : float64;
   accuracy  : opt float64;
   timestamp : int;
-  label     : opt text;
+  locationLabel : opt text;
 };
 
 type ShareInfo = record {
