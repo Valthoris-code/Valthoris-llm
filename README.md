@@ -1,3 +1,7 @@
+<style>
+  header, .site-header, a.site-title { display: none !important; }
+</style>
+
 <div align="center">
 
   <!-- Banner Animado -->
