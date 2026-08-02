@@ -3,12 +3,10 @@ import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Char "mo:base/Char";
-import Nat32 "mo:base/Nat32";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Nat "mo:base/Nat";
-import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 
 /// Identity — contact lookup, risk scoring, and reputation management.
@@ -123,7 +121,7 @@ actor Identity {
           isVerifiedBusiness = e.isVerifiedBusiness;
           firstSeen          = e.firstSeen;
           lastUpdated        = now;
-          notes              = Array.append(e.notes, [reason]);
+          notes              = { let b = Buffer.fromArray<Text>(e.notes); b.add(reason); Buffer.toArray(b) };
         });
       };
       case null {

@@ -3,11 +3,8 @@ import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Nat "mo:base/Nat";
-import Int "mo:base/Int";
-import Buffer "mo:base/Buffer";
 
 /// Backend Core — coordinates platform services, manages user profiles,
 /// and exposes system statistics.
