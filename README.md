@@ -6,7 +6,8 @@
   <br><br>
 
   <!-- Logótipo Completo Principal -->
-  <img src="valthoris-desktop-scene.png" width="260" alt="Valthoris Logo">
+ <img src="documentos/valthoris-desktop-scene.png" width="260" alt="Valthoris Logo">
+
 
   <br><br>
 
