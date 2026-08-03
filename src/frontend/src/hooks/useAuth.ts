@@ -1,48 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getAuthClient, login as doLogin, logout as doLogout } from '../services/auth';
+/**
+ * useAuth — convenience hook that delegates to AuthContext.
+ *
+ * This hook is a thin wrapper around useAuthContext() so that all
+ * existing components continue to work without any changes.
+ * The AuthState type is intentionally kept compatible with the previous
+ * standalone hook signature (it gains the optional `user` field).
+ */
 
-export interface AuthState {
-  isAuthenticated: boolean;
-  principal: string | null;
-  loading: boolean;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-}
+import { useAuthContext } from '../auth/AuthContext';
+import type { AuthContextValue } from '../auth/AuthContext';
 
-export function useAuth(): AuthState {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [principal, setPrincipal] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+/** @deprecated Use AuthContextValue from auth/AuthContext directly. */
+export type AuthState = AuthContextValue;
 
-  const refresh = useCallback(async () => {
-    const client = await getAuthClient();
-    const authed = await client.isAuthenticated();
-    setIsAuthenticated(authed);
-    if (authed) {
-      setPrincipal(client.getIdentity().getPrincipal().toText());
-    } else {
-      setPrincipal(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const login = useCallback(async () => {
-    setLoading(true);
-    await doLogin();
-    await refresh();
-  }, [refresh]);
-
-  const logout = useCallback(async () => {
-    setLoading(true);
-    await doLogout();
-    setIsAuthenticated(false);
-    setPrincipal(null);
-    setLoading(false);
-  }, []);
-
-  return { isAuthenticated, principal, loading, login, logout };
+export function useAuth(): AuthContextValue {
+  return useAuthContext();
 }
