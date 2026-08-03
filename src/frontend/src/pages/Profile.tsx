@@ -16,6 +16,19 @@ interface UserProfile {
   isActive: boolean;
 }
 
+/** Allow only http/https URLs to prevent javascript: or data: injection. */
+function sanitizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return url;
+    }
+  } catch {
+    // invalid URL
+  }
+  return '';
+}
+
 export default function Profile() {
   const { isAuthenticated, principal, loading: authLoading } = useAuth();
   const actors = useActors();
@@ -141,7 +154,7 @@ export default function Profile() {
             <div className="flex items-center gap-2 mb-2">
               {avatarUrl ? (
                 <img
-                  src={avatarUrl}
+                  src={sanitizeUrl(avatarUrl)}
                   alt="Avatar"
                   style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }}
                 />
