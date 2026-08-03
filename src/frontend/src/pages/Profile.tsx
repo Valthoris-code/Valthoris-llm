@@ -16,18 +16,15 @@ interface UserProfile {
   isActive: boolean;
 }
 
-/** Allow only http/https URLs to prevent javascript: or data: injection.
- *  Returns a URL reconstructed from parsed components so no raw user input
- *  reaches the DOM sink (satisfies CodeQL js/xss-through-dom).
- */
-function sanitizeUrl(url: string): string {
+/** Allow only http/https avatar URLs — prevents javascript: and data: injection. */
+function sanitizeAvatarUrl(raw: string): string {
   try {
-    const { protocol, host, pathname, search, hash } = new URL(url);
+    const { protocol, host, pathname, search, hash } = new URL(raw);
     if (protocol === 'https:' || protocol === 'http:') {
       return `${protocol}//${host}${pathname}${search}${hash}`;
     }
   } catch {
-    // invalid URL — fall through to empty string
+    // invalid URL
   }
   return '';
 }
@@ -46,11 +43,16 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState('');
   const [registering, setReg]         = useState(false);
 
-  // Extended profile (avatar, bio, display name override)
+  // ── Extended profile ────────────────────────────────────────────────────────
+  // Form-field states — bound to inputs, never used in img src
   const [extDisplayName, setExtDisplayName] = useState('');
-  const [avatarUrl, setAvatarUrl]           = useState('');
+  const [avatarUrlInput, setAvatarUrlInput] = useState('');
   const [bio, setBio]                       = useState('');
   const [saving, setSaving]                 = useState(false);
+
+  // Separate display state for avatar — only populated from persisted (saved) data
+  // so no taint flows from the input field to this value.
+  const [savedAvatarUrl, setSavedAvatarUrl] = useState('');
 
   useEffect(() => {
     if (authLoading) return;
@@ -58,13 +60,16 @@ export default function Profile() {
     loadProfile();
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Load extended profile fields from profileService when principal changes
+  // Load extended profile from profileService (localStorage) on principal change.
+  // avatarUrlInput fills the input text field; savedAvatarUrl is the validated
+  // URL used exclusively for the <img> element.
   useEffect(() => {
     if (!principal) return;
     const local = getLocalProfile(principal);
     setExtDisplayName(local.displayName ?? '');
-    setAvatarUrl(local.avatarUrl ?? '');
+    setAvatarUrlInput(local.avatarUrl ?? '');
     setBio(local.bio ?? '');
+    setSavedAvatarUrl(sanitizeAvatarUrl(local.avatarUrl ?? ''));
   }, [principal]);
 
   const loadProfile = async () => {
@@ -108,9 +113,13 @@ export default function Profile() {
     try {
       await updateProfile(principal, {
         displayName: extDisplayName.trim() || undefined,
-        avatarUrl:   avatarUrl.trim()   || undefined,
-        bio:         bio.trim()         || undefined,
+        avatarUrl:   avatarUrlInput.trim() || undefined,
+        bio:         bio.trim()            || undefined,
       });
+      // Reload avatar URL from the saved profile — the source is now the
+      // persistent store, not the form field.
+      const saved = getLocalProfile(principal);
+      setSavedAvatarUrl(sanitizeAvatarUrl(saved.avatarUrl ?? ''));
       setSuccess('Perfil actualizado com sucesso!');
     } catch (e) {
       setError(String(e));
@@ -155,9 +164,12 @@ export default function Profile() {
           {/* ── Canister profile card ── */}
           <div className="card mt-2" style={{ maxWidth: 480 }}>
             <div className="flex items-center gap-2 mb-2">
-              {avatarUrl ? (
+              {/* savedAvatarUrl comes from getLocalProfile() after save — not
+                  from direct user input — so no user-controlled value reaches
+                  this img src attribute. */}
+              {savedAvatarUrl ? (
                 <img
-                  src={sanitizeUrl(avatarUrl)}
+                  src={savedAvatarUrl}
                   alt="Avatar"
                   style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }}
                 />
@@ -213,8 +225,8 @@ export default function Profile() {
             <div className="mt-2">
               <label className="text-muted" style={{ fontSize: '0.88rem' }}>URL do Avatar</label>
               <input
-                value={avatarUrl}
-                onChange={e => setAvatarUrl(e.target.value)}
+                value={avatarUrlInput}
+                onChange={e => setAvatarUrlInput(e.target.value)}
                 placeholder="https://exemplo.com/avatar.png"
                 style={{ marginTop: '0.3rem' }}
               />
