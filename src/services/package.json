@@ -1,0 +1,24 @@
+{
+  "name": "@valthoris/services",
+  "version": "1.0.0",
+  "description": "Valthoris backend services — fraud worker, ICP ingest, AI layer, audit, notifications",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "start:worker": "node dist/fraud-worker/index.js",
+    "start:ingest": "node dist/icp-fraud-ingest/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@dfinity/agent": "^2.1.3",
+    "@dfinity/candid": "^2.1.3",
+    "@dfinity/principal": "^2.1.3",
+    "@supabase/supabase-js": "^2.45.0",
+    "openai": "^4.67.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}
