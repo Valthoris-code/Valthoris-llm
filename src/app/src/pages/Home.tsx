@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './Home.css';
 
@@ -21,7 +23,27 @@ const CANISTERS = [
 ];
 
 export default function Home() {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, loading, login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const launchHandled = useRef(false);
+
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action !== 'login' || loading || launchHandled.current) return;
+
+    launchHandled.current = true;
+
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
+    (async () => {
+      await login();
+      navigate('/dashboard', { replace: true });
+    })();
+  }, [searchParams, loading, isAuthenticated, login, navigate]);
 
   return (
     <div className="home">

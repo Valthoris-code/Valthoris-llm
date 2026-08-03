@@ -213,6 +213,24 @@
       box-shadow: 0 0 40px rgba(255, 0, 255, .60);
     }
 
+    .button-row {
+      margin-top: 40px;
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .button-secondary {
+      background: transparent;
+      border: 1px solid rgba(0, 231, 255, 0.7);
+      box-shadow: 0 0 22px rgba(0, 240, 255, .22);
+    }
+
+    .button-secondary:hover {
+      background: rgba(0, 240, 255, 0.12);
+    }
+
     /* ===========================
     SEÇÕES & CARDS
     =========================== */
@@ -465,7 +483,10 @@
     <p>
       Valthoris é uma plataforma inteligente de proteção digital desenvolvida para combater fraude online, engenharia social, phishing, burlas, malware e ameaças digitais utilizando Inteligência Artificial, Blockchain e Internet Computer Protocol.
     </p>
-    <a class="button" href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank" rel="noopener noreferrer">Ver Projeto</a>
+    <div class="button-row">
+      <a class="button" id="launch-app-btn" href="https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/" target="_blank" rel="noopener noreferrer">🚀 Launch App</a>
+      <a class="button button-secondary" id="login-app-btn" href="https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/?action=login" target="_blank" rel="noopener noreferrer">🔐 Login</a>
+    </div>
   </header>
 
   <section id="modulos">
@@ -689,6 +710,39 @@
     window.addEventListener('resize', init);
     init();
     animate();
+  </script>
+
+  <script>
+    (() => {
+      const launchBtn = document.getElementById('launch-app-btn');
+      const loginBtn = document.getElementById('login-app-btn');
+      if (!launchBtn || !loginBtn) return;
+
+      const MAINNET_APP_URL = 'https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/';
+      const params = new URLSearchParams(window.location.search);
+
+      const explicitAppUrl = params.get('appUrl');
+      const localCanisterId = params.get('appCanisterId') || params.get('canisterId');
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+      let appUrl = MAINNET_APP_URL;
+      if (explicitAppUrl) {
+        appUrl = explicitAppUrl;
+      } else if (isLocalhost && localCanisterId) {
+        appUrl = `${window.location.origin}/?canisterId=${localCanisterId}`;
+      }
+
+      const launchUrl = new URL(appUrl);
+      launchUrl.searchParams.delete('action');
+      launchUrl.searchParams.delete('from');
+
+      const loginUrl = new URL(appUrl);
+      loginUrl.searchParams.set('action', 'login');
+      loginUrl.searchParams.set('from', 'landing');
+
+      launchBtn.href = launchUrl.toString();
+      loginBtn.href = loginUrl.toString();
+    })();
   </script>
 
 </body>
