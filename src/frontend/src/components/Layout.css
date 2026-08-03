@@ -2,10 +2,17 @@
 .layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* ─── Navbar ───────────────────────────────────────────────────── */
+/* ─── Main content ─────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── Navbar (legacy, kept for compat) ─────────────────────────── */
 .navbar {
   display: flex;
   align-items: center;
@@ -74,13 +81,6 @@
   border: 1px solid var(--border);
 }
 
-/* ─── Main content ─────────────────────────────────────────────── */
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 /* ─── Footer ───────────────────────────────────────────────────── */
 .footer {
   padding: 1.25rem 2rem;
@@ -89,4 +89,17 @@
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: var(--bg-secondary);
+}
+
+/* ─── Mobile nav (shown on small screens) ───────────────────────── */
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: flex !important;
+  }
+  .sidebar {
+    display: none !important;
+  }
+  .content {
+    padding-bottom: 60px;
+  }
 }

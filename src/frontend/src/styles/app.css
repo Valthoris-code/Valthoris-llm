@@ -145,3 +145,68 @@ input:focus, textarea:focus, select:focus {
   margin: 2rem auto;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Glass card ─────────────────────────────────────────────────── */
+.glass {
+  background: rgba(10, 37, 64, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-radius: var(--radius);
+}
+
+/* ── Section headings ───────────────────────────────────────────── */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Coming soon badge ──────────────────────────────────────────── */
+.badge-coming-soon {
+  background: rgba(255, 170, 0, 0.12);
+  color: var(--accent-amber);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Beta badge ─────────────────────────────────────────────────── */
+.badge-beta {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pulse  { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes blink  { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+.animate-fade-in  { animation: fadeIn 0.3s ease forwards; }
+.animate-pulse    { animation: pulse 1.5s ease-in-out infinite; }
+
+/* ── Divider ────────────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }

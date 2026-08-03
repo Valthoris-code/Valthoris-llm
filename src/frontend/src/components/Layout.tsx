@@ -1,84 +1,32 @@
-import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React, { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import BetaBanner from './BetaBanner';
+import TopToolbar from './TopToolbar';
+import Sidebar from './Sidebar';
+import MobileNav from './MobileNav';
+import AppFooter from './AppFooter';
 import './Layout.css';
 
-const NAV_LINKS = [
-  { to: '/',            label: 'Home',         icon: '🏠', public: true,  minRole: null         },
-  { to: '/dashboard',   label: 'Dashboard',    icon: '📊', public: false, minRole: null         },
-  { to: '/scanner',     label: 'Scanner',      icon: '🔍', public: true,  minRole: null         },
-  { to: '/reports',     label: 'Denúncias',    icon: '🚨', public: true,  minRole: null         },
-  { to: '/safe-location', label: 'Local Seguro', icon: '📍', public: false, minRole: null       },
-  { to: '/profile',     label: 'Perfil',       icon: '👤', public: false, minRole: null         },
-  { to: '/admin',       label: 'Admin',        icon: '🛡', public: false, minRole: 'administrator' as const },
-];
-
 export default function Layout() {
-  const { isAuthenticated, principal, loading, login, logout, user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogin = async () => {
-    await login();
-    navigate('/dashboard');
-  };
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="layout">
-      <header className="navbar">
-        <NavLink to="/" className="navbar-brand">
-          <span className="brand-icon">🛡</span>
-          <span className="brand-text">VALTHORIS</span>
-        </NavLink>
+      <BetaBanner />
+      <TopToolbar onMenuToggle={() => setSidebarCollapsed(c => !c)} />
 
-        <nav className="navbar-links">
-          {NAV_LINKS
-            .filter(l => {
-              if (!l.public && !isAuthenticated) return false;
-              if (l.minRole && user?.role !== l.minRole) return false;
-              return true;
-            })
-            .map(l => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.to === '/'}
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                {l.icon} {l.label}
-              </NavLink>
-            ))}
-        </nav>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
 
-        <div className="navbar-auth">
-          {loading ? (
-            <span className="text-muted">...</span>
-          ) : isAuthenticated ? (
-            <div className="auth-info">
-              <span className="principal-badge" title={principal ?? ''}>
-                {principal?.slice(0, 10)}…
-              </span>
-              <button className="btn-secondary" onClick={logout}>Sair</button>
-            </div>
-          ) : (
-            <button className="btn-primary" onClick={handleLogin}>
-              🔐 Entrar com Internet Identity
-            </button>
-          )}
-        </div>
-      </header>
+        <main className="content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1 }}>
+            <Outlet />
+          </div>
+          <AppFooter />
+        </main>
+      </div>
 
-      <main className="content">
-        <Outlet />
-      </main>
-
-      <footer className="footer">
-        <p>
-          VALTHORIS &copy; 2024 — Plataforma de Cibersegurança na{' '}
-          <a href="https://internetcomputer.org" target="_blank" rel="noreferrer">
-            Internet Computer
-          </a>
-        </p>
-      </footer>
+      <MobileNav />
     </div>
   );
 }
