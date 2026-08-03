@@ -4,16 +4,17 @@ import { useAuth } from '../hooks/useAuth';
 import './Layout.css';
 
 const NAV_LINKS = [
-  { to: '/',            label: 'Home',         icon: '🏠', public: true  },
-  { to: '/dashboard',   label: 'Dashboard',    icon: '📊', public: false },
-  { to: '/scanner',     label: 'Scanner',      icon: '🔍', public: true  },
-  { to: '/reports',     label: 'Denúncias',    icon: '🚨', public: true  },
-  { to: '/safe-location', label: 'Local Seguro', icon: '📍', public: false },
-  { to: '/profile',     label: 'Perfil',       icon: '👤', public: false },
+  { to: '/',            label: 'Home',         icon: '🏠', public: true,  minRole: null         },
+  { to: '/dashboard',   label: 'Dashboard',    icon: '📊', public: false, minRole: null         },
+  { to: '/scanner',     label: 'Scanner',      icon: '🔍', public: true,  minRole: null         },
+  { to: '/reports',     label: 'Denúncias',    icon: '🚨', public: true,  minRole: null         },
+  { to: '/safe-location', label: 'Local Seguro', icon: '📍', public: false, minRole: null       },
+  { to: '/profile',     label: 'Perfil',       icon: '👤', public: false, minRole: null         },
+  { to: '/admin',       label: 'Admin',        icon: '🛡', public: false, minRole: 'administrator' as const },
 ];
 
 export default function Layout() {
-  const { isAuthenticated, principal, loading, login, logout } = useAuth();
+  const { isAuthenticated, principal, loading, login, logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -31,7 +32,11 @@ export default function Layout() {
 
         <nav className="navbar-links">
           {NAV_LINKS
-            .filter(l => l.public || isAuthenticated)
+            .filter(l => {
+              if (!l.public && !isAuthenticated) return false;
+              if (l.minRole && user?.role !== l.minRole) return false;
+              return true;
+            })
             .map(l => (
               <NavLink
                 key={l.to}
