@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { ShareInfo } from '../../../declarations/safe_location/index.d.ts';
 
 export default function SafeLocation() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const actors = useActors();
   const navigate = useNavigate();
 
@@ -23,9 +23,10 @@ export default function SafeLocation() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) { navigate('/'); return; }
     loadShares();
-  }, [isAuthenticated]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   const loadShares = useCallback(async () => {
     setLoading(true);

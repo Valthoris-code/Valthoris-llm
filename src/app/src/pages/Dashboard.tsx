@@ -17,7 +17,7 @@ interface CommunityStats {
 }
 
 export default function Dashboard() {
-  const { isAuthenticated, principal } = useAuth();
+  const { isAuthenticated, principal, loading: authLoading } = useAuth();
   const actors = useActors();
   const navigate = useNavigate();
 
@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [error, setError]         = useState('');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate('/');
       return;
@@ -55,7 +56,7 @@ export default function Dashboard() {
       }
     };
     load();
-  }, [isAuthenticated]);
+  }, [authLoading, isAuthenticated, actors, navigate]);
 
   if (loading) return <div className="page"><div className="spinner" /></div>;
 

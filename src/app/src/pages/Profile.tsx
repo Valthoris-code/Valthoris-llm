@@ -16,7 +16,7 @@ interface UserProfile {
 }
 
 export default function Profile() {
-  const { isAuthenticated, principal } = useAuth();
+  const { isAuthenticated, principal, loading: authLoading } = useAuth();
   const actors = useActors();
   const navigate = useNavigate();
 
@@ -30,9 +30,10 @@ export default function Profile() {
   const [registering, setReg]         = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) { navigate('/'); return; }
     loadProfile();
-  }, [isAuthenticated]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   const loadProfile = async () => {
     setLoading(true);
