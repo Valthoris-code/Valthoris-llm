@@ -3,8 +3,8 @@
   "canisters": {
     "frontend": {
       "type": "assets",
-      "source": ["src/app/dist"],
-      "build": "npm --prefix src/app run build"
+      "source": ["src/frontend/dist"],
+      "build": "npm --prefix src/frontend run build"
     },
     "backend": {
       "type": "motoko",
