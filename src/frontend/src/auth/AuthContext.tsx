@@ -26,7 +26,8 @@ import React, {
 } from 'react';
 import type { ReactNode } from 'react';
 import { getAuthClient, login as doLogin, logout as doLogout } from '../services/auth';
-import type { User, UserRole } from '../models/User';
+import type { User } from '../models/User';
+import { ensureUser } from '../services/roleService';
 
 // ─── Context value shape ────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Reads the current auth state from the AuthClient singleton and
    * updates all state slices atomically.
    *
-   * Future Supabase hook: after resolving `authed === true`, call
+   * Supabase sync hook: after resolving `authed === true`, call
    * `profileService.syncWithSupabase(p)` and merge the returned Profile.
    */
   const refresh = useCallback(async () => {
@@ -78,9 +79,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const authed = await client.isAuthenticated();
     if (authed) {
       const p = client.getIdentity().getPrincipal().toText();
-      const role: UserRole = 'member'; // default; extend once role management is added
+      // Ensure user is registered in roleService and retrieve their stored role.
+      const managed = ensureUser(p);
       setPrincipal(p);
-      setUser({ principal: p, role });
+      setUser({ principal: p, role: managed.role });
       setIsAuthenticated(true);
     } else {
       setPrincipal(null);
