@@ -6,6 +6,8 @@ import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import AppFooter from './AppFooter';
 import ErrorBoundary from './ErrorBoundary';
+import ConsentGate from './ConsentGate';
+import CookieBanner from './CookieBanner';
 import './Layout.css';
 
 function PageFallback() {
@@ -42,6 +44,10 @@ export default function Layout() {
 
   return (
     <div className="layout">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <ErrorBoundary fallback={null}>
+        <ConsentGate />
+      </ErrorBoundary>
       <ErrorBoundary fallback={null}>
         <BetaBanner />
       </ErrorBoundary>
@@ -54,7 +60,7 @@ export default function Layout() {
           <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
         </ErrorBoundary>
 
-        <main className="content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <main id="main-content" className="content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1 }}>
             <ErrorBoundary fallback={<PageFallback />}>
               <Outlet />
@@ -65,6 +71,10 @@ export default function Layout() {
           </ErrorBoundary>
         </main>
       </div>
+
+      <ErrorBoundary fallback={null}>
+        <CookieBanner />
+      </ErrorBoundary>
 
       <ErrorBoundary fallback={null}>
         <MobileNav />

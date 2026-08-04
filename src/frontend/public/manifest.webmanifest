@@ -1,0 +1,35 @@
+{
+  "name": "VALTHORIS — AI Cybersecurity Platform",
+  "short_name": "VALTHORIS",
+  "description": "Decentralised AI cybersecurity platform on the Internet Computer: threat intelligence, scanning, lookup and Safe Location.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#041426",
+  "theme_color": "#041426",
+  "categories": ["security", "utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "AI Assistant", "url": "/assistant" },
+    { "name": "Scanner", "url": "/scanner" },
+    { "name": "Safe Location", "url": "/safe-location" },
+    { "name": "Radar Global", "url": "/radar" }
+  ]
+}

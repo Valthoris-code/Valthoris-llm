@@ -1,123 +1,243 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import PageHeader from '../components/ui/PageHeader';
+import Toggle from '../components/ui/Toggle';
+import LanguageSelector from '../components/LanguageSelector';
+import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../i18n/useI18n';
+
+type ThemeId = 'dark' | 'darker' | 'contrast';
+
+interface Preferences {
+  theme: ThemeId;
+  reduceMotion: boolean;
+  largeText: boolean;
+  highContrast: boolean;
+  notifyEmail: boolean;
+  notifyPush: boolean;
+  notifyThreats: boolean;
+  notifyCommunity: boolean;
+  telemetry: boolean;
+  publicProfile: boolean;
+  locationEnabled: boolean;
+  locationPrecise: boolean;
+}
+
+const DEFAULTS: Preferences = {
+  theme: 'dark',
+  reduceMotion: false,
+  largeText: false,
+  highContrast: false,
+  notifyEmail: true,
+  notifyPush: false,
+  notifyThreats: true,
+  notifyCommunity: false,
+  telemetry: false,
+  publicProfile: false,
+  locationEnabled: false,
+  locationPrecise: true,
+};
+
+const STORAGE_KEY = 'valthoris.settings.v1';
+
+function loadPreferences(): Preferences {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Preferences>) } : DEFAULTS;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+const SECTIONS = [
+  { id: 'appearance', icon: '🎨', label: 'Appearance' },
+  { id: 'accessibility', icon: '♿', label: 'Accessibility' },
+  { id: 'notifications', icon: '🔔', label: 'Notifications' },
+  { id: 'security', icon: '🔐', label: 'Security' },
+  { id: 'privacy', icon: '🕵', label: 'Privacy' },
+  { id: 'location', icon: '📍', label: 'Location' },
+  { id: 'cookies', icon: '🍪', label: 'Cookies' },
+  { id: 'legal', icon: '⚖️', label: 'Legal' },
+] as const;
 
 export default function Settings() {
   const { isAuthenticated } = useAuth();
-  const [theme, setTheme] = useState<'dark' | 'darker'>('dark');
-  const [lang, setLang] = useState('en');
-  const [notifications, setNotifications] = useState({ email: true, push: false, threats: true });
-  const [saved, setSaved] = useState(false);
+  const { t, autoTranslate, setAutoTranslate } = useI18n();
+  const { toast } = useToast();
+  const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = prefs.theme;
+    root.dataset.largeText = String(prefs.largeText);
+    root.dataset.reduceMotion = String(prefs.reduceMotion);
+    root.dataset.highContrast = String(prefs.highContrast || prefs.theme === 'contrast');
+  }, [prefs.theme, prefs.largeText, prefs.reduceMotion, prefs.highContrast]);
+
+  const update = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // storage unavailable — preferences apply to this session only
+    }
+    // TODO(backend): persist user preferences in the identity canister profile.
   };
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <h1 style={{ margin: 0 }}>⚙️ Settings</h1>
-        <span className="badge-beta">BETA</span>
-      </div>
-      <p className="text-muted">Configure your VALTHORIS experience.</p>
+      <PageHeader
+        icon="⚙️"
+        title={t('nav.settings')}
+        subtitle="Configure your VALTHORIS experience."
+        badge={<span className="badge-beta">{t('common.beta')}</span>}
+      />
 
-      {saved && <div className="alert-success mt-2" style={{ maxWidth: 600 }}>✅ Settings saved!</div>}
+      <nav className="settings-nav" aria-label={t('nav.settings')}>
+        {SECTIONS.map(section => (
+          <a key={section.id} href={`#${section.id}`} className="settings-nav-link">
+            <span aria-hidden="true">{section.icon}</span> {section.label}
+          </a>
+        ))}
+      </nav>
 
-      {/* Appearance */}
-      <div className="card mt-2" style={{ maxWidth: 600 }}>
-        <h3 style={{ marginTop: 0 }}>🎨 Appearance</h3>
-        <div className="mb-2">
-          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Theme</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {(['dark', 'darker'] as const).map(t => (
+      <section id="appearance" className="card mt-2 settings-card">
+        <h2 className="section-title">🎨 Appearance</h2>
+        <div className="field">
+          <span className="field-label">Theme</span>
+          <div className="settings-chips">
+            {(['dark', 'darker', 'contrast'] as ThemeId[]).map(theme => (
               <button
-                key={t}
-                onClick={() => setTheme(t)}
-                style={{
-                  background: theme === t ? 'rgba(0,212,255,0.12)' : 'none',
-                  border: `1px solid ${theme === t ? 'var(--accent-cyan)' : 'var(--border)'}`,
-                  color: theme === t ? 'var(--accent-cyan)' : 'var(--text-muted)',
-                  borderRadius: 6, padding: '0.35rem 0.9rem', cursor: 'pointer', fontSize: '0.85rem',
-                }}
+                key={theme}
+                type="button"
+                aria-pressed={prefs.theme === theme}
+                className={`settings-chip${prefs.theme === theme ? ' settings-chip-active' : ''}`}
+                onClick={() => update('theme', theme)}
               >
-                {t === 'dark' ? '🌙 Dark' : '⚫ Darker'}
+                {theme === 'dark' ? '🌙 Dark' : theme === 'darker' ? '⚫ Darker' : '🔆 High contrast'}
               </button>
             ))}
           </div>
         </div>
-        <div className="mb-2">
-          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Language</label>
-          <select value={lang} onChange={e => setLang(e.target.value)} style={{ maxWidth: 200 }}>
-            <option value="en">🇬🇧 English</option>
-            <option value="pt">🇵🇹 Português</option>
-            <option value="es">🇪🇸 Español</option>
-            <option value="fr">🇫🇷 Français</option>
-            <option value="de">🇩🇪 Deutsch</option>
-          </select>
+        <div className="field">
+          <span className="field-label">{t('common.language')}</span>
+          <LanguageSelector />
         </div>
-      </div>
+        <Toggle
+          label="Auto-translate community content"
+          description="Translate community reports, AI conversations and threat descriptions into your language."
+          checked={autoTranslate}
+          onChange={setAutoTranslate}
+        />
+      </section>
 
-      {/* Notifications */}
-      <div className="card mt-2" style={{ maxWidth: 600 }}>
-        <h3 style={{ marginTop: 0 }}>🔔 Notifications</h3>
-        {[
-          { key: 'email' as const,  label: 'Email Notifications',        desc: 'Receive alerts via email' },
-          { key: 'push' as const,   label: 'Push Notifications',          desc: 'Browser push notifications' },
-          { key: 'threats' as const, label: 'Threat Alerts',             desc: 'Instant alerts for critical threats' },
-        ].map(item => (
-          <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{item.label}</div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.desc}</div>
-            </div>
-            <button
-              onClick={() => setNotifications(n => ({ ...n, [item.key]: !n[item.key] }))}
-              style={{
-                width: 44,
-                height: 24,
-                borderRadius: 12,
-                background: notifications[item.key] ? 'var(--accent-cyan)' : 'var(--border)',
-                border: 'none',
-                cursor: 'pointer',
-                position: 'relative',
-                transition: 'background 0.2s',
-                flexShrink: 0,
-              }}
-            >
-              <span style={{
-                position: 'absolute',
-                top: 2,
-                left: notifications[item.key] ? 22 : 2,
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.2s',
-              }} />
-            </button>
-          </div>
-        ))}
-      </div>
+      <section id="accessibility" className="card mt-2 settings-card">
+        <h2 className="section-title">♿ Accessibility</h2>
+        <Toggle
+          label="Reduce motion"
+          description="Minimise animations and transitions across the interface."
+          checked={prefs.reduceMotion}
+          onChange={value => update('reduceMotion', value)}
+        />
+        <Toggle
+          label="Larger text"
+          description="Increase the base font size for improved readability."
+          checked={prefs.largeText}
+          onChange={value => update('largeText', value)}
+        />
+        <Toggle
+          label="Higher contrast"
+          description="Strengthen borders and text contrast."
+          checked={prefs.highContrast}
+          onChange={value => update('highContrast', value)}
+        />
+      </section>
 
-      {/* Security */}
-      <div className="card mt-2" style={{ maxWidth: 600 }}>
-        <h3 style={{ marginTop: 0 }}>🔐 Security</h3>
+      <section id="notifications" className="card mt-2 settings-card">
+        <h2 className="section-title">🔔 {t('nav.notifications')}</h2>
+        <Toggle label="Email notifications" description="Receive alerts by email." checked={prefs.notifyEmail} onChange={v => update('notifyEmail', v)} />
+        <Toggle label="Push notifications" description="Browser push notifications." checked={prefs.notifyPush} onChange={v => update('notifyPush', v)} />
+        <Toggle label="Threat alerts" description="Instant alerts for critical threats." checked={prefs.notifyThreats} onChange={v => update('notifyThreats', v)} />
+        <Toggle label="Community activity" description="Updates on reports you follow." checked={prefs.notifyCommunity} onChange={v => update('notifyCommunity', v)} />
+      </section>
+
+      <section id="security" className="card mt-2 settings-card">
+        <h2 className="section-title">🔐 Security</h2>
         {isAuthenticated ? (
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', margin: 0 }}>
-            Authentication: <span style={{ color: 'var(--accent-green)' }}>✅ Internet Identity</span>
-            <br />
-            <span style={{ fontSize: '0.78rem' }}>TODO: 2FA, session management, API keys</span>
-          </p>
+          <>
+            <p className="text-muted settings-note">
+              Authentication: <span style={{ color: 'var(--accent-green)' }}>Internet Identity</span>
+            </p>
+            <div className="settings-actions">
+              <Link className="btn-secondary settings-btn" to="/profile">
+                Manage sessions & devices
+              </Link>
+              <Link className="btn-secondary settings-btn" to="/legal/security">
+                {t('legal.security')}
+              </Link>
+            </div>
+            {/* TODO(backend): 2FA enrolment, session revocation and API key management. */}
+          </>
         ) : (
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', margin: 0 }}>
-            Sign in to manage security settings.
-          </p>
+          <p className="text-muted settings-note">Sign in to manage security settings.</p>
         )}
-      </div>
+      </section>
 
-      <div style={{ marginTop: '1.5rem', maxWidth: 600 }}>
-        <button className="btn-primary" onClick={handleSave} style={{ padding: '0.5rem 2rem' }}>
-          💾 Save Settings
+      <section id="privacy" className="card mt-2 settings-card">
+        <h2 className="section-title">🕵 Privacy</h2>
+        <Toggle label="Share anonymous telemetry" description="Helps us diagnose errors. No personal identifiers." checked={prefs.telemetry} onChange={v => update('telemetry', v)} />
+        <Toggle label="Public profile" description="Show your display name on community reports." checked={prefs.publicProfile} onChange={v => update('publicProfile', v)} />
+        <div className="settings-actions">
+          <Link className="btn-secondary settings-btn" to="/legal/gdpr">
+            {t('legal.gdpr')}
+          </Link>
+          <Link className="btn-secondary settings-btn" to="/legal/privacy">
+            {t('legal.privacy')}
+          </Link>
+        </div>
+      </section>
+
+      <section id="location" className="card mt-2 settings-card">
+        <h2 className="section-title">📍 {t('nav.safeLocation')}</h2>
+        <Toggle label="Enable location features" description="Required by Safe Location, geofences and SOS." checked={prefs.locationEnabled} onChange={v => update('locationEnabled', v)} />
+        <Toggle label="Precise location" description="Use GNSS accuracy when available." checked={prefs.locationPrecise} onChange={v => update('locationPrecise', v)} />
+        <div className="settings-actions">
+          <Link className="btn-secondary settings-btn" to="/safe-location">
+            Open Safe Location
+          </Link>
+        </div>
+      </section>
+
+      <section id="cookies" className="card mt-2 settings-card">
+        <h2 className="section-title">🍪 {t('legal.cookies')}</h2>
+        <p className="text-muted settings-note">
+          Review or withdraw your consent for each optional cookie category at any time.
+        </p>
+        <div className="settings-actions">
+          <Link className="btn-primary settings-btn" to="/legal/cookie-preferences">
+            {t('consent.managePreferences')}
+          </Link>
+          <Link className="btn-secondary settings-btn" to="/legal/cookies">
+            {t('legal.cookies')}
+          </Link>
+        </div>
+      </section>
+
+      <section id="legal" className="card mt-2 settings-card">
+        <h2 className="section-title">⚖️ {t('legal.framework')}</h2>
+        <div className="settings-actions">
+          <Link className="btn-secondary settings-btn" to="/legal">{t('legal.framework')}</Link>
+          <Link className="btn-secondary settings-btn" to="/legal/terms">{t('legal.terms')}</Link>
+          <Link className="btn-secondary settings-btn" to="/legal/dpo">{t('legal.dpo')}</Link>
+          <Link className="btn-secondary settings-btn" to="/legal/copyright">{t('legal.copyright')}</Link>
+        </div>
+      </section>
+
+      <div className="mt-3">
+        <button type="button" className="btn-primary" onClick={() => toast('Settings saved on this device.', 'success')}>
+          💾 {t('common.save')}
         </button>
       </div>
     </div>

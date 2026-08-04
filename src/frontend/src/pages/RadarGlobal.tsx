@@ -1,172 +1,202 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import MapPlaceholder from '../components/ui/MapPlaceholder';
+import EmptyState from '../components/ui/EmptyState';
+import { useI18n } from '../i18n/useI18n';
 
-const FILTERS = ['All', 'Europe', 'Americas', 'Asia', 'Africa', 'Oceania'];
-const LAYERS  = ['Heatmap', 'Clusters', 'Live Feed', 'Timeline'];
+const REGIONS = ['All', 'Europe', 'Americas', 'Asia', 'Africa', 'Oceania'];
+const SEVERITIES = ['All', 'Low', 'Medium', 'High', 'Critical'] as const;
+const CATEGORIES = ['All', 'Phishing', 'Malware', 'Fraud', 'Scam Call', 'Crypto', 'Identity Theft'];
 
+type LayerId = 'heatmap' | 'clusters' | 'markers' | 'timeline';
+
+const LAYERS: Array<{ id: LayerId; labelKey: string }> = [
+  { id: 'heatmap', labelKey: 'radar.heatmap' },
+  { id: 'clusters', labelKey: 'radar.clusters' },
+  { id: 'markers', labelKey: 'radar.markers' },
+  { id: 'timeline', labelKey: 'radar.timeline' },
+];
+
+/**
+ * Radar Global — global threat map.
+ *
+ * The filters, layers and timeline are fully wired in the UI. The map surface
+ * is the shared OpenStreetMap placeholder; swapping it for Leaflet will not
+ * require changes here.
+ *
+ * TODO(backend): load geo-tagged threat events from the threat_intelligence
+ * canister and feed them into the layers below.
+ */
 export default function RadarGlobal() {
-  const [activeFilter, setActiveFilter] = useState('All');
-  const [activeLayers, setActiveLayers] = useState<string[]>(['Heatmap']);
-  const [search, setSearch] = useState('');
+  const { t } = useI18n();
 
-  const toggleLayer = (l: string) =>
-    setActiveLayers(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+  const [region, setRegion] = useState('All');
+  const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>('All');
+  const [category, setCategory] = useState('All');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
+  const [date, setDate] = useState('');
+  const [layers, setLayers] = useState<LayerId[]>(['heatmap', 'markers']);
+  const [timelineHour, setTimelineHour] = useState(23);
+
+  const toggleLayer = (id: LayerId) =>
+    setLayers(prev => (prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]));
+
+  const activeFilters = useMemo(
+    () =>
+      [
+        region !== 'All' ? region : null,
+        severity !== 'All' ? severity : null,
+        category !== 'All' ? category : null,
+        country || null,
+        city || null,
+        date || null,
+      ].filter(Boolean) as string[],
+    [region, severity, category, country, city, date]
+  );
 
   return (
-    <div className="page" style={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Toolbar */}
-      <div style={{
-        padding: '0.75rem 1.5rem',
-        background: 'var(--bg-secondary)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        flexWrap: 'wrap',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>🗺</span>
-          <strong>Radar Global</strong>
-          <span className="badge-beta">BETA</span>
+    <div className="page radar-page">
+      <div className="radar-toolbar">
+        <div className="radar-brand">
+          <span aria-hidden="true">🗺</span>
+          <strong>{t('radar.title')}</strong>
+          <span className="badge-beta">{t('common.beta')}</span>
         </div>
 
-        <input
-          style={{ maxWidth: 220, marginLeft: 'auto' }}
-          type="text"
-          placeholder="Search location…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-
-        {/* Region filters */}
-        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-          {FILTERS.map(f => (
+        <div className="radar-layers" role="group" aria-label={t('radar.filters')}>
+          {LAYERS.map(layer => (
             <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              style={{
-                background: activeFilter === f ? 'rgba(0,212,255,0.15)' : 'none',
-                border: `1px solid ${activeFilter === f ? 'var(--accent-cyan)' : 'var(--border)'}`,
-                color: activeFilter === f ? 'var(--accent-cyan)' : 'var(--text-muted)',
-                borderRadius: 6,
-                padding: '0.2rem 0.6rem',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-              }}
+              key={layer.id}
+              type="button"
+              aria-pressed={layers.includes(layer.id)}
+              className={`radar-chip${layers.includes(layer.id) ? ' radar-chip-active' : ''}`}
+              onClick={() => toggleLayer(layer.id)}
             >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {/* Layer toggles */}
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
-          {LAYERS.map(l => (
-            <button
-              key={l}
-              onClick={() => toggleLayer(l)}
-              style={{
-                background: activeLayers.includes(l) ? 'rgba(0,255,136,0.12)' : 'none',
-                border: `1px solid ${activeLayers.includes(l) ? 'var(--accent-green)' : 'var(--border)'}`,
-                color: activeLayers.includes(l) ? 'var(--accent-green)' : 'var(--text-muted)',
-                borderRadius: 6,
-                padding: '0.2rem 0.6rem',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-              }}
-            >
-              {l}
+              {t(layer.labelKey)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Map placeholder */}
-      <div style={{
-        flex: 1,
-        background: 'linear-gradient(135deg, #041426 0%, #071e33 50%, #041426 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: 400,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {/* Grid lines to simulate map */}
-        <svg
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.08 }}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#00d4ff" strokeWidth="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-
-        {/* Placeholder dots */}
-        {[
-          { top: '30%', left: '25%', color: 'var(--accent-red)',   label: 'EU Cluster' },
-          { top: '40%', left: '18%', color: 'var(--accent-amber)', label: 'NA Activity' },
-          { top: '35%', left: '60%', color: 'var(--accent-cyan)',  label: 'APAC Threats' },
-          { top: '55%', left: '30%', color: 'var(--accent-red)',   label: 'Africa' },
-          { top: '20%', left: '70%', color: 'var(--accent-amber)', label: 'East Asia' },
-        ].map((dot, i) => (
-          <div
-            key={i}
-            title={dot.label}
-            style={{
-              position: 'absolute',
-              top: dot.top,
-              left: dot.left,
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              background: dot.color,
-              boxShadow: `0 0 12px ${dot.color}`,
-              animation: 'pulse 2s ease-in-out infinite',
-              cursor: 'pointer',
-            }}
-          />
-        ))}
-
-        {/* Center message */}
-        <div style={{ textAlign: 'center', zIndex: 1 }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.4 }}>🗺</div>
-          <h3 style={{ color: 'var(--text-muted)', margin: 0 }}>Interactive Map Coming Soon</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>
-            Leaflet + OpenStreetMap integration prepared.
-            <br />Clusters, heatmap, and timeline layers ready to connect.
-          </p>
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {['Leaflet', 'OpenStreetMap', 'Clusters', 'Heatmap', 'Timeline'].map(t => (
-              <span key={t} className="badge badge-cyan" style={{ fontSize: '0.72rem' }}>{t}</span>
+      <div className="radar-filters">
+        <label className="field">
+          <span className="field-label">Region</span>
+          <select value={region} onChange={e => setRegion(e.target.value)}>
+            {REGIONS.map(r => (
+              <option key={r} value={r}>
+                {r === 'All' ? t('common.all') : r}
+              </option>
             ))}
-          </div>
-        </div>
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-label">{t('radar.country')}</span>
+          <input value={country} onChange={e => setCountry(e.target.value)} placeholder="Portugal" />
+        </label>
+
+        <label className="field">
+          <span className="field-label">{t('radar.city')}</span>
+          <input value={city} onChange={e => setCity(e.target.value)} placeholder="Lisboa" />
+        </label>
+
+        <label className="field">
+          <span className="field-label">{t('radar.severity')}</span>
+          <select value={severity} onChange={e => setSeverity(e.target.value as typeof severity)}>
+            {SEVERITIES.map(s => (
+              <option key={s} value={s}>
+                {s === 'All' ? t('common.all') : s}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-label">{t('radar.category')}</span>
+          <select value={category} onChange={e => setCategory(e.target.value)}>
+            {CATEGORIES.map(c => (
+              <option key={c} value={c}>
+                {c === 'All' ? t('common.all') : c}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-label">{t('radar.date')}</span>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+        </label>
       </div>
 
-      {/* Stats bar */}
-      <div style={{
-        padding: '0.6rem 1.5rem',
-        background: 'var(--bg-secondary)',
-        borderTop: '1px solid var(--border)',
-        display: 'flex',
-        gap: '2rem',
-        fontSize: '0.8rem',
-        color: 'var(--text-muted)',
-        flexShrink: 0,
-      }}>
+      {activeFilters.length > 0 && (
+        <div className="radar-active-filters">
+          <span className="text-muted">{t('radar.filters')}:</span>
+          {activeFilters.map(filter => (
+            <span key={filter} className="badge badge-cyan">
+              {filter}
+            </span>
+          ))}
+          <button
+            type="button"
+            className="btn-secondary radar-clear"
+            onClick={() => {
+              setRegion('All');
+              setSeverity('All');
+              setCategory('All');
+              setCountry('');
+              setCity('');
+              setDate('');
+            }}
+          >
+            {t('common.cancel')}
+          </button>
+        </div>
+      )}
+
+      <MapPlaceholder
+        height={420}
+        heatmap={layers.includes('heatmap')}
+        clusters={layers.includes('clusters')}
+        markers={[]}
+        caption={`${t('radar.title')} — OpenStreetMap preview`}
+      >
+        <div className="radar-overlay">
+          <EmptyState
+            icon="🛰"
+            title="No threat events loaded"
+            body="Leaflet + OpenStreetMap layers are prepared. Events will appear once the threat intelligence feed is connected."
+          />
+        </div>
+      </MapPlaceholder>
+
+      {layers.includes('timeline') && (
+        <div className="radar-timeline">
+          <label className="field">
+            <span className="field-label">
+              {t('radar.timeline')} — {String(timelineHour).padStart(2, '0')}:00
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={23}
+              value={timelineHour}
+              onChange={e => setTimelineHour(Number(e.target.value))}
+              aria-label={t('radar.timeline')}
+            />
+          </label>
+        </div>
+      )}
+
+      <div className="radar-stats">
         {[
-          { label: 'Active Threats', value: '—', color: 'var(--accent-red)' },
-          { label: 'Reports Today',  value: '—', color: 'var(--accent-amber)' },
-          { label: 'Countries',      value: '—', color: 'var(--accent-cyan)' },
-          { label: 'Last Update',    value: 'Pending', color: 'var(--text-muted)' },
-        ].map(s => (
-          <div key={s.label}>
-            <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
-            {' '}<span>{s.label}</span>
+          { label: 'Active threats', value: '—' },
+          { label: 'Reports today', value: '—' },
+          { label: 'Countries', value: '—' },
+          { label: 'Last update', value: 'Pending' },
+        ].map(stat => (
+          <div key={stat.label} className="radar-stat">
+            <strong>{stat.value}</strong>
+            <span className="text-muted">{stat.label}</span>
           </div>
         ))}
       </div>

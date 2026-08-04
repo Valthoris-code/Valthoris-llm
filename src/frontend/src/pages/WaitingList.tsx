@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import LanguageSelector from '../components/LanguageSelector';
+import { useT } from '../i18n/useI18n';
 
 const COUNTRIES = ['Portugal', 'Brazil', 'Spain', 'France', 'Germany', 'United Kingdom', 'United States', 'Other'];
 const LANGUAGES = ['English', 'Português', 'Español', 'Français', 'Deutsch'];
 const REASONS = ['Personal security', 'Business security', 'Research', 'Developer', 'Investor', 'Other'];
 
 export default function WaitingList() {
+  const t = useT();
   const [form, setForm] = useState({
     name: '', email: '', country: '', language: '', reason: '', consent: false,
   });
@@ -28,9 +32,9 @@ export default function WaitingList() {
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
           <h2>You're on the list!</h2>
           <p className="text-muted">Thank you for joining the VALTHORIS waiting list. We'll notify you when Beta access is available.</p>
-          <a href="/assistant" className="btn-primary" style={{ display: 'inline-block', marginTop: '1rem', textDecoration: 'none', padding: '0.5rem 1.5rem', borderRadius: 8 }}>
+          <Link to="/assistant" className="btn-primary" style={{ display: 'inline-block', marginTop: '1rem', textDecoration: 'none', padding: '0.5rem 1.5rem', borderRadius: 8 }}>
             Return to App
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -42,14 +46,17 @@ export default function WaitingList() {
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🛡</div>
           <h1 style={{ margin: 0, fontSize: '1.6rem', color: 'var(--accent-cyan)' }}>VALTHORIS</h1>
-          <p className="text-muted" style={{ margin: '0.4rem 0 0' }}>Join the Beta Private waiting list</p>
+          <p className="text-muted" style={{ margin: '0.4rem 0 0' }}>{t('waiting.title')}</p>
+          <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <LanguageSelector />
+          </div>
         </div>
 
         <div className="card glass">
           <form onSubmit={handleSubmit}>
             {[
-              { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Your name' },
-              { label: 'Email Address', key: 'email', type: 'email', placeholder: 'your@email.com' },
+              { label: t('waiting.name'), key: 'name', type: 'text', placeholder: 'Your name' },
+              { label: t('waiting.email'), key: 'email', type: 'email', placeholder: 'your@email.com' },
             ].map(field => (
               <div key={field.key} className="mb-2">
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>{field.label}</label>
@@ -64,9 +71,9 @@ export default function WaitingList() {
             ))}
 
             {[
-              { label: 'Country', key: 'country', options: COUNTRIES },
-              { label: 'Preferred Language', key: 'language', options: LANGUAGES },
-              { label: 'Reason for joining', key: 'reason', options: REASONS },
+              { label: t('waiting.country'), key: 'country', options: COUNTRIES },
+              { label: t('common.language'), key: 'language', options: LANGUAGES },
+              { label: t('waiting.reason'), key: 'reason', options: REASONS },
             ].map(sel => (
               <div key={sel.key} className="mb-2">
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>{sel.label}</label>
@@ -87,7 +94,9 @@ export default function WaitingList() {
                 required
               />
               <label htmlFor="consent" style={{ fontSize: '0.82rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                I agree to the <a href="/legal" style={{ color: 'var(--accent-cyan)' }}>Privacy Policy and Terms</a> and consent to receive communications from VALTHORIS.
+                I agree to the <Link to="/legal/privacy">{t('legal.privacy')}</Link> and the{' '}
+                <Link to="/legal/terms">{t('legal.terms')}</Link>, and consent to receive
+                communications from VALTHORIS.
               </label>
             </div>
 
@@ -97,7 +106,7 @@ export default function WaitingList() {
               style={{ width: '100%', padding: '0.6rem' }}
               disabled={loading || !form.consent}
             >
-              {loading ? '⏳ Submitting…' : '🛡 Join Waiting List'}
+              {loading ? `⏳ ${t('common.loading')}` : `🛡 ${t('waiting.submit')}`}
             </button>
           </form>
         </div>

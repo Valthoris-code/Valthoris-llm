@@ -1,18 +1,20 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useT } from '../i18n/useI18n';
 
 const MOBILE_ITEMS = [
-  { to: '/assistant',  label: 'AI',        icon: '🤖' },
-  { to: '/dashboard',  label: 'Dashboard', icon: '📊', auth: true },
-  { to: '/scanner',    label: 'Scanner',   icon: '🔍' },
-  { to: '/community',  label: 'Reports',   icon: '🚨' },
-  { to: '/radar',      label: 'Radar',     icon: '🗺' },
+  { to: '/assistant',  labelKey: 'nav.assistant',    icon: '🤖' },
+  { to: '/dashboard',  labelKey: 'nav.dashboard',    icon: '📊', auth: true },
+  { to: '/scanner',    labelKey: 'nav.scanner',      icon: '🔍' },
+  { to: '/community',  labelKey: 'nav.community',    icon: '🚨' },
+  { to: '/safe-location', labelKey: 'nav.safeLocation', icon: '📍', auth: true },
+  { to: '/radar',      labelKey: 'nav.radar',        icon: '🗺' },
 ];
 
 export default function MobileNav() {
   const { isAuthenticated } = useAuth();
-  const location = useLocation();
+  const t = useT();
 
   return (
     <nav style={{
@@ -25,7 +27,7 @@ export default function MobileNav() {
       background: 'var(--bg-secondary)',
       borderTop: '1px solid var(--border)',
       zIndex: 300,
-    }} className="mobile-nav">
+    }} className="mobile-nav" aria-label="Primary">
       {MOBILE_ITEMS.filter(i => !i.auth || isAuthenticated).map(item => (
         <NavLink
           key={item.to}
@@ -43,8 +45,8 @@ export default function MobileNav() {
             padding: '0.4rem 0',
           })}
         >
-          <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-          {item.label}
+          <span aria-hidden="true" style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+          {t(item.labelKey)}
         </NavLink>
       ))}
     </nav>

@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './auth/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { I18nProvider } from './i18n/I18nContext';
+import { ConsentProvider } from './consent/ConsentContext';
+import { ToastProvider } from './components/ui/Toast';
 import './styles/app.css';
 
 // Backwards compatibility: older builds shipped a 404.html that redirected
@@ -31,11 +34,17 @@ if (!rootEl) {
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <AuthProvider>
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
-      </AuthProvider>
+      <I18nProvider>
+        <ConsentProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
+            </AuthProvider>
+          </ToastProvider>
+        </ConsentProvider>
+      </I18nProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );
