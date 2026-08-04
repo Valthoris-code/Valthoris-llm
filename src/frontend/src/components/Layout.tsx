@@ -4,6 +4,7 @@ import BetaBanner from './BetaBanner';
 import TopToolbar from './TopToolbar';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
+import MobileDrawer from './MobileDrawer';
 import AppFooter from './AppFooter';
 import ErrorBoundary from './ErrorBoundary';
 import ConsentGate from './ConsentGate';
@@ -41,6 +42,7 @@ function PageFallback() {
 
 export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <div className="layout">
@@ -77,7 +79,11 @@ export default function Layout() {
       </ErrorBoundary>
 
       <ErrorBoundary fallback={null}>
-        <MobileNav />
+        <MobileNav onMenuOpen={() => setDrawerOpen(true)} />
+      </ErrorBoundary>
+
+      <ErrorBoundary fallback={null}>
+        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       </ErrorBoundary>
     </div>
   );

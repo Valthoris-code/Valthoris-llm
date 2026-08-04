@@ -4,51 +4,44 @@ import { useAuth } from '../hooks/useAuth';
 import { useT } from '../i18n/useI18n';
 
 const MOBILE_ITEMS = [
-  { to: '/assistant',  labelKey: 'nav.assistant',    icon: '🤖' },
-  { to: '/dashboard',  labelKey: 'nav.dashboard',    icon: '📊', auth: true },
-  { to: '/scanner',    labelKey: 'nav.scanner',      icon: '🔍' },
-  { to: '/community',  labelKey: 'nav.community',    icon: '🚨' },
-  { to: '/safe-location', labelKey: 'nav.safeLocation', icon: '📍', auth: true },
-  { to: '/radar',      labelKey: 'nav.radar',        icon: '🗺' },
+  { to: '/assistant',    labelKey: 'nav.assistant',    icon: '🤖' },
+  { to: '/scanner',      labelKey: 'nav.scanner',      icon: '🔍' },
+  { to: '/radar',        labelKey: 'nav.radar',        icon: '🗺' },
+  { to: '/safe-location',labelKey: 'nav.safeLocation', icon: '📍' },
+  { to: '/profile',      labelKey: 'nav.profile',      icon: '👤' },
 ];
 
-export default function MobileNav() {
+interface Props {
+  onMenuOpen: () => void;
+}
+
+export default function MobileNav({ onMenuOpen }: Props) {
   const { isAuthenticated } = useAuth();
   const t = useT();
 
   return (
-    <nav style={{
-      display: 'none',
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-      background: 'var(--bg-secondary)',
-      borderTop: '1px solid var(--border)',
-      zIndex: 300,
-    }} className="mobile-nav" aria-label="Primary">
-      {MOBILE_ITEMS.filter(i => !i.auth || isAuthenticated).map(item => (
+    <nav className="mobile-nav" aria-label="Primary navigation">
+      {MOBILE_ITEMS.map(item => (
         <NavLink
           key={item.to}
           to={item.to}
-          style={({ isActive }) => ({
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            fontSize: '0.65rem',
-            color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
-            textDecoration: 'none',
-            padding: '0.4rem 0',
-          })}
+          className={({ isActive }) =>
+            `mobile-nav-item${isActive ? ' mobile-nav-item-active' : ''}`
+          }
         >
-          <span aria-hidden="true" style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-          {t(item.labelKey)}
+          <span aria-hidden="true" className="mobile-nav-icon">{item.icon}</span>
+          <span className="mobile-nav-label">{t(item.labelKey)}</span>
         </NavLink>
       ))}
+      <button
+        type="button"
+        className="mobile-nav-item mobile-nav-menu-btn"
+        onClick={onMenuOpen}
+        aria-label="Open navigation menu"
+      >
+        <span aria-hidden="true" className="mobile-nav-icon">☰</span>
+        <span className="mobile-nav-label">{t('nav.more') || 'More'}</span>
+      </button>
     </nav>
   );
 }
