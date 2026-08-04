@@ -187,9 +187,9 @@ export default function AIAssistant() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      {/* Conversation list */}
-      <div style={{
+    <div className="ai-assistant-shell" style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      {/* Conversation list — hidden on mobile via CSS */}
+      <div className="ai-conv-list" style={{
         width: 220,
         minWidth: 220,
         background: 'var(--bg-primary)',
@@ -307,7 +307,7 @@ export default function AIAssistant() {
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, margin: 0, fontSize: '0.9rem' }}>
                 Your AI-powered cybersecurity companion. Ask about threats, scan URLs, analyze suspicious content, and stay protected.
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
                 {SUGGESTIONS.map(s => (
                   <button
                     key={s}

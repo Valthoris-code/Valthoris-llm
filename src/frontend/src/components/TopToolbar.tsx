@@ -25,14 +25,15 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       borderBottom: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
-      padding: '0 1.25rem',
-      gap: '1rem',
+      padding: '0 1rem',
+      gap: '0.75rem',
       position: 'sticky',
       top: 0,
       zIndex: 150,
       flexShrink: 0,
+      minWidth: 0,
     }}>
-      {/* Sidebar toggle */}
+      {/* Sidebar toggle — desktop only, hidden on mobile via CSS */}
       <button
         type="button"
         onClick={onMenuToggle}
@@ -58,15 +59,15 @@ export default function TopToolbar({ onMenuToggle }: Props) {
         }}
       >
         <span style={{ fontSize: '1.3rem' }}>🛡</span>
-        <span>VALTHORIS</span>
+        <span className="toolbar-brand-text">VALTHORIS</span>
       </NavLink>
 
-      <span className="badge-beta" style={{ flexShrink: 0 }}>BETA PRIVATE</span>
+      <span className="badge-beta toolbar-beta" style={{ flexShrink: 0 }}>BETA PRIVATE</span>
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Search hint */}
+      {/* Search hint — desktop only */}
       <div className="toolbar-search" style={{
         display: 'flex',
         alignItems: 'center',
@@ -88,11 +89,11 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       <LanguageSelector compact />
 
       {/* Auth area */}
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, minWidth: 0 }}>
         {loading ? (
           <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>…</span>
         ) : isAuthenticated ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <NavLink
               to="/profile"
               style={{
@@ -110,12 +111,12 @@ export default function TopToolbar({ onMenuToggle }: Props) {
               title={principal ?? ''}
             >
               <span>👤</span>
-              <span style={{ fontFamily: 'monospace' }}>{principal?.slice(0, 8)}…</span>
+              <span className="toolbar-principal" style={{ fontFamily: 'monospace' }}>{principal?.slice(0, 8)}…</span>
               {user?.role === 'administrator' && (
                 <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>Admin</span>
               )}
             </NavLink>
-            <button className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.8rem' }} onClick={logout}>
+            <button className="btn-secondary toolbar-signout" style={{ fontSize: '0.82rem', padding: '0.3rem 0.8rem' }} onClick={logout}>
               {t('toolbar.signOut')}
             </button>
           </div>
