@@ -28,6 +28,20 @@ import Settings          from './pages/Settings';
 import Help              from './pages/Help';
 import AuthPage          from './pages/AuthPage';
 import WaitingList       from './pages/WaitingList';
+import Contact           from './pages/Contact';
+import ComingSoon        from './pages/ComingSoon';
+
+// Legal pages
+import PrivacyPolicy         from './pages/legal/PrivacyPolicy';
+import Terms                 from './pages/legal/Terms';
+import CookiePolicy          from './pages/legal/CookiePolicy';
+import CookiePreferences     from './pages/legal/CookiePreferences';
+import GdprRights            from './pages/legal/GdprRights';
+import DataProcessing        from './pages/legal/DataProcessing';
+import ResponsibleDisclosure from './pages/legal/ResponsibleDisclosure';
+import SecurityPolicy        from './pages/legal/SecurityPolicy';
+import ContactDpo            from './pages/legal/ContactDpo';
+import Copyright             from './pages/legal/Copyright';
 
 export default function App() {
   return (
@@ -52,6 +66,18 @@ export default function App() {
           <Route path="threat-intelligence" element={<ThreatIntelligence />} />
           <Route path="downloads"  element={<Downloads />} />
           <Route path="legal"      element={<LegalFramework />} />
+          <Route path="legal/privacy"                 element={<PrivacyPolicy />} />
+          <Route path="legal/terms"                   element={<Terms />} />
+          <Route path="legal/cookies"                 element={<CookiePolicy />} />
+          <Route path="legal/cookie-preferences"      element={<CookiePreferences />} />
+          <Route path="legal/gdpr"                    element={<GdprRights />} />
+          <Route path="legal/data-processing"         element={<DataProcessing />} />
+          <Route path="legal/responsible-disclosure"  element={<ResponsibleDisclosure />} />
+          <Route path="legal/security"                element={<SecurityPolicy />} />
+          <Route path="legal/dpo"                     element={<ContactDpo />} />
+          <Route path="legal/copyright"               element={<Copyright />} />
+          <Route path="contact"    element={<Contact />} />
+          <Route path="coming-soon" element={<ComingSoon />} />
           <Route path="help"       element={<Help />} />
 
           {/* Lookup sub-routes */}
@@ -68,6 +94,9 @@ export default function App() {
             <Route path="admin"          element={<AdminDashboard />} />
             <Route path="admin/users"    element={<UserManagement />} />
           </Route>
+
+          {/* Unknown paths inside the shell fall back to the assistant */}
+          <Route path="*" element={<Navigate to="/assistant" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

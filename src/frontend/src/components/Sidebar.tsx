@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useT } from '../i18n/useI18n';
 
 interface NavItem {
   to: string;
+  /** i18n key resolved at render time, with `label` as the fallback. */
+  labelKey?: string;
   label: string;
   icon: string;
   public?: boolean;
@@ -13,11 +16,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/assistant',           label: 'AI Assistant',         icon: '🤖', public: true  },
-  { to: '/dashboard',           label: 'Dashboard',            icon: '📊' },
-  { to: '/scanner',             label: 'Scanner',              icon: '🔍', public: true  },
+  { to: '/assistant',           label: 'AI Assistant',         labelKey: 'nav.assistant',     icon: '🤖', public: true  },
+  { to: '/dashboard',           label: 'Dashboard',            labelKey: 'nav.dashboard',     icon: '📊' },
+  { to: '/scanner',             label: 'Scanner',              labelKey: 'nav.scanner',       icon: '🔍', public: true  },
   {
-    to: '/lookup',              label: 'Lookup',               icon: '🔎', public: true,
+    to: '/lookup',              label: 'Lookup',               labelKey: 'nav.lookup',        icon: '🔎', public: true,
     children: [
       { to: '/lookup/phone',    label: 'Phone',    icon: '📞', public: true },
       { to: '/lookup/email',    label: 'Email',    icon: '✉️', public: true },
@@ -29,16 +32,17 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/lookup/username', label: 'Username', icon: '👤', public: true },
     ],
   },
-  { to: '/radar',               label: 'Radar Global',         icon: '🗺', public: true  },
-  { to: '/community',           label: 'Community Reports',    icon: '🚨', public: true  },
-  { to: '/crypto-intelligence', label: 'Crypto Intelligence',  icon: '₿',  public: true  },
-  { to: '/safe-location',       label: 'Safe Location',        icon: '📍' },
-  { to: '/threat-intelligence', label: 'Threat Intelligence',  icon: '🛡', public: true  },
-  { to: '/notifications',       label: 'Notifications',        icon: '🔔' },
-  { to: '/downloads',           label: 'Downloads',            icon: '⬇️', public: true  },
-  { to: '/legal',               label: 'Legal Framework',      icon: '⚖️', public: true  },
-  { to: '/settings',            label: 'Settings',             icon: '⚙️' },
-  { to: '/help',                label: 'Help',                 icon: '❓', public: true  },
+  { to: '/radar',               label: 'Radar Global',         labelKey: 'nav.radar',         icon: '🗺', public: true  },
+  { to: '/community',           label: 'Community Reports',    labelKey: 'nav.community',     icon: '🚨', public: true  },
+  { to: '/crypto-intelligence', label: 'Crypto Intelligence',  labelKey: 'nav.crypto',        icon: '₿',  public: true  },
+  { to: '/safe-location',       label: 'Safe Location',        labelKey: 'nav.safeLocation',  icon: '📍' },
+  { to: '/threat-intelligence', label: 'Threat Intelligence',  labelKey: 'nav.threat',        icon: '🛡', public: true  },
+  { to: '/notifications',       label: 'Notifications',        labelKey: 'nav.notifications', icon: '🔔' },
+  { to: '/downloads',           label: 'Downloads',            labelKey: 'nav.downloads',     icon: '⬇️', public: true  },
+  { to: '/legal',               label: 'Legal Framework',      labelKey: 'nav.legal',         icon: '⚖️', public: true  },
+  { to: '/contact',             label: 'Contact',              labelKey: 'nav.contact',       icon: '✉️', public: true  },
+  { to: '/settings',            label: 'Settings',             labelKey: 'nav.settings',      icon: '⚙️' },
+  { to: '/help',                label: 'Help',                 labelKey: 'nav.help',          icon: '❓', public: true  },
 ];
 
 const COMING_SOON: NavItem[] = [
@@ -47,6 +51,7 @@ const COMING_SOON: NavItem[] = [
   { to: '#extension',      label: 'Browser Extension',   icon: '🧩', comingSoon: true },
   { to: '#enterprise',     label: 'Enterprise Dashboard', icon: '🏢', comingSoon: true },
   { to: '#realtime',       label: 'Realtime Detection',  icon: '⚡', comingSoon: true },
+  { to: '#marketplace',    label: 'Marketplace API',     icon: '🛒', comingSoon: true },
 ];
 
 interface Props {
@@ -56,6 +61,9 @@ interface Props {
 
 export default function Sidebar({ collapsed, onToggle }: Props) {
   const { isAuthenticated, user } = useAuth();
+  const t = useT();
+  const labelOf = (item: { label: string; labelKey?: string }) =>
+    item.labelKey ? t(item.labelKey) : item.label;
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState<string | null>('/lookup');
 
@@ -133,7 +141,7 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                   <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{item.icon}</span>
                   {!collapsed && (
                     <>
-                      <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{labelOf(item)}</span>
                       <span style={{ fontSize: '0.65rem' }}>{isExpanded ? '▲' : '▼'}</span>
                     </>
                   )}
@@ -188,10 +196,10 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                 borderLeft: isActive && !collapsed ? '3px solid var(--accent-cyan)' : '3px solid transparent',
                 transition: 'color 0.15s, background 0.15s',
               })}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? labelOf(item) : undefined}
             >
               <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{item.icon}</span>
-              {!collapsed && item.label}
+              {!collapsed && labelOf(item)}
             </NavLink>
           );
         })}
@@ -209,8 +217,20 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
               paddingBottom: '0.4rem',
               borderBottom: '1px solid var(--border)',
             }}>
-              Coming Soon
+              {t('nav.comingSoon')}
             </div>
+            <NavLink
+              to="/coming-soon"
+              style={{
+                display: 'block',
+                fontSize: '0.75rem',
+                color: 'var(--accent-cyan)',
+                textDecoration: 'none',
+                marginBottom: '0.4rem',
+              }}
+            >
+              View roadmap →
+            </NavLink>
             {COMING_SOON.map(item => (
               <div
                 key={item.to}

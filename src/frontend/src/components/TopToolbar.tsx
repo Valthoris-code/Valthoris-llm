@@ -1,6 +1,8 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useT } from '../i18n/useI18n';
+import LanguageSelector from './LanguageSelector';
 
 interface Props {
   onMenuToggle: () => void;
@@ -9,6 +11,7 @@ interface Props {
 export default function TopToolbar({ onMenuToggle }: Props) {
   const { isAuthenticated, principal, loading, login, logout, user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
 
   const handleLogin = async () => {
     await login();
@@ -29,6 +32,16 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       zIndex: 150,
       flexShrink: 0,
     }}>
+      {/* Sidebar toggle */}
+      <button
+        type="button"
+        onClick={onMenuToggle}
+        aria-label={t('toolbar.menu')}
+        className="toolbar-menu-btn"
+      >
+        ☰
+      </button>
+
       {/* Brand */}
       <NavLink
         to="/assistant"
@@ -67,9 +80,12 @@ export default function TopToolbar({ onMenuToggle }: Props) {
         cursor: 'pointer',
         minWidth: 180,
       }}>
-        🔍 <span>Quick scan…</span>
+        🔍 <span>{t('toolbar.quickScan')}</span>
         <span style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.5 }}>⌘K</span>
       </div>
+
+      {/* Language */}
+      <LanguageSelector compact />
 
       {/* Auth area */}
       <div style={{ flexShrink: 0 }}>
@@ -100,12 +116,12 @@ export default function TopToolbar({ onMenuToggle }: Props) {
               )}
             </NavLink>
             <button className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.8rem' }} onClick={logout}>
-              Sign Out
+              {t('toolbar.signOut')}
             </button>
           </div>
         ) : (
           <button className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.3rem 0.9rem' }} onClick={handleLogin}>
-            🔐 Sign In
+            🔐 {t('toolbar.signIn')}
           </button>
         )}
       </div>

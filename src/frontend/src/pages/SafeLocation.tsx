@@ -1,38 +1,63 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageHeader from '../components/ui/PageHeader';
+import EmptyState from '../components/ui/EmptyState';
+import MapPlaceholder from '../components/ui/MapPlaceholder';
+import Toggle from '../components/ui/Toggle';
+import { useToast } from '../components/ui/Toast';
 import { useActors } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../i18n/useI18n';
+import TrustedContacts from '../safeLocation/TrustedContacts';
+import Geofences from '../safeLocation/Geofences';
+import { useDeviceLocation } from '../safeLocation/useDeviceLocation';
+import {
+  SHARE_DURATIONS,
+  UNTIL_DISABLED_TTL_SECONDS,
+  loadSettings,
+  saveSettings,
+} from '../safeLocation/model';
+import type { SafeLocationSettings, ShareDurationId } from '../safeLocation/model';
+import type { MapMarker } from '../components/ui/MapPlaceholder';
 import type { ShareInfo } from '../../../declarations/safe_location/index.d.ts';
+
+type TabId = 'map' | 'contacts' | 'geofences' | 'history';
+
+const TABS: Array<{ id: TabId; icon: string; label: string }> = [
+  { id: 'map', icon: '🗺', label: 'Live map' },
+  { id: 'contacts', icon: '👥', label: 'Trusted contacts' },
+  { id: 'geofences', icon: '🧭', label: 'Geofences' },
+  { id: 'history', icon: '🕘', label: 'History' },
+];
 
 export default function SafeLocation() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const actors = useActors();
   const navigate = useNavigate();
+  const { t } = useI18n();
+  const { toast } = useToast();
 
-  const [shares, setShares]       = useState<ShareInfo[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState('');
-  const [success, setSuccess]     = useState('');
-
-  // Share form
-  const [lat, setLat]             = useState('');
-  const [lng, setLng]             = useState('');
-  const [ttl, setTtl]             = useState('3600');
-  const [label, setLabel]         = useState('');
-  const [recipient, setRecipient] = useState('');
+  const [settings, setSettings] = useState<SafeLocationSettings>(() => loadSettings());
+  const [tab, setTab] = useState<TabId>('map');
+  const [shares, setShares] = useState<ShareInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [duration, setDuration] = useState<ShareDurationId>(settings.defaultDuration);
+  const [label, setLabel] = useState('');
+  const [recipient, setRecipient] = useState('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) { navigate('/'); return; }
-    loadShares();
-  }, [authLoading, isAuthenticated, navigate]);
+  const device = useDeviceLocation(settings.highAccuracy);
+
+  const persist = useCallback((next: SafeLocationSettings) => {
+    setSettings(next);
+    saveSettings(next);
+  }, []);
 
   const loadShares = useCallback(async () => {
     setLoading(true);
     try {
-      const raw = await actors.safeLocation.listMyShares();
-      setShares(raw);
+      setShares(await actors.safeLocation.listMyShares());
     } catch (e) {
       setError(String(e));
     } finally {
@@ -40,35 +65,70 @@ export default function SafeLocation() {
     }
   }, [actors]);
 
-  const useCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(pos => {
-      setLat(String(pos.coords.latitude));
-      setLng(String(pos.coords.longitude));
-    }, () => setError('Não foi possível obter a localização.'));
-  };
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    void loadShares();
+  }, [authLoading, isAuthenticated, navigate, loadShares]);
+
+  const activeShares = useMemo(() => shares.filter(s => s.isActive), [shares]);
+
+  const markers = useMemo<MapMarker[]>(() => {
+    const list: MapMarker[] = [];
+    if (device.position) {
+      list.push({
+        id: 'me',
+        lat: device.position.lat,
+        lng: device.position.lng,
+        label: t('safe.device'),
+        severity: settings.emergencyMode ? 'critical' : 'low',
+      });
+    }
+    settings.contacts.forEach(contact => {
+      if (typeof contact.lat === 'number' && typeof contact.lng === 'number') {
+        list.push({ id: contact.id, lat: contact.lat, lng: contact.lng, label: contact.name, severity: 'medium' });
+      }
+    });
+    settings.geofences.forEach(fence => {
+      list.push({
+        id: fence.id,
+        lat: fence.lat,
+        lng: fence.lng,
+        label: fence.name,
+        severity: fence.kind === 'safe' ? 'low' : 'high',
+      });
+    });
+    return list;
+  }, [device.position, settings.contacts, settings.geofences, settings.emergencyMode, t]);
 
   const handleShare = async () => {
-    const latitude  = parseFloat(lat);
-    const longitude = parseFloat(lng);
-    if (isNaN(latitude) || isNaN(longitude)) { setError('Coordenadas inválidas.'); return; }
-
+    if (!device.position) {
+      setError('Acquire your location before sharing.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
-      const ttlSec = BigInt(parseInt(ttl, 10));
-      const res = await actors.safeLocation.shareLocation(
-        latitude, longitude,
-        [],           // accuracy — optional
-        ttlSec,
+      const chosen = SHARE_DURATIONS.find(d => d.id === duration);
+      const ttlSeconds = chosen?.seconds ?? UNTIL_DISABLED_TTL_SECONDS;
+      const result = await actors.safeLocation.shareLocation(
+        device.position.lat,
+        device.position.lng,
+        device.position.accuracy !== undefined ? [device.position.accuracy] : [],
+        BigInt(ttlSeconds),
         recipient ? [recipient] : [],
         label ? [label] : []
       );
-      if ('ok' in res) {
-        setSuccess('Partilha criada! Token: ' + res.ok);
-        setLat(''); setLng(''); setLabel(''); setRecipient('');
+      if ('ok' in result) {
+        toast(`${t('safe.liveSharing')} — token ${result.ok}`, 'success');
+        setLabel('');
+        setRecipient('');
         await loadShares();
       } else {
-        setError((res as any).err);
+        setError(String((result as { err: string }).err));
       }
     } catch (e) {
       setError(String(e));
@@ -79,100 +139,256 @@ export default function SafeLocation() {
 
   const handleRevoke = async (token: string) => {
     try {
-      const res = await actors.safeLocation.revokeShare(token);
-      if ('err' in res) setError((res as any).err);
-      else await loadShares();
+      const result = await actors.safeLocation.revokeShare(token);
+      if ('err' in result) {
+        setError(String((result as { err: string }).err));
+      } else {
+        toast('Share revoked.', 'success');
+        await loadShares();
+      }
     } catch (e) {
       setError(String(e));
     }
   };
 
-  const formatExpiry = (ns: bigint) => {
-    const ms = Number(ns / BigInt(1_000_000));
-    return new Date(ms).toLocaleString('pt-PT');
+  const triggerSos = () => {
+    persist({ ...settings, emergencyMode: true });
+    device.startWatching();
+    // TODO(backend): notify every trusted contact with `receive-sos` permission
+    // and open an emergency incident in the safe_location canister.
+    toast(t('safe.sosActive'), 'error');
   };
 
+  const formatExpiry = (ns: bigint) => new Date(Number(ns / BigInt(1_000_000))).toLocaleString();
+
   return (
-    <div className="page">
-      <h1>📍 Local Seguro</h1>
-      <p className="text-muted">Partilhe a sua localização de forma temporária e segura com quem escolher.</p>
-
-      {error   && <div className="alert-error   mt-2">{error}</div>}
-      {success && <div className="alert-success mt-2">{success}</div>}
-
-      {/* Share form */}
-      <div className="card mt-2" style={{ maxWidth: 620 }}>
-        <h3>Nova Partilha de Localização</h3>
-        <div className="flex gap-1 mt-2">
-          <div style={{ flex: 1 }}>
-            <label className="text-muted" style={{ fontSize: '0.88rem' }}>Latitude</label>
-            <input value={lat} onChange={e => setLat(e.target.value)} placeholder="38.7169" style={{ marginTop: '0.3rem' }} />
+    <div className="page safe-page">
+      <PageHeader
+        icon="📍"
+        title={t('safe.title')}
+        subtitle={t('safe.subtitle')}
+        badge={<span className="badge-beta">{t('common.beta')}</span>}
+        actions={
+          <div className="safe-header-actions">
+            <button
+              type="button"
+              className={`safe-sos${settings.emergencyMode ? ' safe-sos-active' : ''}`}
+              onClick={triggerSos}
+              aria-label={t('safe.sos')}
+            >
+              🆘 {t('safe.sos')}
+            </button>
+            {settings.emergencyMode && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  persist({ ...settings, emergencyMode: false });
+                  device.stopWatching();
+                }}
+              >
+                {t('common.disable')} · {t('safe.emergencyMode')}
+              </button>
+            )}
           </div>
-          <div style={{ flex: 1 }}>
-            <label className="text-muted" style={{ fontSize: '0.88rem' }}>Longitude</label>
-            <input value={lng} onChange={e => setLng(e.target.value)} placeholder="-9.1395" style={{ marginTop: '0.3rem' }} />
-          </div>
-        </div>
-        <button className="btn-secondary mt-1" style={{ fontSize: '0.85rem' }} onClick={useCurrentLocation}>
-          📡 Usar Localização Actual
-        </button>
+        }
+      />
 
-        <div className="mt-2">
-          <label className="text-muted" style={{ fontSize: '0.88rem' }}>TTL (segundos)</label>
-          <input value={ttl} onChange={e => setTtl(e.target.value)} type="number" min="60" style={{ marginTop: '0.3rem' }} />
-          <span className="text-muted" style={{ fontSize: '0.78rem', marginTop: '0.2rem', display: 'block' }}>
-            3600 = 1 hora | 86400 = 1 dia
-          </span>
+      {settings.emergencyMode && (
+        <div className="alert-error mt-2" role="alert">
+          🆘 {t('safe.sosActive')} — trusted contacts with SOS permission will be notified.
         </div>
+      )}
+      {error && <div className="alert-error mt-2">{error}</div>}
+      {device.error && <div className="alert-error mt-2">{device.error}</div>}
 
-        <div className="mt-2">
-          <label className="text-muted" style={{ fontSize: '0.88rem' }}>Etiqueta (opcional)</label>
-          <input value={label} onChange={e => setLabel(e.target.value)} placeholder="ex: Casa, Trabalho" style={{ marginTop: '0.3rem' }} />
-        </div>
-
-        <div className="mt-2">
-          <label className="text-muted" style={{ fontSize: '0.88rem' }}>Principal do destinatário (opcional)</label>
-          <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="xxxx-xxxx-...-cai" style={{ marginTop: '0.3rem' }} />
-        </div>
-
-        <button className="btn-primary mt-2" onClick={handleShare}
-          disabled={submitting || !lat || !lng}
-          style={{ width: '100%' }}>
-          {submitting ? '⏳ A criar...' : '📤 Partilhar Localização'}
-        </button>
+      <div className="safe-tabs" role="tablist" aria-label={t('safe.title')}>
+        {TABS.map(item => (
+          <button
+            key={item.id}
+            role="tab"
+            type="button"
+            aria-selected={tab === item.id}
+            className={`safe-tab${tab === item.id ? ' safe-tab-active' : ''}`}
+            onClick={() => setTab(item.id)}
+          >
+            <span aria-hidden="true">{item.icon}</span> {item.label}
+          </button>
+        ))}
       </div>
 
-      {/* Active shares */}
-      <h2 className="mt-3">As Minhas Partilhas Activas</h2>
-      {loading ? (
-        <div className="spinner" />
-      ) : shares.length === 0 ? (
-        <p className="text-muted">Sem partilhas activas.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {shares.filter(s => s.isActive).map(s => (
-            <div key={s.token} className="card">
-              <div className="flex items-center gap-2 mb-1">
-                <code style={{ color: 'var(--accent-cyan)', fontSize: '0.85rem' }}>{s.token}</code>
-                <span className={`badge ${s.isActive ? 'badge-green' : 'badge-red'}`}>
-                  {s.isActive ? 'activa' : 'expirada'}
-                </span>
-              </div>
-              {s.recipient.length > 0 && (
-                <p className="text-muted" style={{ fontSize: '0.85rem', margin: '0.2rem 0' }}>
-                  Destinatário: <code>{s.recipient[0]}</code>
-                </p>
+      {tab === 'map' && (
+        <div className="safe-grid">
+          <div className="safe-map-col">
+            <MapPlaceholder
+              center={device.position ?? undefined}
+              markers={markers}
+              height={380}
+              clusters={markers.length > 3}
+              caption={`${t('safe.familyMap')} — OpenStreetMap preview`}
+            />
+            <p className="text-muted safe-map-note">
+              {t('safe.familyMap')} · {settings.contacts.length} contact(s), {settings.geofences.length} zone(s).
+              {/* TODO(backend): stream contact positions from the safe_location canister. */}
+            </p>
+          </div>
+
+          <div className="safe-side-col">
+            <section className="card safe-panel">
+              <h2 className="section-title">📱 {t('safe.device')}</h2>
+              {device.position ? (
+                <dl className="safe-device">
+                  <div>
+                    <dt>Latitude</dt>
+                    <dd>{device.position.lat.toFixed(6)}</dd>
+                  </div>
+                  <div>
+                    <dt>Longitude</dt>
+                    <dd>{device.position.lng.toFixed(6)}</dd>
+                  </div>
+                  <div>
+                    <dt>Accuracy</dt>
+                    <dd>{device.position.accuracy ? `${Math.round(device.position.accuracy)} m` : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>{new Date(device.position.at).toLocaleTimeString()}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <EmptyState icon="📡" title="Location not acquired" body="Allow location access to enable sharing and geofences." />
               )}
-              <p className="text-muted" style={{ fontSize: '0.82rem', margin: '0.2rem 0' }}>
-                Expira: {formatExpiry(s.expiresAt)}
-              </p>
-              <button className="btn-danger mt-1" style={{ fontSize: '0.82rem', padding: '0.3rem 0.8rem' }}
-                onClick={() => handleRevoke(s.token)}>
-                🗑 Revogar
+
+              <div className="safe-device-actions">
+                <button type="button" className="btn-secondary safe-mini-btn" onClick={device.locate} disabled={device.loading}>
+                  📡 {device.loading ? t('common.loading') : t('safe.locate')}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary safe-mini-btn"
+                  onClick={device.watching ? device.stopWatching : device.startWatching}
+                >
+                  {device.watching ? '⏹ Stop live tracking' : '▶ Start live tracking'}
+                </button>
+              </div>
+
+              <Toggle
+                label="High accuracy"
+                description="Uses GNSS when available. Higher battery consumption."
+                checked={settings.highAccuracy}
+                onChange={value => persist({ ...settings, highAccuracy: value })}
+              />
+              <Toggle
+                label="Share battery level"
+                description="Include the device battery level with each update."
+                checked={settings.shareBattery}
+                onChange={value => persist({ ...settings, shareBattery: value })}
+              />
+            </section>
+
+            <section className="card safe-panel">
+              <h2 className="section-title">📤 {t('safe.liveSharing')}</h2>
+
+              <fieldset className="safe-duration">
+                <legend className="field-label">{t('safe.duration')}</legend>
+                {SHARE_DURATIONS.map(option => (
+                  <label key={option.id} className={`safe-chip${duration === option.id ? ' safe-chip-active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="share-duration"
+                      value={option.id}
+                      checked={duration === option.id}
+                      onChange={() => {
+                        setDuration(option.id);
+                        persist({ ...settings, defaultDuration: option.id });
+                      }}
+                    />
+                    {t(option.labelKey)}
+                  </label>
+                ))}
+              </fieldset>
+
+              <label className="field">
+                <span className="field-label">Label ({t('common.optional')})</span>
+                <input value={label} onChange={e => setLabel(e.target.value)} placeholder="Home, work…" />
+              </label>
+
+              <label className="field">
+                <span className="field-label">Recipient principal ({t('common.optional')})</span>
+                <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="xxxxx-…-cai" />
+              </label>
+
+              <button
+                type="button"
+                className="btn-primary safe-share-btn"
+                onClick={handleShare}
+                disabled={submitting || !device.position}
+              >
+                {submitting ? t('common.loading') : `📤 ${t('safe.liveSharing')}`}
               </button>
-            </div>
-          ))}
+            </section>
+
+            <section className="card safe-panel">
+              <h2 className="section-title">🔗 Active shares</h2>
+              {loading ? (
+                <div className="spinner" role="status" aria-label={t('common.loading')} />
+              ) : activeShares.length === 0 ? (
+                <EmptyState icon="🔗" title="No active shares" body="Start a share to let your trusted contacts follow you." />
+              ) : (
+                <ul className="safe-list">
+                  {activeShares.map(share => (
+                    <li key={share.token} className="safe-list-item">
+                      <div className="safe-list-head">
+                        <code className="safe-token">{share.token}</code>
+                        <span className="badge badge-green">active</span>
+                        <button
+                          type="button"
+                          className="btn-danger safe-mini-btn"
+                          onClick={() => handleRevoke(share.token)}
+                        >
+                          🗑 Revoke
+                        </button>
+                      </div>
+                      <span className="text-muted safe-list-sub">Expires: {formatExpiry(share.expiresAt)}</span>
+                      {share.recipient.length > 0 && (
+                        <span className="text-muted safe-list-sub">
+                          Recipient: <code>{share.recipient[0]}</code>
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         </div>
+      )}
+
+      {tab === 'contacts' && (
+        <TrustedContacts
+          contacts={settings.contacts}
+          onChange={contacts => persist({ ...settings, contacts })}
+        />
+      )}
+
+      {tab === 'geofences' && (
+        <Geofences
+          geofences={settings.geofences}
+          onChange={geofences => persist({ ...settings, geofences })}
+          position={device.position}
+        />
+      )}
+
+      {tab === 'history' && (
+        <section className="card safe-panel">
+          <h2 className="section-title">🕘 {t('safe.history')}</h2>
+          <EmptyState
+            icon="🕘"
+            title="Location history is not recorded yet"
+            body="History will be available once the safe_location canister exposes a history endpoint. Nothing is stored on this device today."
+          />
+          {/* TODO(backend): read location history from the safe_location canister. */}
+        </section>
       )}
     </div>
   );
