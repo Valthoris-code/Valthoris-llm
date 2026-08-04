@@ -29,8 +29,19 @@
         var path = l.pathname;
         var search = l.search;
         var hash = l.hash;
-        // Redirect to the root with path encoded in the query string
-        var redirectUrl = l.origin + '/?p=' + encodeURIComponent(path + search + hash);
+        // On a GitHub Pages project site the app is served from
+        // /<repo>/, so the redirect target (and index.html) live under
+        // that prefix rather than at the origin root.
+        var base = '/';
+        if (/\.github\.io$/.test(l.hostname)) {
+          var firstSegment = path.split('/')[1];
+          if (firstSegment) {
+            base = '/' + firstSegment + '/';
+          }
+        }
+        var redirectUrl =
+          l.origin + base + '?p=' +
+          encodeURIComponent(path + search + hash);
         l.replace(redirectUrl);
       })();
     </script>

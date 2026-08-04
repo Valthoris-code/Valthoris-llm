@@ -4,6 +4,11 @@ import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Use relative asset URLs so the built bundle works both on a custom
+  // domain (https://valthoris.com/) and on a GitHub Pages project sub-path
+  // (https://<user>.github.io/<repo>/). Absolute "/assets/..." URLs 404 on
+  // the sub-path deployment, which renders a blank white page.
+  base: process.env.VITE_BASE_PATH ?? './',
   plugins: [react()],
   resolve: {
     alias: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BASE_PATH }  from './basePath';
 import Layout         from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -30,7 +31,7 @@ import WaitingList       from './pages/WaitingList';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={BASE_PATH}>
       <Routes>
         {/* Auth pages — outside main layout */}
         <Route path="/auth"         element={<AuthPage />} />
