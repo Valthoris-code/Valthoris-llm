@@ -758,3 +758,53 @@ input:focus, textarea:focus, select:focus {
   .legal-actions { flex-direction: column; align-items: stretch; }
   .legal-btn { justify-content: center; }
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   User preferences (driven by Settings)
+   ═════════════════════════════════════════════════════════════════ */
+html[data-theme='darker'] {
+  --bg-primary:   #01070e;
+  --bg-secondary: #04121f;
+  --bg-card:      #06192b;
+}
+html[data-theme='contrast'], html[data-high-contrast='true'] {
+  --text-muted: #b9d3ea;
+  --border:     #2f5f8e;
+}
+html[data-large-text='true'] { font-size: 18px; }
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   Settings page
+   ═════════════════════════════════════════════════════════════════ */
+.settings-nav { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.settings-nav-link {
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 0.28rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.settings-nav-link:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); text-decoration: none; }
+.settings-card { max-width: 720px; scroll-margin-top: 80px; }
+.settings-card .section-title { font-size: 1.05rem; margin-bottom: 0.9rem; }
+.settings-chips { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.settings-chip {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 0.32rem 0.9rem;
+  font-size: 0.84rem;
+}
+.settings-chip-active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 212, 255, 0.1); }
+.settings-note { font-size: 0.87rem; margin: 0 0 0.9rem; }
+.settings-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.settings-btn { font-size: 0.82rem; padding: 0.35rem 0.9rem; text-decoration: none; display: inline-flex; align-items: center; border-radius: var(--radius); font-weight: 600; }

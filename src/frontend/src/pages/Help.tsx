@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import PageHeader from '../components/ui/PageHeader';
 
 const FAQS = [
   { q: 'What is VALTHORIS?', a: 'VALTHORIS is a decentralised AI-powered cybersecurity platform built on the Internet Computer. It helps you identify threats, verify suspicious contacts, and stay protected online.' },
@@ -14,18 +16,25 @@ export default function Help() {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <h1 style={{ margin: 0 }}>❓ Help & Support</h1>
-        <span className="badge-beta">BETA</span>
-      </div>
-      <p className="text-muted">Find answers to common questions and learn how to use VALTHORIS.</p>
+      <PageHeader
+        icon="❓"
+        title="Help & Support"
+        subtitle="Find answers to common questions and learn how to use VALTHORIS."
+        badge={<span className="badge-beta">BETA</span>}
+        actions={
+          <div className="settings-actions">
+            <Link className="btn-primary settings-btn" to="/contact">✉️ Contact us</Link>
+            <Link className="btn-secondary settings-btn" to="/legal">⚖️ Legal Framework</Link>
+          </div>
+        }
+      />
 
       {/* Quick links */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem', marginTop: '1.5rem' }}>
         {[
           { icon: '📖', label: 'Documentation',  href: '#' },
           { icon: '💬', label: 'Discord',         href: 'https://discord.com' },
-          { icon: '📧', label: 'Email Support',   href: 'mailto:support@valthoris.com' },
+          { icon: '📧', label: 'Email Support',   href: 'mailto:contact@valthoris.com' },
           { icon: '⬡', label: 'GitHub',          href: 'https://github.com' },
         ].map(l => (
           <a

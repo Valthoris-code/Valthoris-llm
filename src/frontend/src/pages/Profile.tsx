@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useActors } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
 import { getLocalProfile, updateProfile } from '../services/profileService';
+import PageHeader from '../components/ui/PageHeader';
+import ProfilePreferences from './ProfilePreferences';
 
 // Matches the backend UserProfile type exactly
 interface UserProfile {
@@ -140,8 +142,12 @@ export default function Profile() {
 
   return (
     <div className="page">
-      <h1>👤 Perfil</h1>
-      <p className="text-muted">Principal: <code>{principal}</code></p>
+      <PageHeader
+        icon="👤"
+        title="Perfil"
+        subtitle={`Principal: ${principal ?? '—'}`}
+        badge={<span className="badge-beta">BETA</span>}
+      />
 
       {error   && <div className="alert-error   mt-2">{error}</div>}
       {success && <div className="alert-success mt-2">{success}</div>}
@@ -251,6 +257,8 @@ export default function Profile() {
               {saving ? '⏳ A guardar...' : '💾 Guardar Alterações'}
             </button>
           </div>
+
+          <ProfilePreferences principal={principal} />
         </>
       )}
     </div>
