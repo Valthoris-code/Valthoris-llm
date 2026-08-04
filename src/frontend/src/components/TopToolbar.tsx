@@ -67,7 +67,7 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       <div style={{ flex: 1 }} />
 
       {/* Search hint */}
-      <div style={{
+      <div className="toolbar-search" style={{
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
