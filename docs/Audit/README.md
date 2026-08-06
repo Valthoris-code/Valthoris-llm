@@ -1,148 +1,98 @@
-# Valthoris - Production Backend Audit Baseline v1.2
+# VALTHORIS Audit Documentation
 
-**Status:** FROZEN BASELINE  
-**Version:** 1.2  
 **Repository:** Valthoris-llm  
-**Platform:** Valthoris AI Cybersecurity Platform
+**Platform:** VALTHORIS AI Cybersecurity Platform
 
 ---
 
-# Executive Summary
+# Current Production Baseline
 
-This document is the official and permanent Security & Performance Audit Baseline for the Valthoris platform.
+**Production Backend Audit Baseline v1.3 (Latest)**
 
-It is the authoritative **single source of truth** for all completed Security Advisor and Performance Advisor audits.
+Status: **ACTIVE**
 
-All findings documented here have been individually verified and frozen.
+This is the official production audit baseline and the single source of truth for all future backend security and performance audits.
 
-Future AI assistants (GitHub Copilot, Claude, ChatGPT or any successor) must use this document as the starting point before performing any audit or security analysis.
-
----
-
-# Scope
-
-This baseline covers:
-
-- Security Advisor
-- Performance Advisor
-- PostgreSQL
-- Supabase
-- Backend
-- Valthoris AI Platform
+All new audits must start from **Baseline_v1.3.md**.
 
 ---
 
-# Frozen Baseline Rules
+# Historical Baselines
 
-The findings documented in this file are considered:
+- Production Backend Audit Baseline v1.2
+- Production Backend Audit Baseline v1.1
+- Production Backend Audit Baseline v1.0
 
-- VERIFIED
-- APPROVED
-- FROZEN
-
-Therefore they must **NOT** be:
-
-- re-audited;
-- reclassified;
-- reopened;
-- modified;
-- regenerated.
-
-A new formal security audit is required before changing any frozen finding.
+Historical baselines are immutable and retained for audit traceability.
 
 ---
 
-# Verified Security Advisor Findings
+# Audit Documentation
 
-| Finding | Status |
-|---------|--------|
-| security_definer_view | Frozen |
-| function_search_path_mutable | Frozen |
+## Governance
 
----
+- AI Governance
+- API Governance
+- Access Control Policy
+- Architecture Governance
 
-# Verified Performance Advisor Findings
+## Security
 
-| Finding | Status |
-|---------|--------|
-| auth_rls_initplan | Frozen |
-| duplicate_index | Frozen |
-| unused_index | Frozen |
+- Security Architecture
+- Security Guidelines
+- Threat Model
+- Cryptography Standard
+- Secure Development Lifecycle
 
----
+## Compliance
 
-# Evidence Summary
+- Compliance Baseline
+- Privacy Framework
+- Data Governance
+- Data Classification Policy
 
-The verification work was performed using read-only inspection of PostgreSQL system catalogs, including:
+## Operations
 
-- pg_class
-- pg_policies
-- pg_depend
-- pg_rewrite
-- pg_stat_user_indexes
-
-No production data was modified during the verification process.
-
----
-
-# Compliance
-
-The Valthoris platform is developed in alignment with European cybersecurity principles, including:
-
-- General Data Protection Regulation (GDPR / RGPD)
-- NIS2 Directive
-- Cyber Resilience Act (CRA)
-- European Union AI Act
-- ENISA recommendations
-- OWASP ASVS
-- OWASP Top 10
-
-Where applicable, development also follows Secure by Design principles and references ISO/IEC 27001 and ISO/IEC 27701.
-
----
-
-# Architecture Assumptions
-
-The frozen baseline assumes the following platform architecture:
-
-- Supabase
-- PostgreSQL
-- Row Level Security (RLS)
-- Internet Computer Protocol (ICP)
-- Motoko canisters
-- React frontend
-- Progressive Web App (PWA)
+- Incident Response
+- Incident Response Plan
+- Business Continuity
+- Risk Register
+- Third Party Risk Management
 
 ---
 
 # Operational Rules
 
-Every AI assistant working on this repository must:
+Every AI assistant (GitHub Copilot, Claude, ChatGPT or any successor) must:
 
-1. Read this document before starting any audit.
-2. Continue from this baseline.
-3. Never restart completed audits.
-4. Never infer missing evidence.
-5. Never modify frozen findings without a new formal audit.
-
----
-
-# Future Audits
-
-Future audits will be versioned separately (v1.3, v1.4, etc.) and will only include newly identified findings.
-
-This document remains immutable after approval.
+- Read this README before starting any audit.
+- Use the latest Production Baseline as the starting point.
+- Never modify frozen baselines.
+- Never restart completed audits.
+- Never infer missing evidence.
+- Create a new version (v1.4, v1.5, etc.) for future audits.
 
 ---
 
-# Change Log
+# Repository Structure
 
-| Version | Description |
-|---------|-------------|
-| v1.0 | Initial audit |
-| v1.1 | Performance Advisor verification |
-| v1.2 | Frozen Production Backend Audit Baseline |
+```
+docs/
+└── Audit/
+    ├── README.md
+    ├── Baseline_v1.3.md
+    ├── Audit_Baseline_v1.2.md
+    ├── Risk_Register.md
+    ├── Threat_Model.md
+    ├── Security_Architecture.md
+    ├── Compliance_Baseline.md
+    ├── ...
+```
 
 ---
 
-**End of Frozen Baseline**
+**Maintained by:** HCenterprise
+
+**Project:** VALTHORIS AI Cybersecurity Platform
+
+**Last Updated:** Production Baseline v1.3
