@@ -37,6 +37,7 @@ const en: Catalogue = {
   'nav.contact': 'Contact',
   'nav.profile': 'Profile',
   'nav.comingSoon': 'Coming Soon',
+  'nav.more': 'More',
 
   // ── Toolbar ────────────────────────────────────────────────────────────────
   'toolbar.quickScan': 'Quick scan…',

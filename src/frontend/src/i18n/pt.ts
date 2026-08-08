@@ -37,6 +37,7 @@ const pt: Catalogue = {
   'nav.contact': 'Contacto',
   'nav.profile': 'Perfil',
   'nav.comingSoon': 'Em Breve',
+  'nav.more': 'Mais',
 
   // ── Barra superior ─────────────────────────────────────────────────────────
   'toolbar.quickScan': 'Análise rápida…',

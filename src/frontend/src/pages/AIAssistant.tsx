@@ -105,6 +105,17 @@ export default function AIAssistant() {
 
   const activeConv = conversations.find(c => c.id === activeId) ?? null;
 
+  const autoGrow = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, []);
+
+  useEffect(() => {
+    autoGrow();
+  }, [input, autoGrow]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeConv?.messages]);
@@ -346,6 +357,7 @@ export default function AIAssistant() {
         {/* Input area */}
         <div style={{
           padding: '1rem 1.5rem',
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
           borderTop: '1px solid var(--border)',
           background: 'var(--bg-secondary)',
           flexShrink: 0,
@@ -397,10 +409,11 @@ export default function AIAssistant() {
                 outline: 'none',
                 fontSize: '0.92rem',
                 lineHeight: 1.5,
-                maxHeight: 120,
                 overflowY: 'auto',
                 padding: '0.25rem 0',
                 width: '100%',
+                minHeight: '1.5em',
+                maxHeight: 200,
               }}
             />
 
