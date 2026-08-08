@@ -51,6 +51,11 @@ export class FraudPipeline {
     this.writer = new FraudDecisionWriter(supabase);
   }
 
+  /** Update the pipeline UUID after runtime resolution (name → UUID). */
+  setPipelineId(id: string): void {
+    this.options.pipelineId = id;
+  }
+
   async run(event: FraudEvent): Promise<FraudPipelineResult> {
     const startedAt = new Date().toISOString();
     const context: PipelineContext = {
