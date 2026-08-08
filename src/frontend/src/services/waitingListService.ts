@@ -23,18 +23,21 @@ export interface WaitingListEntry {
 /**
  * Submit a waiting-list entry.
  * Throws when a network or database error occurs.
- * Duplicate emails are silently ignored (ON CONFLICT DO NOTHING).
+ * Duplicate emails are silently ignored (`onConflict: 'email', ignoreDuplicates: true`).
  */
 export async function submitWaitingListEntry(entry: WaitingListEntry): Promise<void> {
   const { error } = await supabase
     .from('waiting_list')
-    .insert({
-      name:     entry.name.trim(),
-      email:    entry.email.trim().toLowerCase(),
-      country:  entry.country,
-      language: entry.language,
-      reason:   entry.reason,
-    });
+    .upsert(
+      {
+        name:     entry.name.trim(),
+        email:    entry.email.trim().toLowerCase(),
+        country:  entry.country,
+        language: entry.language,
+        reason:   entry.reason,
+      },
+      { onConflict: 'email', ignoreDuplicates: true },
+    );
 
   if (error) {
     throw new Error(error.message);
