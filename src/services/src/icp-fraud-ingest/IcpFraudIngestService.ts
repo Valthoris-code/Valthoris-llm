@@ -6,8 +6,25 @@
  * via pgmq.
  *
  * De-duplication strategy:
- *   A Set of already-enqueued ICP report IDs is kept in memory.
- *   On startup the service loads the IDs from the `icp_ingest_cursors` table.
+ *   A Set of already-enqueued ICP report IDs is kept in memory per cursor.
+ *   On startup the service loads the last_processed_id from `icp_ingest_cursors`
+ *   and seeds the in-memory Set with it so that the single most-recently-seen
+ *   ID is not re-enqueued on restart.
+ *
+ *   LIMITATION: This provides only single-item deduplication across restarts.
+ *   After a restart the service will re-process all ICP reports returned by
+ *   listRecentReports() / listActiveThreats() EXCEPT for the last persisted ID.
+ *   Full deduplication across restarts would require either:
+ *     (a) Cursor/pagination support in the canister API (afterId param), or
+ *     (b) A persistent set of processed IDs in the database.
+ *   Neither is currently supported without changing the canister interface or
+ *   adding a new table.
+ *
+ * TODO: When/if the ICP community and threat-intelligence canisters add
+ *       pagination support (e.g. listRecentReports(afterId, limit)), update
+ *       ingestCommunityReports() and ingestThreatEntries() to pass
+ *       last_processed_id as the cursor so only new items are fetched,
+ *       eliminating the duplicate-processing window after a restart.
  *
  * The `icp_ingest_cursors` table is created by migration
  *   20260808000002_create_supporting_tables.sql
