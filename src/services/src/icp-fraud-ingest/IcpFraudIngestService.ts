@@ -9,13 +9,8 @@
  *   A Set of already-enqueued ICP report IDs is kept in memory.
  *   On startup the service loads the IDs from the `icp_ingest_cursors` table.
  *
- * TODO: Create the `icp_ingest_cursors` table in your Supabase schema, or
- *       replace this with any other persistence strategy.
- *       Expected schema:
- *         id TEXT PRIMARY KEY,       -- cursor identifier (e.g. "community" / "threat")
- *         last_processed_id TEXT,    -- last ICP report/entry ID processed
- *         processed_count BIGINT,
- *         updated_at TIMESTAMPTZ
+ * The `icp_ingest_cursors` table is created by migration
+ *   20260808000002_create_supporting_tables.sql
  */
 
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
@@ -297,9 +292,8 @@ export class IcpFraudIngestService {
       .select('id, last_processed_id, processed_count, updated_at');
 
     if (error) {
-      // TODO: Create the icp_ingest_cursors table in your Supabase schema
       console.warn(
-        '[IcpFraudIngestService] Could not load cursors (table may not exist):',
+        '[IcpFraudIngestService] Could not load cursors:',
         error.message,
       );
       return;
