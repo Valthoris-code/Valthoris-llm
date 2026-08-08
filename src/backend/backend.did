@@ -36,10 +36,9 @@ type VoidResult         = variant { ok; err : text };
 
 service : {
   ensureManagedUser      : ()      -> (ManagedUserResult);
-  listManagedUsers       : ()      -> (ManagedUsersResult) query;
+  listManagedUsers       : ()      -> (ManagedUsersResult);
   setUserRole            : (text, UserRole) -> (ManagedUserResult);
   setUserActive          : (text, bool) -> (ManagedUserResult);
-  bootstrapAdministrator : (text)  -> (ManagedUserResult);
   registerUser           : (text)  -> (ProfileResult);
   getUserProfile         : ()      -> (ProfileResult) query;
   getProfile             : (text)  -> (opt UserProfile) query;

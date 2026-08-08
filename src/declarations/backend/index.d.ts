@@ -38,7 +38,6 @@ export interface _SERVICE {
   listManagedUsers       : ActorMethod<[], ManagedUsersResult>;
   setUserRole            : ActorMethod<[string, UserRole], ManagedUserResult>;
   setUserActive          : ActorMethod<[string, boolean], ManagedUserResult>;
-  bootstrapAdministrator : ActorMethod<[string], ManagedUserResult>;
   registerUser           : ActorMethod<[string], ProfileResult>;
   getUserProfile         : ActorMethod<[], ProfileResult>;
   getProfile             : ActorMethod<[string], [] | [UserProfile]>;

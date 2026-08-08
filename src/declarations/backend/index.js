@@ -32,10 +32,9 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     ensureManagedUser      : IDL.Func([], [ManagedUserResult], []),
-    listManagedUsers       : IDL.Func([], [ManagedUsersResult], ['query']),
+    listManagedUsers       : IDL.Func([], [ManagedUsersResult], []),
     setUserRole            : IDL.Func([IDL.Text, UserRole], [ManagedUserResult], []),
     setUserActive          : IDL.Func([IDL.Text, IDL.Bool], [ManagedUserResult], []),
-    bootstrapAdministrator : IDL.Func([IDL.Text], [ManagedUserResult], []),
     registerUser           : IDL.Func([IDL.Text], [ProfileResult], []),
     getUserProfile         : IDL.Func([], [ProfileResult], ['query']),
     getProfile             : IDL.Func([IDL.Text], [IDL.Opt(UserProfile)], ['query']),

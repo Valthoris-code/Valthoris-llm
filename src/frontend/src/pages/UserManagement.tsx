@@ -163,6 +163,7 @@ function UserManagementContent() {
   const [error, setError] = useState('');
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
       const nextUsers = await getAllUsers();
       setUsers(nextUsers);

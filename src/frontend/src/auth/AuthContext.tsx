@@ -83,12 +83,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const managed = await ensureUser();
         setPrincipal(p);
         setUser({ principal: p, role: managed.role });
+        setIsAuthenticated(true);
       } catch (err) {
         console.error('[AuthContext] Failed to resolve backend role:', err);
-        setPrincipal(p);
+        setPrincipal(null);
         setUser(null);
+        setIsAuthenticated(false);
       }
-      setIsAuthenticated(true);
     } else {
       setPrincipal(null);
       setUser(null);
