@@ -34,7 +34,7 @@ type ManagedUserResult  = variant { ok : ManagedUser; err : text };
 type ManagedUsersResult = variant { ok : vec ManagedUser; err : text };
 type VoidResult         = variant { ok; err : text };
 
-service : {
+service : (principal) -> {
   ensureManagedUser      : ()      -> (ManagedUserResult);
   listManagedUsers       : ()      -> (ManagedUsersResult);
   setUserRole            : (text, UserRole) -> (ManagedUserResult);

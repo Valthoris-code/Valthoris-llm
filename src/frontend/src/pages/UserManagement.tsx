@@ -36,12 +36,16 @@ interface UserRowProps {
 function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
   const isSelf = user.principal === currentPrincipal;
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const runAction = useCallback(async (action: () => Promise<unknown>) => {
     setBusy(true);
+    setActionError(null);
     try {
       await action();
       await onAction();
+    } catch (err) {
+      setActionError(String(err));
     } finally {
       setBusy(false);
     }
@@ -93,49 +97,56 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
         {isSelf ? (
           <span className="text-muted" style={{ fontSize: '0.82rem' }}>—</span>
         ) : (
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            {user.role !== 'administrator' && (
-              <button
-                className="btn-primary"
-                style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
-                onClick={handlePromote}
-                disabled={busy}
-                title="Promover ao próximo nível"
-              >
-                ⬆ Promover
-              </button>
-            )}
-            {user.role !== 'member' && (
-              <button
-                className="btn-secondary"
-                style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
-                onClick={handleDemote}
-                disabled={busy}
-                title="Demover ao nível anterior"
-              >
-                ⬇ Demover
-              </button>
-            )}
-            {user.isActive ? (
-              <button
-                className="btn-danger"
-                style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
-                onClick={handleDeactivate}
-                disabled={busy}
-                title="Desactivar conta"
-              >
-                🚫 Desactivar
-              </button>
-            ) : (
-              <button
-                className="btn-primary"
-                style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
-                onClick={handleReactivate}
-                disabled={busy}
-                title="Reactivar conta"
-              >
-                ✅ Reactivar
-              </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {user.role !== 'administrator' && (
+                <button
+                  className="btn-primary"
+                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
+                  onClick={handlePromote}
+                  disabled={busy}
+                  title="Promover ao próximo nível"
+                >
+                  ⬆ Promover
+                </button>
+              )}
+              {user.role !== 'member' && (
+                <button
+                  className="btn-secondary"
+                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
+                  onClick={handleDemote}
+                  disabled={busy}
+                  title="Demover ao nível anterior"
+                >
+                  ⬇ Demover
+                </button>
+              )}
+              {user.isActive ? (
+                <button
+                  className="btn-danger"
+                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
+                  onClick={handleDeactivate}
+                  disabled={busy}
+                  title="Desactivar conta"
+                >
+                  🚫 Desactivar
+                </button>
+              ) : (
+                <button
+                  className="btn-primary"
+                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
+                  onClick={handleReactivate}
+                  disabled={busy}
+                  title="Reactivar conta"
+                >
+                  ✅ Reactivar
+                </button>
+              )}
+            </div>
+            {actionError && (
+              <span style={{ color: 'var(--color-error, #e53e3e)', fontSize: '0.78rem' }}>
+                {actionError}
+              </span>
             )}
           </div>
         )}
