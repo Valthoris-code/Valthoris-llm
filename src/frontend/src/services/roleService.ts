@@ -1,139 +1,106 @@
-/**
- * Role Management Service — Valthoris
- *
- * Manages user roles and account status with localStorage persistence.
- *
- * Architecture note: this service is designed to be replaced by
- * a Motoko admin canister call once the role-persistence canister is deployed.
- * The public API surface is intentionally kept stable for that migration.
- *
- * Motoko integration hook (future):
- *   Replace load()/save() calls with canister query/update calls, e.g.:
- *     await adminCanister.setUserRole(principal, role)
- *     await adminCanister.getAllUsers()
- */
-
+import { createActors } from './actors';
+import { getIdentity } from './auth';
 import type { UserRole } from '../models/User';
-
-const STORAGE_KEY = 'valthoris_user_roles';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import type {
+  ManagedUser as BackendManagedUser,
+  UserRole as BackendUserRole,
+} from '../../../declarations/backend/index.d.ts';
 
 export interface ManagedUser {
-  /** Internet Identity principal text representation. */
   principal: string;
-  /** Display name shown in the admin UI. */
   displayName: string;
-  /** Assigned role. */
   role: UserRole;
-  /** Whether the account is active. */
   isActive: boolean;
-  /** Unix timestamp (ms) of first registration. */
   registeredAt: number;
 }
 
-type RoleStore = Record<string, ManagedUser>;
+function backendRoleToUserRole(role: BackendUserRole): UserRole {
+  if ('administrator' in role) return 'administrator';
+  if ('moderator' in role) return 'moderator';
+  return 'member';
+}
 
-// ─── Private helpers ──────────────────────────────────────────────────────────
-
-function load(): RoleStore {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as RoleStore) : {};
-  } catch {
-    return {};
+function userRoleToBackendRole(role: UserRole): BackendUserRole {
+  switch (role) {
+    case 'administrator':
+      return { administrator: null };
+    case 'moderator':
+      return { moderator: null };
+    case 'member':
+    default:
+      return { member: null };
   }
 }
 
-function save(store: RoleStore): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  } catch {
-    // Ignore quota / private-browsing errors
-  }
+function mapManagedUser(user: BackendManagedUser): ManagedUser {
+  return {
+    principal: user.principal,
+    displayName: user.displayName,
+    role: backendRoleToUserRole(user.role),
+    isActive: user.isActive,
+    registeredAt: Number(user.registeredAt / BigInt(1_000_000)),
+  };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
-
-/** Return all registered users sorted by registration date (oldest first). */
-export function getAllUsers(): ManagedUser[] {
-  return Object.values(load()).sort((a, b) => a.registeredAt - b.registeredAt);
+async function getBackend() {
+  const identity = await getIdentity();
+  return createActors(identity).backend;
 }
 
-/** Return the stored role for a principal, defaulting to 'member'. */
-export function getUserRole(principal: string): UserRole {
-  return load()[principal]?.role ?? 'member';
+function sortUsers(users: ManagedUser[]): ManagedUser[] {
+  return [...users].sort((a, b) => a.registeredAt - b.registeredAt);
 }
 
-/**
- * Register or refresh a user entry.
- *
- * - First ever user automatically becomes 'administrator' (bootstrap).
- * - Subsequent users default to 'member'.
- * - If the user already exists their role is preserved; only displayName
- *   is updated when a non-empty value is supplied.
- *
- * Called automatically from AuthContext after a successful II login.
- */
-export function ensureUser(principal: string, displayName?: string): ManagedUser {
-  const store = load();
-
-  if (!store[principal]) {
-    const isFirstUser = Object.keys(store).length === 0;
-    store[principal] = {
-      principal,
-      displayName: displayName ?? `${principal.slice(0, 12)}…`,
-      role: isFirstUser ? 'administrator' : 'member',
-      isActive: true,
-      registeredAt: Date.now(),
-    };
-    save(store);
-  } else if (displayName && store[principal].displayName !== displayName) {
-    store[principal] = { ...store[principal], displayName };
-    save(store);
-  }
-
-  return store[principal];
+export async function getAllUsers(): Promise<ManagedUser[]> {
+  const backend = await getBackend();
+  const result = await backend.listManagedUsers();
+  if ('err' in result) throw new Error(result.err);
+  return sortUsers(result.ok.map(mapManagedUser));
 }
 
-/** Promote a user one step up the role hierarchy (member → moderator → administrator). */
-export function promoteUser(principal: string): void {
-  const store = load();
-  if (!store[principal]) return;
+export async function ensureUser(): Promise<ManagedUser> {
+  const backend = await getBackend();
+  const result = await backend.ensureManagedUser();
+  if ('err' in result) throw new Error(result.err);
+  return mapManagedUser(result.ok);
+}
+
+async function setUserRole(principal: string, role: UserRole): Promise<ManagedUser> {
+  const backend = await getBackend();
+  const result = await backend.setUserRole(principal, userRoleToBackendRole(role));
+  if ('err' in result) throw new Error(result.err);
+  return mapManagedUser(result.ok);
+}
+
+export async function promoteUser(principal: string, currentRole: UserRole): Promise<ManagedUser> {
   const next: Record<UserRole, UserRole> = {
     member: 'moderator',
     moderator: 'administrator',
     administrator: 'administrator',
   };
-  store[principal] = { ...store[principal], role: next[store[principal].role] };
-  save(store);
+  return setUserRole(principal, next[currentRole]);
 }
 
-/** Demote a user one step down the role hierarchy (administrator → moderator → member). */
-export function demoteUser(principal: string): void {
-  const store = load();
-  if (!store[principal]) return;
+export async function demoteUser(principal: string, currentRole: UserRole): Promise<ManagedUser> {
   const prev: Record<UserRole, UserRole> = {
     administrator: 'moderator',
     moderator: 'member',
     member: 'member',
   };
-  store[principal] = { ...store[principal], role: prev[store[principal].role] };
-  save(store);
+  return setUserRole(principal, prev[currentRole]);
 }
 
-/** Mark a user account as inactive. */
-export function deactivateUser(principal: string): void {
-  const store = load();
-  if (!store[principal]) return;
-  store[principal] = { ...store[principal], isActive: false };
-  save(store);
+async function setUserActive(principal: string, isActive: boolean): Promise<ManagedUser> {
+  const backend = await getBackend();
+  const result = await backend.setUserActive(principal, isActive);
+  if ('err' in result) throw new Error(result.err);
+  return mapManagedUser(result.ok);
 }
 
-/** Restore a previously deactivated user account. */
-export function reactivateUser(principal: string): void {
-  const store = load();
-  if (!store[principal]) return;
-  store[principal] = { ...store[principal], isActive: true };
-  save(store);
+export function deactivateUser(principal: string): Promise<ManagedUser> {
+  return setUserActive(principal, false);
+}
+
+export function reactivateUser(principal: string): Promise<ManagedUser> {
+  return setUserActive(principal, true);
 }

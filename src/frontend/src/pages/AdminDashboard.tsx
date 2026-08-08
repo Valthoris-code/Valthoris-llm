@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import RoleGuard from '../components/RoleGuard';
 import { getAllUsers } from '../services/roleService';
+import type { ManagedUser } from '../services/roleService';
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
@@ -16,7 +17,35 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 
 function AdminDashboardContent() {
   const { principal } = useAuth();
-  const [users] = useState(() => getAllUsers());
+  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    void (async () => {
+      try {
+        const nextUsers = await getAllUsers();
+        if (mounted) {
+          setUsers(nextUsers);
+          setError('');
+        }
+      } catch (err) {
+        if (mounted) {
+          setUsers([]);
+          setError(String(err));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const totalUsers    = users.length;
   const activeUsers   = users.filter(u => u.isActive).length;
@@ -30,6 +59,9 @@ function AdminDashboardContent() {
       <p className="text-muted">
         Principal: <code>{principal}</code>
       </p>
+
+      {error && <div className="alert-error mt-2">{error}</div>}
+      {loading && <div className="spinner mt-2" />}
 
       <h2 className="mt-3">Visão Geral de Utilizadores</h2>
       <div className="stat-grid">
@@ -56,8 +88,8 @@ function AdminDashboardContent() {
       </div>
 
       <p className="text-muted mt-3" style={{ fontSize: '0.82rem' }}>
-        ℹ️ A persistência de funções é gerida localmente. A integração com o canister Motoko
-        será activada em versões futuras.
+        ℹ️ As funções administrativas são autorizadas pelo canister backend. A atribuição
+        inicial de administrador requer bootstrap explícito no backend.
       </p>
     </div>
   );

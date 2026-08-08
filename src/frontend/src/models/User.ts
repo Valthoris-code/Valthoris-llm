@@ -2,9 +2,8 @@
  * User model and role system for Valthoris.
  *
  * Roles follow a simple hierarchy: member < moderator < administrator.
- * All authenticated users default to the "member" role.
- * Moderator / Administrator roles are reserved for future assignment
- * (e.g. via a backend canister admin method or Supabase metadata).
+ * Roles are resolved from the backend canister and must not be trusted from
+ * mutable browser storage.
  */
 
 export type UserRole = 'member' | 'moderator' | 'administrator';

@@ -30,16 +30,27 @@ const ROLE_BADGE: Record<UserRole, string> = {
 interface UserRowProps {
   user: ManagedUser;
   currentPrincipal: string | null;
-  onAction: () => void;
+  onAction: () => Promise<void>;
 }
 
 function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
   const isSelf = user.principal === currentPrincipal;
+  const [busy, setBusy] = useState(false);
 
-  const handlePromote    = () => { promoteUser(user.principal);    onAction(); };
-  const handleDemote     = () => { demoteUser(user.principal);     onAction(); };
-  const handleDeactivate = () => { deactivateUser(user.principal); onAction(); };
-  const handleReactivate = () => { reactivateUser(user.principal); onAction(); };
+  const runAction = useCallback(async (action: () => Promise<unknown>) => {
+    setBusy(true);
+    try {
+      await action();
+      await onAction();
+    } finally {
+      setBusy(false);
+    }
+  }, [onAction]);
+
+  const handlePromote = () => void runAction(() => promoteUser(user.principal, user.role));
+  const handleDemote = () => void runAction(() => demoteUser(user.principal, user.role));
+  const handleDeactivate = () => void runAction(() => deactivateUser(user.principal));
+  const handleReactivate = () => void runAction(() => reactivateUser(user.principal));
 
   return (
     <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -88,6 +99,7 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
                 className="btn-primary"
                 style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
                 onClick={handlePromote}
+                disabled={busy}
                 title="Promover ao próximo nível"
               >
                 ⬆ Promover
@@ -98,6 +110,7 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
                 className="btn-secondary"
                 style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
                 onClick={handleDemote}
+                disabled={busy}
                 title="Demover ao nível anterior"
               >
                 ⬇ Demover
@@ -108,6 +121,7 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
                 className="btn-danger"
                 style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
                 onClick={handleDeactivate}
+                disabled={busy}
                 title="Desactivar conta"
               >
                 🚫 Desactivar
@@ -117,6 +131,7 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
                 className="btn-primary"
                 style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem' }}
                 onClick={handleReactivate}
+                disabled={busy}
                 title="Reactivar conta"
               >
                 ✅ Reactivar
@@ -142,10 +157,28 @@ const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
 
 function UserManagementContent() {
   const { principal } = useAuth();
-  const [users, setUsers]   = useState<ManagedUser[]>(() => getAllUsers());
+  const [users, setUsers]   = useState<ManagedUser[]>([]);
   const [filter, setFilter] = useState<FilterValue>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const refresh = useCallback(() => setUsers(getAllUsers()), []);
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const nextUsers = await getAllUsers();
+      setUsers(nextUsers);
+      setError('');
+    } catch (err) {
+      setUsers([]);
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const filtered = filter === 'all' ? users : users.filter(u => u.role === filter);
 
@@ -155,6 +188,8 @@ function UserManagementContent() {
       <p className="text-muted">
         Gerir funções e estado de conta de todos os utilizadores registados.
       </p>
+      {error && <div className="alert-error mt-2">{error}</div>}
+      {loading && <div className="spinner mt-2" />}
 
       {/* Role filter */}
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
@@ -216,8 +251,8 @@ function UserManagementContent() {
       </div>
 
       <p className="text-muted mt-2" style={{ fontSize: '0.82rem' }}>
-        ℹ️ As funções são persistidas localmente e entram em vigor na próxima sessão do
-        utilizador. A integração com o canister Motoko será activada em versões futuras.
+        ℹ️ As alterações de função e activação são aplicadas no canister backend e exigem
+        autorização administrativa do lado do servidor.
       </p>
     </div>
   );

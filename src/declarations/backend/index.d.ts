@@ -12,25 +12,41 @@ export interface UserProfile {
   isActive        : boolean;
 }
 
+export type UserRole = { member: null } | { moderator: null } | { administrator: null };
+
+export interface ManagedUser {
+  principal    : string;
+  displayName  : string;
+  role         : UserRole;
+  isActive     : boolean;
+  registeredAt : bigint;
+}
+
 export interface SystemStats {
   totalUsers : bigint;
   version    : string;
   startTime  : bigint;
 }
 
-export type ProfileResult = { ok: UserProfile } | { err: string };
-export type VoidResult    = { ok: null } | { err: string };
+export type ProfileResult      = { ok: UserProfile } | { err: string };
+export type ManagedUserResult  = { ok: ManagedUser } | { err: string };
+export type ManagedUsersResult = { ok: ManagedUser[] } | { err: string };
+export type VoidResult         = { ok: null } | { err: string };
 
 export interface _SERVICE {
-  registerUser   : ActorMethod<[string], ProfileResult>;
-  getUserProfile : ActorMethod<[], ProfileResult>;
-  getProfile     : ActorMethod<[string], [] | [UserProfile]>;
-  isRegistered   : ActorMethod<[], boolean>;
-  recordScan     : ActorMethod<[], VoidResult>;
-  recordReport   : ActorMethod<[], VoidResult>;
-  getSystemStats : ActorMethod<[], SystemStats>;
-  healthCheck    : ActorMethod<[], boolean>;
-  getVersion     : ActorMethod<[], string>;
+  ensureManagedUser      : ActorMethod<[], ManagedUserResult>;
+  listManagedUsers       : ActorMethod<[], ManagedUsersResult>;
+  setUserRole            : ActorMethod<[string, UserRole], ManagedUserResult>;
+  setUserActive          : ActorMethod<[string, boolean], ManagedUserResult>;
+  registerUser           : ActorMethod<[string], ProfileResult>;
+  getUserProfile         : ActorMethod<[], ProfileResult>;
+  getProfile             : ActorMethod<[string], [] | [UserProfile]>;
+  isRegistered           : ActorMethod<[], boolean>;
+  recordScan             : ActorMethod<[], VoidResult>;
+  recordReport           : ActorMethod<[], VoidResult>;
+  getSystemStats         : ActorMethod<[], SystemStats>;
+  healthCheck            : ActorMethod<[], boolean>;
+  getVersion             : ActorMethod<[], string>;
 }
 
 export declare const idlFactory: ({ IDL }: { IDL: any }) => any;

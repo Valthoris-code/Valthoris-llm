@@ -79,11 +79,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const authed = await client.isAuthenticated();
     if (authed) {
       const p = client.getIdentity().getPrincipal().toText();
-      // Ensure user is registered in roleService and retrieve their stored role.
-      const managed = ensureUser(p);
-      setPrincipal(p);
-      setUser({ principal: p, role: managed.role });
-      setIsAuthenticated(true);
+      try {
+        const managed = await ensureUser();
+        setPrincipal(p);
+        setUser({ principal: p, role: managed.role });
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.error('[AuthContext] Failed to resolve backend role:', err);
+        setPrincipal(null);
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } else {
       setPrincipal(null);
       setUser(null);

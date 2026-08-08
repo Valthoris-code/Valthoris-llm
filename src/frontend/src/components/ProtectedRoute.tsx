@@ -43,7 +43,7 @@ export default function ProtectedRoute({
     return <Navigate to={redirectTo} replace />;
   }
 
-  if (user && !hasMinimumRole(user.role, requiredRole)) {
+  if (!user || !hasMinimumRole(user.role, requiredRole)) {
     return <Navigate to={redirectTo} replace />;
   }
 

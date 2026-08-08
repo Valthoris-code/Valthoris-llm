@@ -9,23 +9,43 @@ type UserProfile = record {
   isActive        : bool;
 };
 
+type UserRole = variant {
+  member;
+  moderator;
+  administrator;
+};
+
+type ManagedUser = record {
+  principal    : text;
+  displayName  : text;
+  role         : UserRole;
+  isActive     : bool;
+  registeredAt : int;
+};
+
 type SystemStats = record {
   totalUsers : nat;
   version    : text;
   startTime  : int;
 };
 
-type ProfileResult = variant { ok : UserProfile; err : text };
-type VoidResult    = variant { ok; err : text };
+type ProfileResult      = variant { ok : UserProfile; err : text };
+type ManagedUserResult  = variant { ok : ManagedUser; err : text };
+type ManagedUsersResult = variant { ok : vec ManagedUser; err : text };
+type VoidResult         = variant { ok; err : text };
 
 service : {
-  registerUser    : (text)  -> (ProfileResult);
-  getUserProfile  : ()      -> (ProfileResult) query;
-  getProfile      : (text)  -> (opt UserProfile) query;
-  isRegistered    : ()      -> (bool) query;
-  recordScan      : ()      -> (VoidResult);
-  recordReport    : ()      -> (VoidResult);
-  getSystemStats  : ()      -> (SystemStats) query;
-  healthCheck     : ()      -> (bool) query;
-  getVersion      : ()      -> (text) query;
+  ensureManagedUser      : ()      -> (ManagedUserResult);
+  listManagedUsers       : ()      -> (ManagedUsersResult);
+  setUserRole            : (text, UserRole) -> (ManagedUserResult);
+  setUserActive          : (text, bool) -> (ManagedUserResult);
+  registerUser           : (text)  -> (ProfileResult);
+  getUserProfile         : ()      -> (ProfileResult) query;
+  getProfile             : (text)  -> (opt UserProfile) query;
+  isRegistered           : ()      -> (bool) query;
+  recordScan             : ()      -> (VoidResult);
+  recordReport           : ()      -> (VoidResult);
+  getSystemStats         : ()      -> (SystemStats) query;
+  healthCheck            : ()      -> (bool) query;
+  getVersion             : ()      -> (text) query;
 };

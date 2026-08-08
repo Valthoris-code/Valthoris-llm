@@ -229,7 +229,7 @@ export class IcpFraudIngestService {
     let entries;
 
     try {
-      const raw = await this.actors.threatIntelligence.getActiveThreats(
+      const raw = await this.actors.threatIntelligence.listActiveThreats(
         BigInt(this.icpCfg.fetchBatchSize),
       );
       entries = raw;
