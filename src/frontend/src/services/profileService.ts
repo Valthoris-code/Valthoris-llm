@@ -1,23 +1,25 @@
 /**
  * Profile Service — Valthoris
  *
- * Manages extended user profiles (avatar, bio, display name) with
- * localStorage persistence and a pre-wired Supabase integration surface.
+ * Manages extended user profiles (avatar, bio, display name) backed by
+ * a Supabase `profiles` table, with localStorage as a read-through cache
+ * for offline / pre-sync access.
  *
- * Architecture note: replace the localStorage stubs with Supabase client
- * calls once the `profiles` table is provisioned. Each TODO comment marks
- * the exact integration point.
- *
- * Supabase table schema (future):
+ * Supabase table schema:
  *   profiles (
  *     principal    TEXT PRIMARY KEY,
  *     display_name TEXT,
  *     avatar_url   TEXT,
  *     bio          TEXT,
+ *     last_seen    TIMESTAMPTZ DEFAULT now(),
  *     updated_at   TIMESTAMPTZ DEFAULT now()
  *   )
+ *
+ * RLS policy: authenticated users may read/write only their own row.
+ * See supabase/migrations/20260808000001_create_profiles.sql
  */
 
+import { supabase } from './supabaseClient';
 import type { UserRole } from '../models/User';
 import type { Profile } from '../models/Profile';
 
@@ -44,7 +46,7 @@ function load(): ProfileStore {
   }
 }
 
-function save(store: ProfileStore): void {
+function saveLocal(store: ProfileStore): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
@@ -54,49 +56,68 @@ function save(store: ProfileStore): void {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/** Return locally stored extended profile fields for a principal. */
+/** Return locally cached extended profile fields for a principal. */
 export function getLocalProfile(principal: string): ProfileUpdate {
   return load()[principal] ?? {};
 }
 
 /**
- * Persist profile edits locally.
- *
- * Supabase integration hook (future):
- *   await supabase.from('profiles').upsert({
- *     principal,
- *     display_name: data.displayName,
- *     avatar_url:   data.avatarUrl,
- *     bio:          data.bio,
- *     updated_at:   new Date().toISOString(),
- *   }, { onConflict: 'principal' });
+ * Persist profile edits to Supabase and update the local cache.
+ * Falls back silently to local-only storage when Supabase is unavailable.
  */
 export async function updateProfile(principal: string, data: ProfileUpdate): Promise<void> {
   const store = load();
   store[principal] = { ...store[principal], ...data };
-  save(store);
-  // TODO: Supabase upsert call once client is configured
+  saveLocal(store);
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert(
+      {
+        principal,
+        display_name: data.displayName,
+        avatar_url:   data.avatarUrl,
+        bio:          data.bio,
+        updated_at:   new Date().toISOString(),
+      },
+      { onConflict: 'principal' },
+    );
+
+  if (error) {
+    console.warn('[profileService] Supabase upsert failed:', error.message);
+  }
 }
 
 /**
- * Sync a principal with Supabase on login (upsert pattern).
- * Currently returns locally stored data; the return shape matches the
- * future Supabase record so callers need no changes after migration.
- *
- * Supabase integration hook (future):
- *   const { data } = await supabase
- *     .from('profiles')
- *     .upsert(
- *       { principal, last_seen: new Date().toISOString() },
- *       { onConflict: 'principal' },
- *     )
- *     .select()
- *     .single();
- *   return { displayName: data.display_name, avatarUrl: data.avatar_url, bio: data.bio };
+ * Sync a principal with Supabase on login (upsert `last_seen`).
+ * Merges cloud fields back into the local cache and returns them.
  */
 export async function syncWithSupabase(principal: string): Promise<ProfileUpdate> {
-  // TODO: replace with Supabase client call
-  return getLocalProfile(principal);
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(
+      { principal, last_seen: new Date().toISOString() },
+      { onConflict: 'principal' },
+    )
+    .select('display_name, avatar_url, bio')
+    .single();
+
+  if (error || !data) {
+    console.warn('[profileService] Supabase sync failed:', error?.message ?? 'no data');
+    return getLocalProfile(principal);
+  }
+
+  const merged: ProfileUpdate = {
+    displayName: data.display_name ?? undefined,
+    avatarUrl:   data.avatar_url   ?? undefined,
+    bio:         data.bio          ?? undefined,
+  };
+
+  const store = load();
+  store[principal] = { ...store[principal], ...merged };
+  saveLocal(store);
+
+  return merged;
 }
 
 /**

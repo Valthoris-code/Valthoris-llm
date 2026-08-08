@@ -50,4 +50,4 @@ export interface _SERVICE {
 }
 
 export declare const idlFactory: ({ IDL }: { IDL: any }) => any;
-export declare const init: ({ IDL }: { IDL: any }) => never[];
+export declare const init: ({ IDL }: { IDL: any }) => any[];

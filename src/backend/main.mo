@@ -9,7 +9,22 @@ import Buffer "mo:base/Buffer";
 
 /// Backend Core — coordinates platform services, manages user profiles,
 /// and exposes system statistics.
-actor Backend {
+///
+/// First-administrator bootstrap
+/// ─────────────────────────────
+/// The first administrator is provisioned at canister install time by the
+/// deployer, who supplies their Internet Identity principal as a constructor
+/// argument.  This happens before any user can call the canister, so the
+/// identity of the first administrator is set by a trusted, deployment-
+/// authorised authority rather than by any browser client or runtime caller.
+///
+/// Deployment command (run once when installing the canister):
+///
+///   dfx deploy backend --argument '(principal "YOUR-II-PRINCIPAL-ID")'
+///
+/// On subsequent upgrades the constructor is NOT called again; stable storage
+/// preserves all managed-user records across upgrades.
+actor class Backend(initialAdminPrincipal : Principal) {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -156,7 +171,15 @@ actor Backend {
   func callerIsActive(caller : Principal) : Bool {
     switch (managedUsers.get(pt(caller))) {
       case (?managed) managed.isActive;
-      case null false;
+      case null {
+        // Backward-compatibility: users who registered before the ManagedUser
+        // overlay was introduced have a UserProfile but no ManagedUser record.
+        // Treat them as active members so they are not locked out.
+        // They are NOT granted any elevated role; RBAC functions (listManagedUsers,
+        // setUserRole, setUserActive) still require isAdministrator() which
+        // explicitly returns false for unmanaged callers.
+        users.get(pt(caller)) != null
+      };
     }
   };
 
@@ -178,7 +201,11 @@ actor Backend {
     if (isAnonymousCaller(msg.caller)) {
       return #err("Authentication required");
     };
-    #ok(ensureManagedUserForCaller(msg.caller, null))
+    let managed = ensureManagedUserForCaller(msg.caller, null);
+    if (not managed.isActive) {
+      return #err("User account is inactive");
+    };
+    #ok(managed)
   };
 
   public shared(msg) func listManagedUsers() : async ManagedUsersResult {
@@ -383,4 +410,33 @@ actor Backend {
 
   /// Canister version string.
   public query func getVersion() : async Text { version };
+
+  // ──────────────────────────────────────────────────────────────────────
+  // First-administrator bootstrap
+  // ──────────────────────────────────────────────────────────────────────
+  // Runs exactly once, at canister install time, before any user call can
+  // reach the canister.  The deployer supplies their Internet Identity
+  // principal via the dfx --argument flag:
+  //
+  //   dfx deploy backend --argument '(principal "YOUR-II-PRINCIPAL-ID")'
+  //
+  // Guards:
+  //   1. initialAdminPrincipal must be non-anonymous (rejects the default
+  //      anonymous identity and any accidental omission of the argument).
+  //   2. managedUsers must be empty (ensures this only runs on a fresh
+  //      install, not if the canister is upgraded with --reinstall later
+  //      when an administrator already exists).
+  //
+  // On upgrade (dfx deploy without --reinstall) this block is NOT re-executed;
+  // stable storage preserves all managedUser records across upgrades.
+  if (not Principal.isAnonymous(initialAdminPrincipal) and managedUsers.size() == 0) {
+    let p = pt(initialAdminPrincipal);
+    managedUsers.put(p, {
+      principal    = p;
+      displayName  = p;
+      role         = #administrator;
+      isActive     = true;
+      registeredAt = Time.now();
+    });
+  };
 }

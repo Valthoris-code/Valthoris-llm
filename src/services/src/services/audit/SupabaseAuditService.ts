@@ -4,8 +4,7 @@
  * Supabase implementation of IAuditService.
  * Writes audit entries to the `audit_logs` table.
  *
- * TODO: Ensure the `audit_logs` table exists in your Supabase schema.
- *       See src/services/src/types/database.ts for the expected schema.
+ * Table created by: supabase/migrations/20260808000002_create_supporting_tables.sql
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
