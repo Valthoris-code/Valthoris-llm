@@ -106,7 +106,7 @@ export interface IcpThreatResult {
 
 export interface IcpThreatIntelligenceService {
   checkThreat: (indicator: string) => Promise<IcpThreatResult>;
-  getActiveThreats: (limit: bigint) => Promise<IcpThreatEntry[]>;
+  listActiveThreats: (limit: bigint) => Promise<IcpThreatEntry[]>;
 }
 
 // ─── Helper utilities ────────────────────────────────────────────────────

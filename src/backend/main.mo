@@ -108,6 +108,15 @@ actor Backend {
     isController(caller) or isAdministrator(pt(caller))
   };
 
+  func hasActiveAdministrator() : Bool {
+    for ((_, user) in managedUsers.entries()) {
+      if (user.role == #administrator and user.isActive) {
+        return true;
+      };
+    };
+    false
+  };
+
   func ensureManagedUserInternal(principal : Text, displayName : ?Text) : ManagedUser {
     switch (managedUsers.get(principal)) {
       case (?existing) {
@@ -154,12 +163,38 @@ actor Backend {
     hasPrivilegedAccess(caller)
   };
 
+  func ensureManagedUserForCaller(caller : Principal, displayName : ?Text) : ManagedUser {
+    let principal = pt(caller);
+    let managed = ensureManagedUserInternal(principal, displayName);
+
+    if (isController(caller) and not hasActiveAdministrator()) {
+      let bootstrapped : ManagedUser = {
+        principal    = managed.principal;
+        displayName  = managed.displayName;
+        role         = #administrator;
+        isActive     = true;
+        registeredAt = managed.registeredAt;
+      };
+      managedUsers.put(principal, bootstrapped);
+      bootstrapped
+    } else {
+      managed
+    }
+  };
+
+  func callerIsActive(caller : Principal) : Bool {
+    switch (managedUsers.get(pt(caller))) {
+      case (?managed) managed.isActive;
+      case null true;
+    }
+  };
+
   // ──────────────────────────────────────────────────────────────────────
   // Public API
   // ──────────────────────────────────────────────────────────────────────
 
   public shared(msg) func ensureManagedUser() : async ManagedUserResult {
-    #ok(ensureManagedUserInternal(pt(msg.caller), null))
+    #ok(ensureManagedUserForCaller(msg.caller, null))
   };
 
   public shared query(msg) func listManagedUsers() : async ManagedUsersResult {
@@ -232,7 +267,7 @@ actor Backend {
     };
     let key = pt(msg.caller);
     let now = Time.now();
-    let managed = ensureManagedUserInternal(key, ?displayName);
+    let managed = ensureManagedUserForCaller(msg.caller, ?displayName);
     if (not managed.isActive) {
       return #err("User account is inactive");
     };
@@ -296,6 +331,9 @@ actor Backend {
 
   /// Increment the scan counter for the caller.
   public shared(msg) func recordScan() : async VoidResult {
+    if (not callerIsActive(msg.caller)) {
+      return #err("User account is inactive");
+    };
     let key = pt(msg.caller);
     switch (users.get(key)) {
       case null #err("User not registered");
@@ -317,6 +355,9 @@ actor Backend {
 
   /// Increment the report counter and slightly boost the caller's reputation.
   public shared(msg) func recordReport() : async VoidResult {
+    if (not callerIsActive(msg.caller)) {
+      return #err("User account is inactive");
+    };
     let key = pt(msg.caller);
     switch (users.get(key)) {
       case null #err("User not registered");
