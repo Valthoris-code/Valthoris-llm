@@ -124,7 +124,7 @@ function threatIntelligenceIdlFactory(): IDL.ServiceClass {
     addThreat: IDL.Func([NewThreatInput], [AddResult], []),
     checkThreat: IDL.Func([IDL.Text], [ThreatResult], ['query']),
     getThreatEntry: IDL.Func([IDL.Text], [IDL.Opt(ThreatEntry)], ['query']),
-    getActiveThreats: IDL.Func([IDL.Nat], [IDL.Vec(ThreatEntry)], ['query']),
+    listActiveThreats: IDL.Func([IDL.Nat], [IDL.Vec(ThreatEntry)], ['query']),
     deactivateThreat: IDL.Func([IDL.Text], [VoidResult], []),
     getStats: IDL.Func([], [ThreatStats], ['query']),
     healthCheck: IDL.Func([], [IDL.Bool], ['query']),
