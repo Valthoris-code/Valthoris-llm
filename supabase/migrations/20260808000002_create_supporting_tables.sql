@@ -87,13 +87,18 @@ CREATE POLICY "notifications_select_own"
   TO authenticated
   USING (user_id = auth.uid());
 
--- Authenticated users can mark their own notifications as read (UPDATE read_at only)
+-- Authenticated users can mark their own notifications as read.
+-- Column-level privilege restricts the UPDATE to read_at only.
 CREATE POLICY "notifications_update_own"
   ON public.notifications
   FOR UPDATE
   TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+
+-- Restrict authenticated UPDATE to read_at; all other columns are immutable for clients.
+REVOKE UPDATE ON public.notifications FROM authenticated;
+GRANT  UPDATE (read_at) ON public.notifications TO authenticated;
 
 -- ─── icp_ingest_cursors ───────────────────────────────────────────────────────
 --
