@@ -1,4 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet's default icon paths when bundled with Vite/webpack
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
+  iconUrl:       new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
+  shadowUrl:     new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
+});
 
 export interface MapMarker {
   id: string;
@@ -13,30 +24,56 @@ interface Props {
   center?: { lat: number; lng: number };
   markers?: MapMarker[];
   height?: number | string;
-  /** Visual layers requested by the parent module. */
+  /** Visual layers requested by the parent module (reserved for future use). */
   heatmap?: boolean;
   clusters?: boolean;
   caption?: string;
   children?: React.ReactNode;
 }
 
+const DEFAULT_CENTER: [number, number] = [38.736, -9.142]; // Lisbon
+
 const SEVERITY_COLOR: Record<NonNullable<MapMarker['severity']>, string> = {
-  low: 'var(--accent-cyan)',
-  medium: 'var(--accent-amber)',
-  high: '#ff7a45',
-  critical: 'var(--accent-red)',
+  low:      '#00d4ff',
+  medium:   '#ffaa00',
+  high:     '#ff7a45',
+  critical: '#ff3366',
 };
 
+function markerIcon(severity?: MapMarker['severity']) {
+  const color = SEVERITY_COLOR[severity ?? 'low'];
+  const svg = encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36">` +
+    `<path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z" fill="${color}"/>` +
+    `<circle cx="12" cy="12" r="5" fill="#041426"/>` +
+    `</svg>`
+  );
+  return L.icon({
+    iconUrl:    `data:image/svg+xml,${svg}`,
+    iconSize:   [24, 36],
+    iconAnchor: [12, 36],
+    popupAnchor:[0, -36],
+  });
+}
+
+/** Invalidates the map size after mount so tiles render correctly in flex/grid layouts. */
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const id = setTimeout(() => map.invalidateSize(), 150);
+    return () => clearTimeout(id);
+  }, [map]);
+  return null;
+}
+
 /**
- * OpenStreetMap surface placeholder.
+ * OpenStreetMap surface using Leaflet + react-leaflet.
  *
- * The production implementation will mount Leaflet (OpenStreetMap tiles,
- * `leaflet.markercluster` and `leaflet.heat`) on this container. Keeping the
- * public props identical to the future Leaflet wrapper means the modules that
- * consume it — Radar Global, Safe Location, Family Map — will not change.
+ * Props are intentionally kept identical to the previous MapPlaceholder so
+ * all consumers (Radar Global, Safe Location) do not need changes.
  *
- * TODO(backend): replace the placeholder surface with a real Leaflet map and
- * feed markers from the threat intelligence / safe location canisters.
+ * TODO(backend): wire markers from the threat_intelligence / safe_location
+ * canisters once those data feeds are connected.
  */
 export default function MapPlaceholder({
   center,
@@ -47,53 +84,54 @@ export default function MapPlaceholder({
   caption,
   children,
 }: Props) {
+  const mapCenter: [number, number] = center
+    ? [center.lat, center.lng]
+    : DEFAULT_CENTER;
+
   return (
     <div
       className="map-surface"
-      style={{ height }}
-      role="img"
+      style={{ height, position: 'relative' }}
+      role="region"
       aria-label={
         caption ??
-        `OpenStreetMap preview${markers.length ? ` with ${markers.length} markers` : ''}`
+        `OpenStreetMap${markers.length ? ` with ${markers.length} markers` : ''}`
       }
     >
-      <div className={`map-grid${heatmap ? ' map-grid-heat' : ''}`} aria-hidden="true" />
+      <MapContainer
+        center={mapCenter}
+        zoom={4}
+        style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
+        scrollWheelZoom
+        attributionControl
+      >
+        <MapResizer />
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {markers.map(marker => (
+          <Marker
+            key={marker.id}
+            position={[marker.lat, marker.lng]}
+            icon={markerIcon(marker.severity)}
+          >
+            <Popup>
+              <strong>{marker.label}</strong>
+              {marker.severity && <div>Severity: {marker.severity}</div>}
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
 
-      <div className="map-badges">
+      {/* Overlay badges */}
+      <div className="map-badges" style={{ zIndex: 1000 }}>
         <span className="badge badge-cyan">OpenStreetMap</span>
         {heatmap && <span className="badge badge-amber">Heatmap</span>}
         {clusters && <span className="badge badge-green">Clusters</span>}
       </div>
 
-      {/* Markers are positioned with a simple equirectangular projection so the
-          preview is deterministic without a tile engine. */}
-      {markers.map(marker => {
-        const left = ((marker.lng + 180) / 360) * 100;
-        const top = ((90 - marker.lat) / 180) * 100;
-        return (
-          <span
-            key={marker.id}
-            className="map-marker"
-            title={marker.label}
-            style={{
-              left: `${left}%`,
-              top: `${top}%`,
-              background: SEVERITY_COLOR[marker.severity ?? 'low'],
-            }}
-          />
-        );
-      })}
-
       {children}
-
-      <div className="map-footer">
-        <span>
-          {center
-            ? `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`
-            : 'Location not set'}
-        </span>
-        <span className="map-attribution">© OpenStreetMap contributors</span>
-      </div>
     </div>
   );
 }

@@ -63,7 +63,7 @@ export default function MobileDrawer({ open, onClose }: Props) {
       <aside className="mobile-drawer" aria-label="Navigation menu" role="dialog" aria-modal="true">
         <div className="mobile-drawer-header">
           <span className="mobile-drawer-brand">
-            <span style={{ fontSize: '1.3rem' }}>🛡</span>
+            <img src="/valthoris-logo.png" alt="Valthoris" style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
             <span>VALTHORIS</span>
           </span>
           <button

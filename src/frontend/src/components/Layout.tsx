@@ -46,6 +46,25 @@ export default function Layout() {
 
   return (
     <div className="layout">
+      {/* Subtle shield watermark in the background */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          bottom: '5%',
+          right: '3%',
+          width: 340,
+          height: 340,
+          backgroundImage: 'url(/valthoris-shield.png)',
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          opacity: 0.04,
+          pointerEvents: 'none',
+          zIndex: 0,
+          userSelect: 'none',
+        }}
+      />
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <ErrorBoundary fallback={null}>
         <ConsentGate />

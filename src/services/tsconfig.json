@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
+    "types": ["node"],
     "lib": ["ES2020"],
     "strict": true,
     "outDir": "./dist",

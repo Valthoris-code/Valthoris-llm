@@ -58,7 +58,11 @@ export default function TopToolbar({ onMenuToggle }: Props) {
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '1.3rem' }}>🛡</span>
+        <img
+          src="/valthoris-logo.png"
+          alt="Valthoris"
+          style={{ height: 32, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+        />
         <span className="toolbar-brand-text">VALTHORIS</span>
       </NavLink>
 

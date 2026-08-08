@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LanguageSelector from '../components/LanguageSelector';
 import { useT } from '../i18n/useI18n';
+import { submitWaitingListEntry } from '../services/waitingListService';
 
 const COUNTRIES = ['Portugal', 'Brazil', 'Spain', 'France', 'Germany', 'United Kingdom', 'United States', 'Other'];
 const LANGUAGES = ['English', 'Português', 'Español', 'Français', 'Deutsch'];
@@ -14,15 +15,27 @@ export default function WaitingList() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.consent) return;
     setLoading(true);
-    // TODO: Connect to waiting list backend service
-    await new Promise(r => setTimeout(r, 1000));
-    setSubmitted(true);
-    setLoading(false);
+    setSubmitError(null);
+    try {
+      await submitWaitingListEntry({
+        name:     form.name,
+        email:    form.email,
+        country:  form.country,
+        language: form.language,
+        reason:   form.reason,
+      });
+      setSubmitted(true);
+    } catch {
+      setSubmitError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -108,6 +121,11 @@ export default function WaitingList() {
             >
               {loading ? `⏳ ${t('common.loading')}` : `🛡 ${t('waiting.submit')}`}
             </button>
+            {submitError && (
+              <p style={{ color: 'var(--color-error, #e53e3e)', fontSize: '0.85rem', marginTop: '0.5rem', textAlign: 'center' }}>
+                {submitError}
+              </p>
+            )}
           </form>
         </div>
       </div>

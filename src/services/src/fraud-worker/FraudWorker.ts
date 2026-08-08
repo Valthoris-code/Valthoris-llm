@@ -151,18 +151,24 @@ export class FraudWorker {
     // Ensure the queue exists before starting
     await this.pgmq.ensureQueue(this.queueConfig.fraudQueueName);
 
+    // Resolve the pipeline name to its UUID if needed, then propagate the
+    // resolved UUID into the FraudPipeline so that every DB write uses the
+    // correct foreign-key value rather than the human-readable name.
+    const resolvedPipelineId = await this.resolvePipelineId(this.workerConfig.pipelineId);
+    this.pipeline.setPipelineId(resolvedPipelineId);
+
     await this.audit.log({
       actor: 'FraudWorker',
       action: 'worker.started',
       metadata: {
-        pipelineId: this.workerConfig.pipelineId,
+        pipelineId: resolvedPipelineId,
         mode: this.workerConfig.mode,
         pollIntervalMs: this.workerConfig.pollIntervalMs,
       },
     });
 
     console.log(
-      `[FraudWorker] Started — pipeline: ${this.workerConfig.pipelineId}, ` +
+      `[FraudWorker] Started — pipeline: ${resolvedPipelineId}, ` +
         `mode: ${this.workerConfig.mode}, queue: ${this.queueConfig.fraudQueueName}`,
     );
 
@@ -194,6 +200,38 @@ export class FraudWorker {
   }
 
   // ─── Private ─────────────────────────────────────────────────────────
+
+  /**
+   * Resolve a pipeline identifier to a UUID.
+   *
+   * FRAUD_WORKER_PIPELINE_ID may be set to either a UUID or a human-readable
+   * pipeline name (e.g. 'default-pipeline-v1').  The fraud_workflow_runs and
+   * fraud_decisions tables require a UUID foreign key.  This method accepts
+   * either form:
+   *   - If the value already matches the UUID v4 pattern it is returned as-is.
+   *   - Otherwise it is treated as a name and the corresponding row is fetched
+   *     from fraud_pipelines.  An error is thrown if no matching row is found.
+   */
+  private async resolvePipelineId(nameOrId: string): Promise<string> {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE.test(nameOrId)) {
+      return nameOrId;
+    }
+
+    const { data, error } = await this.supabase
+      .from('fraud_pipelines')
+      .select('id')
+      .eq('name', nameOrId)
+      .single();
+
+    if (error || !data) {
+      throw new Error(
+        `[FraudWorker] Could not resolve pipeline "${nameOrId}" to a UUID: ${error?.message ?? 'not found'}`,
+      );
+    }
+
+    return (data as { id: string }).id;
+  }
 
   private schedulePoll(): void {
     if (this.stopping) return;

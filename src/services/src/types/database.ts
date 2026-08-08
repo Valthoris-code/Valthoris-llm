@@ -1,18 +1,17 @@
 /**
  * types/database.ts
  *
- * Production-ready row interfaces for the Valthoris fraud pipeline tables.
+ * Row interfaces for the Valthoris Supabase tables.
  *
- * These interfaces are derived from the known migration constraints
- * (20260803000000_add_fraud_pipeline_constraints.sql) and the domain model.
- * They do NOT depend on Supabase schema introspection.
- *
- * TODO: Align column names with your actual database schema if they differ
- *       from the names used here.
+ * Schema is defined by the migrations in supabase/migrations/:
+ *   20260801000000_create_fraud_pipeline_tables.sql  — fraud pipeline tables
+ *   20260803000000_add_fraud_pipeline_constraints.sql — UNIQUE constraints
+ *   20260808000000_create_waiting_list.sql            — waiting_list
+ *   20260808000001_create_profiles.sql                — profiles
+ *   20260808000002_create_supporting_tables.sql       — audit_logs, notifications, icp_ingest_cursors
  */
 
 // ─── fraud_events ─────────────────────────────────────────────────────────
-// TODO: Verify that this table exists in your Supabase schema.
 // The fraud worker reads events from this table (via pgmq or direct query).
 
 export interface FraudEventRow {
@@ -28,7 +27,6 @@ export interface FraudEventRow {
 }
 
 // ─── fraud_pipelines ──────────────────────────────────────────────────────
-// TODO: Verify that this table exists in your Supabase schema.
 
 export interface FraudPipelineRow {
   id: string;
@@ -102,7 +100,6 @@ export type FraudDecisionJustificationInsert = Omit<
 >;
 
 // ─── audit_logs ───────────────────────────────────────────────────────────
-// TODO: Verify that this table exists in your Supabase schema.
 
 export interface AuditLogRow {
   id: string;
@@ -122,7 +119,6 @@ export interface AuditLogRow {
 export type AuditLogInsert = Omit<AuditLogRow, 'id' | 'created_at'>;
 
 // ─── notifications ────────────────────────────────────────────────────────
-// TODO: Verify that this table exists in your Supabase schema.
 
 export interface NotificationRow {
   id: string;
