@@ -6,9 +6,9 @@ import 'leaflet/dist/leaflet.css';
 // Fix Leaflet's default icon paths when bundled with Vite/webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
+  iconUrl:       new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
+  shadowUrl:     new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
 });
 
 export interface MapMarker {
