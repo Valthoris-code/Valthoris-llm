@@ -321,8 +321,8 @@ export class IcpFraudIngestService {
     lastProcessedId: string | null,
     newCount: number,
   ): Promise<void> {
-    const cumulativeCount = (this.processedCounts.get(cursorId) ?? 0) + newCount;
-    this.processedCounts.set(cursorId, cumulativeCount);
+    const previousCount = this.processedCounts.get(cursorId) ?? 0;
+    const cumulativeCount = previousCount + newCount;
 
     const { error } = await this.supabase.from('icp_ingest_cursors').upsert(
       {
@@ -337,6 +337,9 @@ export class IcpFraudIngestService {
     if (error) {
       // Non-critical — log and continue
       console.warn('[IcpFraudIngestService] Could not persist cursor:', error.message);
+      return;
     }
+
+    this.processedCounts.set(cursorId, cumulativeCount);
   }
 }

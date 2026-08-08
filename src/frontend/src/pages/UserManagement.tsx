@@ -25,6 +25,10 @@ const ROLE_BADGE: Record<UserRole, string> = {
   member:        'badge-cyan',
 };
 
+function toErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+}
+
 // ─── UserRow ──────────────────────────────────────────────────────────────────
 
 interface UserRowProps {
@@ -45,7 +49,7 @@ function UserRow({ user, currentPrincipal, onAction }: UserRowProps) {
       await action();
       await onAction();
     } catch (err) {
-      setActionError(String(err));
+      setActionError(toErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -181,7 +185,7 @@ function UserManagementContent() {
       setError('');
     } catch (err) {
       setUsers([]);
-      setError(String(err));
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
