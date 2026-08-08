@@ -77,6 +77,10 @@ export class IcpFraudIngestService {
     [CURSOR_COMMUNITY, new Set()],
     [CURSOR_THREAT, new Set()],
   ]);
+  private readonly processedCounts = new Map<string, number>([
+    [CURSOR_COMMUNITY, 0],
+    [CURSOR_THREAT, 0],
+  ]);
 
   private stopping = false;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
@@ -220,19 +224,19 @@ export class IcpFraudIngestService {
     await this.pgmq.sendBatch(this.queueCfg.fraudQueueName, messages);
 
     newReports.forEach((r) => seen.add(r.id));
-    await this.persistCursor(CURSOR_COMMUNITY, newReports.length);
+    const lastProcessedId = newReports[newReports.length - 1]?.id ?? null;
+    await this.persistCursor(CURSOR_COMMUNITY, lastProcessedId, newReports.length);
 
     return newReports.length;
   }
 
   private async ingestThreatEntries(): Promise<number> {
-    let entries;
+    let entries: Awaited<ReturnType<IcpActors['threatIntelligence']['listActiveThreats']>>;
 
     try {
-      const raw = await this.actors.threatIntelligence.listActiveThreats(
+      entries = await this.actors.threatIntelligence.listActiveThreats(
         BigInt(this.icpCfg.fetchBatchSize),
       );
-      entries = raw;
     } catch (err) {
       console.error('[IcpFraudIngestService] Failed to fetch threat entries:', err);
       return 0;
@@ -265,7 +269,8 @@ export class IcpFraudIngestService {
     await this.pgmq.sendBatch(this.queueCfg.fraudQueueName, messages);
 
     newEntries.forEach((e) => seen.add(e.id));
-    await this.persistCursor(CURSOR_THREAT, newEntries.length);
+    const lastProcessedId = newEntries[newEntries.length - 1]?.id ?? null;
+    await this.persistCursor(CURSOR_THREAT, lastProcessedId, newEntries.length);
 
     return newEntries.length;
   }
@@ -289,7 +294,7 @@ export class IcpFraudIngestService {
   private async loadCursors(): Promise<void> {
     const { data, error } = await this.supabase
       .from('icp_ingest_cursors')
-      .select('id, last_processed_id');
+      .select('id, last_processed_id, processed_count, updated_at');
 
     if (error) {
       // TODO: Create the icp_ingest_cursors table in your Supabase schema
@@ -305,16 +310,25 @@ export class IcpFraudIngestService {
       if (set && row.last_processed_id) {
         set.add(row.last_processed_id);
       }
+      if (this.processedCounts.has(row.id)) {
+        this.processedCounts.set(row.id, Number(row.processed_count) || 0);
+      }
     }
   }
 
-  private async persistCursor(cursorId: string, newCount: number): Promise<void> {
+  private async persistCursor(
+    cursorId: string,
+    lastProcessedId: string | null,
+    newCount: number,
+  ): Promise<void> {
+    const cumulativeCount = (this.processedCounts.get(cursorId) ?? 0) + newCount;
+    this.processedCounts.set(cursorId, cumulativeCount);
+
     const { error } = await this.supabase.from('icp_ingest_cursors').upsert(
       {
         id: cursorId,
-        // TODO: Store the actual last-processed ID once ordering is stable
-        last_processed_id: null,
-        processed_count: newCount,
+        last_processed_id: lastProcessedId,
+        processed_count: cumulativeCount,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'id' },
