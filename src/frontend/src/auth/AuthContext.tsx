@@ -28,6 +28,7 @@ import type { ReactNode } from 'react';
 import { getAuthClient, login as doLogin, logout as doLogout } from '../services/auth';
 import type { User } from '../models/User';
 import { ensureUser } from '../services/roleService';
+import { syncWithSupabase } from '../services/profileService';
 
 // ─── Context value shape ────────────────────────────────────────────────────
 
@@ -81,6 +82,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const p = client.getIdentity().getPrincipal().toText();
       try {
         const managed = await ensureUser();
+  try {
+    await syncWithSupabase(p);
+  } catch (supabaseErr) {
+    console.warn("[AuthContext] Supabase profile sync failed:", supabaseErr);
+  }
         setPrincipal(p);
         setUser({ principal: p, role: managed.role });
         setIsAuthenticated(true);
