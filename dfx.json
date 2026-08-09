@@ -1,5 +1,10 @@
 {
   "version": 1,
+  "defaults": {
+    "build": {
+      "args": "--enhanced-orthogonal-persistence"
+    }
+  },
   "canisters": {
     "frontend": {
       "type": "assets",
@@ -8,29 +13,23 @@
     },
     "backend": {
       "type": "motoko",
-      "main": "src/backend/main.mo",
-      "args": "--enhanced-orthogonal-persistence",
-      "init_arg": "(principal \"5zuwu-tg4w3-24k2i-oj4co-jtrvg-awxcp-cb3kq-a44yk-oug3q-zes7x-6ae\")"
+      "main": "src/backend/main.mo"
     },
     "community": {
       "type": "motoko",
-      "main": "src/community/main.mo",
-      "args": "--enhanced-orthogonal-persistence"
+      "main": "src/community/main.mo"
     },
     "identity": {
       "type": "motoko",
-      "main": "src/identity/main.mo",
-      "args": "--enhanced-orthogonal-persistence"
+      "main": "src/identity/main.mo"
     },
     "threat_intelligence": {
       "type": "motoko",
-      "main": "src/threat_intelligence/main.mo",
-      "args": "--enhanced-orthogonal-persistence"
+      "main": "src/threat_intelligence/main.mo"
     },
     "safe_location": {
       "type": "motoko",
-      "main": "src/safe_location/main.mo",
-      "args": "--enhanced-orthogonal-persistence"
+      "main": "src/safe_location/main.mo"
     }
   },
   "networks": {
