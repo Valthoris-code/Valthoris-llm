@@ -10,7 +10,7 @@ import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 
 /// Identity — contact lookup, risk scoring, and reputation management.
-actor Identity {
+persistent actor Identity {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -64,7 +64,7 @@ actor Identity {
 
   stable var dbEntries : [(Text, ReputationEntry)] = [];
 
-  var db : HashMap.HashMap<Text, ReputationEntry> =
+  transient var db : HashMap.HashMap<Text, ReputationEntry> =
     HashMap.fromIter<Text, ReputationEntry>(
       dbEntries.vals(), dbEntries.size(), Text.equal, Text.hash
     );
