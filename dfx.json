@@ -8,23 +8,28 @@
     },
     "backend": {
       "type": "motoko",
-      "main": "src/backend/main.mo"
+      "main": "src/backend/main.mo",
+      "args": "--enhanced-orthogonal-persistence"
     },
     "community": {
       "type": "motoko",
-      "main": "src/community/main.mo"
+      "main": "src/community/main.mo",
+      "args": "--enhanced-orthogonal-persistence"
     },
     "identity": {
       "type": "motoko",
-      "main": "src/identity/main.mo"
+      "main": "src/identity/main.mo",
+      "args": "--enhanced-orthogonal-persistence"
     },
     "threat_intelligence": {
       "type": "motoko",
-      "main": "src/threat_intelligence/main.mo"
+      "main": "src/threat_intelligence/main.mo",
+      "args": "--enhanced-orthogonal-persistence"
     },
     "safe_location": {
+      "main": "src/safe_location/main.mo",
       "type": "motoko",
-      "main": "src/safe_location/main.mo"
+      "args": "--enhanced-orthogonal-persistence"
     }
   },
   "networks": {
