@@ -19,7 +19,7 @@
  * See supabase/migrations/20260808000001_create_profiles.sql
  */
 
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 import type { UserRole } from '../models/User';
 import type { Profile } from '../models/Profile';
 
@@ -70,6 +70,8 @@ export async function updateProfile(principal: string, data: ProfileUpdate): Pro
   store[principal] = { ...store[principal], ...data };
   saveLocal(store);
 
+  if (!isSupabaseConfigured) return;
+
   const { error } = await supabase
     .from('profiles')
     .upsert(
@@ -93,6 +95,8 @@ export async function updateProfile(principal: string, data: ProfileUpdate): Pro
  * Merges cloud fields back into the local cache and returns them.
  */
 export async function syncWithSupabase(principal: string): Promise<ProfileUpdate> {
+  if (!isSupabaseConfigured) return getLocalProfile(principal);
+
   const { data, error } = await supabase
     .from('profiles')
     .upsert(

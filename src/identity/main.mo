@@ -121,7 +121,7 @@ actor Identity {
           isVerifiedBusiness = e.isVerifiedBusiness;
           firstSeen          = e.firstSeen;
           lastUpdated        = now;
-          notes              = { let b = Buffer.fromArray<Text>(e.notes); b.add(reason); Buffer.toArray(b) };
+          notes              = do { let b = Buffer.fromArray<Text>(e.notes); b.add(reason); Buffer.toArray(b) };
         });
       };
       case null {

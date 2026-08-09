@@ -132,7 +132,7 @@ actor Community {
 
   func recordVote(reportId : Text, voter : Text) {
     let prev = switch (voters.get(reportId)) { case (?vs) vs; case null [] };
-    voters.put(reportId, { let b = Buffer.fromArray<Text>(prev); b.add(voter); Buffer.toArray(b) });
+    voters.put(reportId, do { let b = Buffer.fromArray<Text>(prev); b.add(voter); Buffer.toArray(b) });
   };
 
   // ──────────────────────────────────────────────────────────────────────

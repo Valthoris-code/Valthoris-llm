@@ -135,7 +135,7 @@ actor ThreatIntelligence {
   func indexIndicator(indicator : Text, id : Text) {
     let key  = normalise(indicator);
     let prev = switch (indicatorIdx.get(key)) { case (?ids) ids; case null [] };
-    indicatorIdx.put(key, { let b = Buffer.fromArray<Text>(prev); b.add(id); Buffer.toArray(b) });
+    indicatorIdx.put(key, do { let b = Buffer.fromArray<Text>(prev); b.add(id); Buffer.toArray(b) });
   };
 
   func noThreat() : ThreatResult {
