@@ -9,7 +9,7 @@ import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 
 /// Community — fraud reports, community voting, and reputation signals.
-actor Community {
+persistent actor Community {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -67,13 +67,13 @@ actor Community {
   stable var votesEntries   : [(Text, [Text])]   = [];
   stable var reportCounter  : Nat                = 0;
 
-  var reports : HashMap.HashMap<Text, Report> =
+  transient var reports : HashMap.HashMap<Text, Report> =
     HashMap.fromIter<Text, Report>(
       reportsEntries.vals(), reportsEntries.size(), Text.equal, Text.hash
     );
 
   // voters: reportId → list of principal strings that already voted
-  var voters : HashMap.HashMap<Text, [Text]> =
+  transient var voters : HashMap.HashMap<Text, [Text]> =
     HashMap.fromIter<Text, [Text]>(
       votesEntries.vals(), votesEntries.size(), Text.equal, Text.hash
     );
@@ -132,7 +132,7 @@ actor Community {
 
   func recordVote(reportId : Text, voter : Text) {
     let prev = switch (voters.get(reportId)) { case (?vs) vs; case null [] };
-    voters.put(reportId, { let b = Buffer.fromArray<Text>(prev); b.add(voter); Buffer.toArray(b) });
+    voters.put(reportId, do { let b = Buffer.fromArray<Text>(prev); b.add(voter); Buffer.toArray(b) });
   };
 
   // ──────────────────────────────────────────────────────────────────────

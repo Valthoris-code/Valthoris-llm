@@ -10,7 +10,7 @@ import Buffer "mo:base/Buffer";
 
 /// Threat Intelligence — IOC database with fast indicator lookup
 /// across URLs, IPs, domains, file hashes, and email addresses.
-actor ThreatIntelligence {
+persistent actor ThreatIntelligence {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -88,13 +88,13 @@ actor ThreatIntelligence {
   stable var threatCounter       : Nat                   = 0;
 
   // Primary store: id → ThreatEntry
-  var threats : HashMap.HashMap<Text, ThreatEntry> =
+  transient var threats : HashMap.HashMap<Text, ThreatEntry> =
     HashMap.fromIter<Text, ThreatEntry>(
       threatEntries.vals(), threatEntries.size(), Text.equal, Text.hash
     );
 
   // Inverted index: normalised indicator → [entry ids]
-  var indicatorIdx : HashMap.HashMap<Text, [Text]> =
+  transient var indicatorIdx : HashMap.HashMap<Text, [Text]> =
     HashMap.fromIter<Text, [Text]>(
       indicatorIdxEntries.vals(), indicatorIdxEntries.size(), Text.equal, Text.hash
     );
@@ -135,7 +135,7 @@ actor ThreatIntelligence {
   func indexIndicator(indicator : Text, id : Text) {
     let key  = normalise(indicator);
     let prev = switch (indicatorIdx.get(key)) { case (?ids) ids; case null [] };
-    indicatorIdx.put(key, { let b = Buffer.fromArray<Text>(prev); b.add(id); Buffer.toArray(b) });
+    indicatorIdx.put(key, do { let b = Buffer.fromArray<Text>(prev); b.add(id); Buffer.toArray(b) });
   };
 
   func noThreat() : ThreatResult {

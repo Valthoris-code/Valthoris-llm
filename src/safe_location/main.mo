@@ -12,7 +12,7 @@ import Result "mo:base/Result";
 import Option "mo:base/Option";
 
 /// Safe Location — encrypted location sharing with TTL and geofencing.
-actor SafeLocation {
+persistent actor SafeLocation {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -71,11 +71,11 @@ actor SafeLocation {
   stable var shareCounter     : Nat                    = 0;
   stable var geofenceCounter  : Nat                    = 0;
 
-  var shares    : HashMap.HashMap<Text, ShareInfo>    =
+  transient var shares    : HashMap.HashMap<Text, ShareInfo>    =
     HashMap.fromIter<Text, ShareInfo>(sharesEntries.vals(), sharesEntries.size(), Text.equal, Text.hash);
-  var locations : HashMap.HashMap<Text, LocationData> =
+  transient var locations : HashMap.HashMap<Text, LocationData> =
     HashMap.fromIter<Text, LocationData>(locationsEntries.vals(), locationsEntries.size(), Text.equal, Text.hash);
-  var geofences : HashMap.HashMap<Text, GeofenceZone> =
+  transient var geofences : HashMap.HashMap<Text, GeofenceZone> =
     HashMap.fromIter<Text, GeofenceZone>(geofencesEntries.vals(), geofencesEntries.size(), Text.equal, Text.hash);
 
   system func preupgrade() {

@@ -24,7 +24,7 @@ import Buffer "mo:base/Buffer";
 ///
 /// On subsequent upgrades the constructor is NOT called again; stable storage
 /// preserves all managed-user records across upgrades.
-actor class Backend(initialAdminPrincipal : Principal) {
+persistent actor class Backend(initialAdminPrincipal : Principal) {
 
   // ──────────────────────────────────────────────────────────────────────
   // Types
@@ -75,12 +75,12 @@ actor class Backend(initialAdminPrincipal : Principal) {
   stable let startTime    : Int  = Time.now();
   stable let version      : Text = "1.0.0";
 
-  var users : HashMap.HashMap<Text, UserProfile> =
+  transient var users : HashMap.HashMap<Text, UserProfile> =
     HashMap.fromIter<Text, UserProfile>(
       usersEntries.vals(), usersEntries.size(), Text.equal, Text.hash
     );
 
-  var managedUsers : HashMap.HashMap<Text, ManagedUser> =
+  transient var managedUsers : HashMap.HashMap<Text, ManagedUser> =
     HashMap.fromIter<Text, ManagedUser>(
       managedUserEntries.vals(), managedUserEntries.size(), Text.equal, Text.hash
     );
