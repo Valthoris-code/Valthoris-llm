@@ -82,6 +82,15 @@ interface Completion {
   model: string;
 }
 
+/**
+ * An error whose message is safe to return to the browser.
+ *
+ * Anything that is not an `AiChatError` (an unexpected runtime fault, whose
+ * message may embed internal details or a stack trace) is logged server-side
+ * and reported to the client as a generic failure instead.
+ */
+class AiChatError extends Error {}
+
 async function callOpenAi(messages: ChatMessage[], apiKey: string): Promise<Completion> {
   const model = env('OPENAI_MODEL') ?? 'gpt-4o-mini';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -99,13 +108,14 @@ async function callOpenAi(messages: ChatMessage[], apiKey: string): Promise<Comp
   });
 
   if (!res.ok) {
-    throw new Error(`OpenAI request failed (${res.status}): ${await res.text()}`);
+    console.error('[ai-chat] openai', res.status, await res.text());
+    throw new AiChatError(`OpenAI request failed with HTTP ${res.status}`);
   }
 
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== 'string' || content.length === 0) {
-    throw new Error('OpenAI returned an empty completion');
+    throw new AiChatError('OpenAI returned an empty completion');
   }
   return { content, provider: 'openai', model: data?.model ?? model };
 }
@@ -133,13 +143,14 @@ async function callAnthropic(messages: ChatMessage[], apiKey: string): Promise<C
   });
 
   if (!res.ok) {
-    throw new Error(`Anthropic request failed (${res.status}): ${await res.text()}`);
+    console.error('[ai-chat] anthropic', res.status, await res.text());
+    throw new AiChatError(`Anthropic request failed with HTTP ${res.status}`);
   }
 
   const data = await res.json();
   const content = data?.content?.[0]?.text;
   if (typeof content !== 'string' || content.length === 0) {
-    throw new Error('Anthropic returned an empty completion');
+    throw new AiChatError('Anthropic returned an empty completion');
   }
   return { content, provider: 'anthropic', model: data?.model ?? model };
 }
@@ -159,7 +170,7 @@ async function complete(messages: ChatMessage[]): Promise<Completion> {
   }
 
   if (attempts.length === 0) {
-    throw new Error(
+    throw new AiChatError(
       'No AI provider configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY as Supabase function secrets.',
     );
   }
@@ -169,10 +180,16 @@ async function complete(messages: ChatMessage[]): Promise<Completion> {
     try {
       return await attempt();
     } catch (err) {
-      errors.push(err instanceof Error ? err.message : String(err));
+      if (err instanceof AiChatError) {
+        errors.push(err.message);
+      } else {
+        // Unexpected fault: keep the detail in the function logs only.
+        console.error('[ai-chat] provider fault', err);
+        errors.push('unexpected provider error');
+      }
     }
   }
-  throw new Error(`All AI providers failed: ${errors.join(' | ')}`);
+  throw new AiChatError(`All AI providers failed: ${errors.join(' | ')}`);
 }
 
 (globalThis as any).Deno?.serve(async (req: Request) => {
@@ -198,8 +215,11 @@ async function complete(messages: ChatMessage[]): Promise<Completion> {
   try {
     return json(await complete(messages), 200);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[ai-chat]', message);
+    console.error('[ai-chat]', err);
+    // Only curated messages reach the browser; unexpected faults are generic.
+    const message = err instanceof AiChatError
+      ? err.message
+      : 'The AI backend is unavailable. Please try again later.';
     return json({ error: message }, 502);
   }
 });
