@@ -1,15 +1,4 @@
 
-<div align="center">
-
-<img src="documentos/valthoris-desktop-scene.png" alt="Valthoris" width="850">
-
-# VALTHORIS
-
-### AI Cybersecurity & Fraud Prevention
-
-**Intelligence · Prevention · Protection**
-
-</div>
 
 # VALTHORIS
 
