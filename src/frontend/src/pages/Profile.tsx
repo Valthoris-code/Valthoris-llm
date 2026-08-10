@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useActors } from '../hooks/useActors';
+import { useActorsReady } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
 import { getLocalProfile, updateProfile } from '../services/profileService';
 import PageHeader from '../components/ui/PageHeader';
@@ -18,6 +18,9 @@ interface UserProfile {
   isActive: boolean;
 }
 
+/** Exact backend error meaning "this principal has no profile yet". */
+const NOT_REGISTERED = 'User not registered';
+
 /** Allow only http/https avatar URLs — prevents javascript: and data: injection. */
 function sanitizeAvatarUrl(raw: string): string {
   try {
@@ -33,10 +36,12 @@ function sanitizeAvatarUrl(raw: string): string {
 
 export default function Profile() {
   const { isAuthenticated, principal, loading: authLoading } = useAuth();
-  const actors = useActors();
+  const { actors, ready } = useActorsReady();
   const navigate = useNavigate();
 
   const [profile, setProfile]   = useState<UserProfile | null>(null);
+  /** True only when the backend explicitly reported "User not registered". */
+  const [notRegistered, setNotRegistered] = useState(false);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
@@ -56,11 +61,46 @@ export default function Profile() {
   // so no taint flows from the input field to this value.
   const [savedAvatarUrl, setSavedAvatarUrl] = useState('');
 
+  const loadProfile = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await actors.backend.getUserProfile();
+      if ('ok' in res) {
+        setProfile(res.ok as unknown as UserProfile);
+        setNotRegistered(false);
+        setError('');
+      } else {
+        const message = String((res as { err: string }).err);
+        if (message === NOT_REGISTERED) {
+          // First access — show the create-profile form.
+          setProfile(null);
+          setNotRegistered(true);
+          setError('');
+        } else {
+          // Authentication / account errors must never be mistaken for
+          // "not registered", otherwise an existing profile looks empty.
+          setProfile(null);
+          setNotRegistered(false);
+          setError(message);
+        }
+      }
+    } catch (e) {
+      setProfile(null);
+      setNotRegistered(false);
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [actors]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) { navigate('/'); return; }
-    loadProfile();
-  }, [authLoading, isAuthenticated, navigate]);
+    // Wait until the identity-bound actors exist, otherwise the call is made
+    // with the anonymous agent and the backend rejects it.
+    if (!ready) return;
+    void loadProfile();
+  }, [authLoading, isAuthenticated, navigate, ready, loadProfile]);
 
   // Load extended profile from profileService (localStorage) on principal change.
   // avatarUrlInput fills the input text field; savedAvatarUrl is the validated
@@ -73,21 +113,6 @@ export default function Profile() {
     setBio(local.bio ?? '');
     setSavedAvatarUrl(sanitizeAvatarUrl(local.avatarUrl ?? ''));
   }, [principal]);
-
-  const loadProfile = async () => {
-    setLoading(true);
-    try {
-      const res = await actors.backend.getUserProfile();
-      if ('ok' in res) {
-        setProfile(res.ok as unknown as UserProfile);
-      }
-      // If 'err' in res the user is simply not registered yet — that's fine
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRegister = async () => {
     if (!displayName.trim()) return;
@@ -152,7 +177,17 @@ export default function Profile() {
       {error   && <div className="alert-error   mt-2">{error}</div>}
       {success && <div className="alert-success mt-2">{success}</div>}
 
-      {!profile ? (
+      {!profile && !notRegistered ? (
+        <div className="card mt-2" style={{ maxWidth: 480 }}>
+          <h3>Perfil indisponível</h3>
+          <p className="text-muted">
+            Não foi possível carregar o seu perfil. Verifique a sessão e tente novamente.
+          </p>
+          <button className="btn-secondary mt-2" onClick={() => void loadProfile()}>
+            🔄 Tentar novamente
+          </button>
+        </div>
+      ) : !profile ? (
         <div className="card mt-2" style={{ maxWidth: 480 }}>
           <h3>Criar Perfil</h3>
           <p className="text-muted">Este é o seu primeiro acesso. Crie o seu perfil para aceder a todas as funcionalidades.</p>

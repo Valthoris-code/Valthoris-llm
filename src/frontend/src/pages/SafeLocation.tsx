@@ -5,7 +5,7 @@ import EmptyState from '../components/ui/EmptyState';
 import MapPlaceholder from '../components/ui/MapPlaceholder';
 import Toggle from '../components/ui/Toggle';
 import { useToast } from '../components/ui/Toast';
-import { useActors } from '../hooks/useActors';
+import { useActorsReady } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
 import { useI18n } from '../i18n/useI18n';
 import TrustedContacts from '../safeLocation/TrustedContacts';
@@ -17,9 +17,24 @@ import {
   loadSettings,
   saveSettings,
 } from '../safeLocation/model';
-import type { SafeLocationSettings, ShareDurationId } from '../safeLocation/model';
+import type { Geofence, GeofenceDraft, SafeLocationSettings, ShareDurationId } from '../safeLocation/model';
+import { buildShareUrl, copyToClipboard } from '../safeLocation/shareLink';
 import type { MapMarker } from '../components/ui/MapPlaceholder';
-import type { ShareInfo } from '../../../declarations/safe_location/index.d.ts';
+import type { GeofenceZone, ShareInfo } from '../../../declarations/safe_location/index.d.ts';
+
+/** Canister zone → UI model. A zone alerting on entry is an "alert" zone. */
+function toGeofence(zone: GeofenceZone): Geofence {
+  return {
+    id: zone.id,
+    name: zone.name,
+    lat: zone.centerLat,
+    lng: zone.centerLng,
+    radiusMeters: zone.radiusMeters,
+    kind: zone.alertOnEnter ? 'alert' : 'safe',
+    notifyOnEnter: zone.alertOnEnter,
+    notifyOnExit: zone.alertOnExit,
+  };
+}
 
 type TabId = 'map' | 'contacts' | 'geofences' | 'history';
 
@@ -32,7 +47,7 @@ const TABS: Array<{ id: TabId; icon: string; label: string }> = [
 
 export default function SafeLocation() {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const actors = useActors();
+  const { actors, ready } = useActorsReady();
   const navigate = useNavigate();
   const { t } = useI18n();
   const { toast } = useToast();
@@ -40,12 +55,16 @@ export default function SafeLocation() {
   const [settings, setSettings] = useState<SafeLocationSettings>(() => loadSettings());
   const [tab, setTab] = useState<TabId>('map');
   const [shares, setShares] = useState<ShareInfo[]>([]);
+  const [geofences, setGeofences] = useState<Geofence[]>([]);
+  const [geofencesLoading, setGeofencesLoading] = useState(true);
+  const [geofenceBusy, setGeofenceBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [duration, setDuration] = useState<ShareDurationId>(settings.defaultDuration);
   const [label, setLabel] = useState('');
   const [recipient, setRecipient] = useState('');
+  const [lastShareUrl, setLastShareUrl] = useState('');
 
   const device = useDeviceLocation(settings.highAccuracy);
 
@@ -65,14 +84,59 @@ export default function SafeLocation() {
     }
   }, [actors]);
 
+  const loadGeofences = useCallback(async () => {
+    setGeofencesLoading(true);
+    try {
+      const zones = await actors.safeLocation.listMyGeofences();
+      setGeofences(zones.map(toGeofence));
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setGeofencesLoading(false);
+    }
+  }, [actors]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
       navigate('/auth');
       return;
     }
+    // The canister rejects anonymous callers, so wait for the identity-bound
+    // actors before issuing the first call.
+    if (!ready) return;
     void loadShares();
-  }, [authLoading, isAuthenticated, navigate, loadShares]);
+    void loadGeofences();
+  }, [authLoading, isAuthenticated, navigate, ready, loadShares, loadGeofences]);
+
+  const handleAddGeofence = useCallback(async (draft: GeofenceDraft) => {
+    setGeofenceBusy(true);
+    try {
+      const result = await actors.safeLocation.setGeofence(
+        draft.name,
+        draft.lat,
+        draft.lng,
+        draft.radiusMeters,
+        draft.notifyOnEnter,
+        draft.notifyOnExit
+      );
+      if ('err' in result) throw new Error(String((result as { err: string }).err));
+      await loadGeofences();
+    } finally {
+      setGeofenceBusy(false);
+    }
+  }, [actors, loadGeofences]);
+
+  const handleDeleteGeofence = useCallback(async (id: string) => {
+    setGeofenceBusy(true);
+    try {
+      const result = await actors.safeLocation.deleteGeofence(id);
+      if ('err' in result) throw new Error(String((result as { err: string }).err));
+      await loadGeofences();
+    } finally {
+      setGeofenceBusy(false);
+    }
+  }, [actors, loadGeofences]);
 
   const activeShares = useMemo(() => shares.filter(s => s.isActive), [shares]);
 
@@ -92,7 +156,7 @@ export default function SafeLocation() {
         list.push({ id: contact.id, lat: contact.lat, lng: contact.lng, label: contact.name, severity: 'medium' });
       }
     });
-    settings.geofences.forEach(fence => {
+    geofences.forEach(fence => {
       list.push({
         id: fence.id,
         lat: fence.lat,
@@ -102,7 +166,7 @@ export default function SafeLocation() {
       });
     });
     return list;
-  }, [device.position, settings.contacts, settings.geofences, settings.emergencyMode, t]);
+  }, [device.position, settings.contacts, geofences, settings.emergencyMode, t]);
 
   const handleShare = async () => {
     if (!device.position) {
@@ -123,7 +187,15 @@ export default function SafeLocation() {
         label ? [label] : []
       );
       if ('ok' in result) {
-        toast(`${t('safe.liveSharing')} — token ${result.ok}`, 'success');
+        const url = buildShareUrl(result.ok);
+        setLastShareUrl(url);
+        const copied = await copyToClipboard(url);
+        toast(
+          copied
+            ? `${t('safe.liveSharing')} — link copiado`
+            : `${t('safe.liveSharing')} — ${url}`,
+          'success'
+        );
         setLabel('');
         setRecipient('');
         await loadShares();
@@ -157,6 +229,12 @@ export default function SafeLocation() {
     // TODO(backend): notify every trusted contact with `receive-sos` permission
     // and open an emergency incident in the safe_location canister.
     toast(t('safe.sosActive'), 'error');
+  };
+
+  const handleCopyLink = async (token: string) => {
+    const url = buildShareUrl(token);
+    const copied = await copyToClipboard(url);
+    toast(copied ? 'Link copiado.' : url, copied ? 'success' : 'info');
   };
 
   const formatExpiry = (ns: bigint) => new Date(Number(ns / BigInt(1_000_000))).toLocaleString();
@@ -228,7 +306,7 @@ export default function SafeLocation() {
               caption={`${t('safe.familyMap')} — OpenStreetMap preview`}
             />
             <p className="text-muted safe-map-note">
-              {t('safe.familyMap')} · {settings.contacts.length} contact(s), {settings.geofences.length} zone(s).
+              {t('safe.familyMap')} · {settings.contacts.length} contact(s), {geofences.length} zone(s).
               {/* TODO(backend): stream contact positions from the safe_location canister. */}
             </p>
           </div>
@@ -330,6 +408,11 @@ export default function SafeLocation() {
 
             <section className="card safe-panel">
               <h2 className="section-title">🔗 Active shares</h2>
+              {lastShareUrl && (
+                <p className="text-muted safe-list-sub">
+                  Último link: <a href={lastShareUrl}>{lastShareUrl}</a>
+                </p>
+              )}
               {loading ? (
                 <div className="spinner" role="status" aria-label={t('common.loading')} />
               ) : activeShares.length === 0 ? (
@@ -341,6 +424,13 @@ export default function SafeLocation() {
                       <div className="safe-list-head">
                         <code className="safe-token">{share.token}</code>
                         <span className="badge badge-green">active</span>
+                        <button
+                          type="button"
+                          className="btn-secondary safe-mini-btn"
+                          onClick={() => void handleCopyLink(share.token)}
+                        >
+                          🔗 Copy link
+                        </button>
                         <button
                           type="button"
                           className="btn-danger safe-mini-btn"
@@ -373,9 +463,12 @@ export default function SafeLocation() {
 
       {tab === 'geofences' && (
         <Geofences
-          geofences={settings.geofences}
-          onChange={geofences => persist({ ...settings, geofences })}
+          geofences={geofences}
+          onAdd={handleAddGeofence}
+          onDelete={handleDeleteGeofence}
           position={device.position}
+          loading={geofencesLoading}
+          busy={geofenceBusy}
         />
       )}
 

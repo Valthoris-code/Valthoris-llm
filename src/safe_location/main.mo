@@ -99,6 +99,10 @@ persistent actor SafeLocation {
 
   func pt(p : Principal) : Text { Principal.toText(p) };
 
+  /// Anonymous callers all share the principal `2vxsx-fae`, so any data owned
+  /// by it would be readable and mutable by every other anonymous caller.
+  func isAnonymous(p : Principal) : Bool { Principal.isAnonymous(p) };
+
   // Token: "SL" + counter + "-" + hash of (caller + now + counter)
   func newToken(caller : Principal) : Text {
     shareCounter += 1;
@@ -142,6 +146,7 @@ persistent actor SafeLocation {
     recipient     : ?Text,
     locationLabel : ?Text,
   ) : async ShareResult {
+    if (isAnonymous(msg.caller))                   return #err("Authentication required");
     if (ttlSeconds == 0 or ttlSeconds > 2_592_000) return #err("TTL must be 1 s – 30 days");
     if (lat < -90.0 or lat > 90.0)                 return #err("Latitude out of range");
     if (lng < -180.0 or lng > 180.0)               return #err("Longitude out of range");
@@ -173,6 +178,7 @@ persistent actor SafeLocation {
     lng      : Float,
     accuracy : ?Float,
   ) : async VoidResult {
+    if (isAnonymous(msg.caller)) return #err("Authentication required");
     switch (shares.get(token)) {
       case null   #err("Share not found");
       case (?s) {
@@ -213,6 +219,7 @@ persistent actor SafeLocation {
 
   /// Revoke a share before it expires.
   public shared(msg) func revokeShare(token : Text) : async VoidResult {
+    if (isAnonymous(msg.caller)) return #err("Authentication required");
     switch (shares.get(token)) {
       case null   #err("Share not found");
       case (?s) {
@@ -228,6 +235,7 @@ persistent actor SafeLocation {
 
   /// List all shares created by the caller.
   public shared query(msg) func listMyShares() : async [ShareInfo] {
+    if (isAnonymous(msg.caller)) return [];
     let caller = pt(msg.caller);
     let buf    = Buffer.Buffer<ShareInfo>(4);
     for ((_, s) in shares.entries()) {
@@ -249,6 +257,7 @@ persistent actor SafeLocation {
     alertOnEnter : Bool,
     alertOnExit  : Bool,
   ) : async ShareResult {
+    if (isAnonymous(msg.caller))                    return #err("Authentication required");
     if (Text.size(name) < 2)                        return #err("Name too short");
     if (radiusMeters < 10.0 or radiusMeters > 50_000.0) return #err("Radius: 10 m – 50 km");
     if (centerLat < -90.0 or centerLat > 90.0)     return #err("Latitude out of range");
@@ -267,6 +276,7 @@ persistent actor SafeLocation {
 
   /// List all active geofences owned by the caller.
   public shared query(msg) func listMyGeofences() : async [GeofenceZone] {
+    if (isAnonymous(msg.caller)) return [];
     let caller = pt(msg.caller);
     let buf    = Buffer.Buffer<GeofenceZone>(4);
     for ((_, g) in geofences.entries()) {
@@ -277,6 +287,7 @@ persistent actor SafeLocation {
 
   /// Soft-delete a geofence owned by the caller.
   public shared(msg) func deleteGeofence(id : Text) : async VoidResult {
+    if (isAnonymous(msg.caller)) return #err("Authentication required");
     switch (geofences.get(id)) {
       case null   #err("Geofence not found");
       case (?g) {
@@ -296,6 +307,7 @@ persistent actor SafeLocation {
   /// Check provided coordinates against all active geofences owned by the caller.
   /// Returns an alert for every zone the point falls inside.
   public shared query(msg) func checkGeofences(lat : Float, lng : Float) : async [GeofenceAlert] {
+    if (isAnonymous(msg.caller)) return [];
     if (lat < -90.0 or lat > 90.0 or lng < -180.0 or lng > 180.0) return [];
     let caller = pt(msg.caller);
     let buf    = Buffer.Buffer<GeofenceAlert>(4);
