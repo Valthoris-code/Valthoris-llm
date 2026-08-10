@@ -10,11 +10,14 @@
  * provider calls client.isAuthenticated() to restore the session — no
  * manual localStorage management is required.
  *
- * Architecture note for future Supabase integration:
- *   After the Internet Identity login resolves, insert a call to a
- *   `profileService.syncWithSupabase(principal)` here (inside refresh())
- *   before setting `loading = false`. The service will upsert the profile
- *   to Supabase and return the merged Profile object.
+ * Identity model (single source of truth):
+ *   The Internet Identity principal is the canonical Valthoris user id. The
+ *   browser never opens a Supabase Auth session, so `auth.uid()` is NULL for
+ *   every request the app makes and the ICP principal must never be treated as
+ *   a Supabase `auth.users.id`. All per-user data written from the browser is
+ *   therefore stored in the canisters, which authenticate that same principal.
+ *   Supabase tables are written by backend services holding the service-role
+ *   key. See services/profileService.ts for the full rationale.
  */
 
 import React, {
@@ -29,7 +32,6 @@ import type { Identity } from '@dfinity/agent';
 import { getAuthClient, login as doLogin, logout as doLogout } from '../services/auth';
 import type { User } from '../models/User';
 import { ensureUser } from '../services/roleService';
-import { syncWithSupabase } from '../services/profileService';
 
 // ─── Context value shape ────────────────────────────────────────────────────
 
@@ -79,9 +81,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Reads the current auth state from the AuthClient singleton and
    * updates all state slices atomically.
-   *
-   * Supabase sync hook: after resolving `authed === true`, call
-   * `profileService.syncWithSupabase(p)` and merge the returned Profile.
    */
   const refresh = useCallback(async () => {
     const client = await getAuthClient();
@@ -91,11 +90,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const p = id.getPrincipal().toText();
       try {
         const managed = await ensureUser();
-  try {
-    await syncWithSupabase(p);
-  } catch (supabaseErr) {
-    console.warn("[AuthContext] Supabase profile sync failed:", supabaseErr);
-  }
         setIdentity(id);
         setPrincipal(p);
         setUser({ principal: p, role: managed.role });

@@ -2,7 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActorsReady } from '../hooks/useActors';
 import { useAuth } from '../hooks/useAuth';
-import { getLocalProfile, updateProfile } from '../services/profileService';
+import {
+  EMPTY_PROFILE_DETAILS,
+  fetchProfileDetails,
+  getCachedProfileDetails,
+  saveProfileDetails,
+} from '../services/profileService';
+import type { ProfileDetailsData } from '../services/profileService';
 import PageHeader from '../components/ui/PageHeader';
 import ProfilePreferences from './ProfilePreferences';
 
@@ -56,6 +62,8 @@ export default function Profile() {
   const [avatarUrlInput, setAvatarUrlInput] = useState('');
   const [bio, setBio]                       = useState('');
   const [saving, setSaving]                 = useState(false);
+  /** Preferences persisted together with the extended profile. */
+  const [prefs, setPrefs] = useState<ProfileDetailsData>(EMPTY_PROFILE_DETAILS);
 
   // Separate display state for avatar — only populated from persisted (saved) data
   // so no taint flows from the input field to this value.
@@ -102,17 +110,39 @@ export default function Profile() {
     void loadProfile();
   }, [authLoading, isAuthenticated, navigate, ready, loadProfile]);
 
-  // Load extended profile from profileService (localStorage) on principal change.
-  // avatarUrlInput fills the input text field; savedAvatarUrl is the validated
-  // URL used exclusively for the <img> element.
+  /**
+   * Apply persisted extended-profile values to the form.
+   * avatarUrlInput fills the input text field; savedAvatarUrl is the validated
+   * URL used exclusively for the <img> element.
+   */
+  const applyDetails = useCallback((details: ProfileDetailsData) => {
+    setPrefs(details);
+    setExtDisplayName(details.displayName ?? '');
+    setAvatarUrlInput(details.avatarUrl ?? '');
+    setBio(details.bio ?? '');
+    setSavedAvatarUrl(sanitizeAvatarUrl(details.avatarUrl ?? ''));
+  }, []);
+
+  // Paint the cached copy immediately, then replace it with the authoritative
+  // canister record. The cache is never treated as the persisted truth.
   useEffect(() => {
     if (!principal) return;
-    const local = getLocalProfile(principal);
-    setExtDisplayName(local.displayName ?? '');
-    setAvatarUrlInput(local.avatarUrl ?? '');
-    setBio(local.bio ?? '');
-    setSavedAvatarUrl(sanitizeAvatarUrl(local.avatarUrl ?? ''));
-  }, [principal]);
+    applyDetails(getCachedProfileDetails(principal));
+  }, [principal, applyDetails]);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated || !ready || !principal || !profile) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const details = await fetchProfileDetails(actors.backend, principal);
+        if (!cancelled) applyDetails(details);
+      } catch (e) {
+        if (!cancelled) setError(`Não foi possível carregar o perfil alargado: ${String(e)}`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, ready, principal, profile, actors, applyDetails]);
 
   const handleRegister = async () => {
     if (!displayName.trim()) return;
@@ -137,23 +167,31 @@ export default function Profile() {
     if (!principal) return;
     setSaving(true);
     setError('');
+    setSuccess('');
     try {
-      await updateProfile(principal, {
+      // The canister answer — not the form field — is what gets rendered back,
+      // so a rejected write can never look like a successful one.
+      const saved = await saveProfileDetails(actors.backend, principal, {
+        ...prefs,
         displayName: extDisplayName.trim() || undefined,
         avatarUrl:   avatarUrlInput.trim() || undefined,
         bio:         bio.trim()            || undefined,
       });
-      // Reload avatar URL from the saved profile — the source is now the
-      // persistent store, not the form field.
-      const saved = getLocalProfile(principal);
-      setSavedAvatarUrl(sanitizeAvatarUrl(saved.avatarUrl ?? ''));
+      applyDetails(saved);
       setSuccess('Perfil actualizado com sucesso!');
     } catch (e) {
-      setError(String(e));
+      setError(`Não foi possível guardar o perfil: ${String(e)}`);
     } finally {
       setSaving(false);
     }
   };
+
+  /** Persist a preference change (country, public profile, 2FA) immediately. */
+  const handlePrefsChange = useCallback(async (next: ProfileDetailsData) => {
+    if (!principal) throw new Error('Not authenticated');
+    const saved = await saveProfileDetails(actors.backend, principal, next);
+    applyDetails(saved);
+  }, [actors, principal, applyDetails]);
 
   const reputationColor = (rep: bigint) => {
     const v = Number(rep);
@@ -250,7 +288,7 @@ export default function Profile() {
           <div className="card mt-2" style={{ maxWidth: 480 }}>
             <h3 style={{ marginTop: 0 }}>✏️ Editar Perfil Alargado</h3>
             <p className="text-muted" style={{ fontSize: '0.88rem' }}>
-              Estes campos são sincronizados localmente e preparados para integração futura com Supabase.
+              Guardados no canister ICP sob a sua Internet Identity, pelo que persistem em qualquer dispositivo.
             </p>
 
             <div className="mt-2">
@@ -293,7 +331,11 @@ export default function Profile() {
             </button>
           </div>
 
-          <ProfilePreferences principal={principal} />
+          <ProfilePreferences
+            principal={principal}
+            prefs={prefs}
+            onChange={handlePrefsChange}
+          />
         </>
       )}
     </div>
