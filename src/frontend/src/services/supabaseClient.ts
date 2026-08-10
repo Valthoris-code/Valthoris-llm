@@ -20,6 +20,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+/** Project URL, exported so operational probes can reach the health endpoint. */
+export const SUPABASE_URL: string | undefined = supabaseUrl;
+
 /** True when both Supabase environment variables are present. */
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnon);
 

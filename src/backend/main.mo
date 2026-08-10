@@ -146,7 +146,32 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     Principal.isAnonymous(caller)
   };
 
+  /// Compile-time allow-list of Valthoris platform administrators.
+  ///
+  /// These are the Internet Identity principals that control the production
+  /// canisters. They are baked into the canister code — not into the browser
+  /// bundle and not into any mutable table — so administrator authorization
+  /// survives upgrades and cannot be granted by a runtime caller supplying an
+  /// arbitrary principal or e-mail address. A browser-provided identity string
+  /// is never trusted: `msg.caller` is authenticated by the IC itself.
+  ///
+  /// This complements (and does not replace) the `initialAdminPrincipal`
+  /// install argument, which cannot be re-run on an already deployed,
+  /// stateful canister without a destructive reinstall.
+  transient let PLATFORM_ADMINISTRATORS : [Text] = [
+    "6wzpv-jfxnt-kzbeg-4isuv-vd2m2-yfzmk-znnho-tpvrg-lmarn-afsnw-tae",
+    "5zuwu-tg4w3-24k2i-oj4co-jtrvg-awxcp-cb3kq-a44yk-oug3q-zes7x-6ae",
+  ];
+
+  func isPlatformAdministrator(principal : Text) : Bool {
+    for (admin in PLATFORM_ADMINISTRATORS.vals()) {
+      if (admin == principal) return true;
+    };
+    false
+  };
+
   func isAdministrator(principal : Text) : Bool {
+    if (isPlatformAdministrator(principal)) return true;
     switch (managedUsers.get(principal)) {
       case (?u) { u.role == #administrator and u.isActive };
       case null false;
@@ -158,7 +183,7 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
   };
 
   func ensureManagedUserInternal(principal : Text, displayName : ?Text) : ManagedUser {
-    switch (managedUsers.get(principal)) {
+    let resolved = switch (managedUsers.get(principal)) {
       case (?existing) {
         switch (displayName) {
           case (?name) {
@@ -196,7 +221,26 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
         managedUsers.put(principal, created);
         created
       };
-    }
+    };
+
+    // Platform administrators are authorised by their principal, so their
+    // stored record is reconciled on every login: the role is restored even if
+    // it was never set, and the account can never stay deactivated.
+    if (
+      isPlatformAdministrator(principal)
+      and (resolved.role != #administrator or not resolved.isActive)
+    ) {
+      let elevated : ManagedUser = {
+        principal    = resolved.principal;
+        displayName  = resolved.displayName;
+        role         = #administrator;
+        isActive     = true;
+        registeredAt = resolved.registeredAt;
+      };
+      managedUsers.put(principal, elevated);
+      return elevated;
+    };
+    resolved
   };
 
   func ensureManagedUserForCaller(caller : Principal, displayName : ?Text) : ManagedUser {
@@ -287,6 +331,9 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     switch (managedUsers.get(principal)) {
       case null #err("User not found");
       case (?existing) {
+        if (isPlatformAdministrator(principal) and role != #administrator) {
+          return #err("Cannot change the role of a Valthoris platform administrator");
+        };
         if (existing.role == #administrator and existing.isActive and role != #administrator and wouldRemoveLastActiveAdministrator(principal)) {
           return #err("Cannot remove the last active administrator");
         };
@@ -311,6 +358,9 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     switch (managedUsers.get(principal)) {
       case null #err("User not found");
       case (?existing) {
+        if (isPlatformAdministrator(principal) and not isActive) {
+          return #err("Cannot deactivate a Valthoris platform administrator");
+        };
         if (existing.role == #administrator and existing.isActive and not isActive and wouldRemoveLastActiveAdministrator(principal)) {
           return #err("Cannot deactivate the last active administrator");
         };
