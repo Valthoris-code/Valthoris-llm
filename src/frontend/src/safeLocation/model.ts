@@ -1,11 +1,15 @@
 /**
  * Safe Location domain model.
  *
- * The share lifecycle and geofences are backed by the existing `safe_location`
- * canister. Trusted contacts, emergency mode and history remain frontend-only
- * placeholders persisted in localStorage until the corresponding canister
- * endpoints exist.
+ * Shares, geofences, trusted contacts and the owner preferences are all backed
+ * by the `safe_location` canister, which authenticates the caller's Internet
+ * Identity principal. localStorage is only a non-authoritative render cache so
+ * the page paints instantly on reload; it is always overwritten by the
+ * canister answer and a failed canister write is never shown as a success.
  */
+
+import type { SafeSettings, TrustedContact as CanisterContact } from '../../../declarations/safe_location/index.d.ts';
+import type { _SERVICE as SafeLocationService } from '../../../declarations/safe_location/index.d.ts';
 
 export type ShareDurationId = '15m' | '1h' | '8h' | '24h' | 'until';
 
@@ -88,32 +92,112 @@ export const DEFAULT_SETTINGS: SafeLocationSettings = {
   shareBattery: false,
 };
 
-const STORAGE_KEY = 'valthoris.safeLocation.v1';
+const CACHE_KEY = 'valthoris.safeLocation.cache.v2';
 
-export function loadSettings(): SafeLocationSettings {
+const DURATION_IDS: ShareDurationId[] = ['15m', '1h', '8h', '24h', 'until'];
+
+function toDurationId(value: string): ShareDurationId {
+  return (DURATION_IDS as string[]).includes(value)
+    ? (value as ShareDurationId)
+    : DEFAULT_SETTINGS.defaultDuration;
+}
+
+/**
+ * Last known configuration for a principal. Render cache only — never treat
+ * this as the persisted truth.
+ */
+export function getCachedSettings(principal: string): SafeLocationSettings {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(CACHE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    const parsed = JSON.parse(raw) as Partial<SafeLocationSettings>;
+    const cache = JSON.parse(raw) as Record<string, Partial<SafeLocationSettings>>;
+    const entry = cache[principal];
+    if (!entry) return DEFAULT_SETTINGS;
     return {
       ...DEFAULT_SETTINGS,
-      ...parsed,
-      contacts: Array.isArray(parsed.contacts) ? parsed.contacts : [],
+      ...entry,
+      contacts: Array.isArray(entry.contacts) ? entry.contacts : [],
     };
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
-export function saveSettings(settings: SafeLocationSettings): void {
+function cacheSettings(principal: string, settings: SafeLocationSettings): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    const cache = raw ? (JSON.parse(raw) as Record<string, SafeLocationSettings>) : {};
+    cache[principal] = settings;
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
   } catch {
-    // Storage unavailable — settings apply to the current session only.
+    // Quota / private-browsing errors are irrelevant: the cache is optional.
   }
-  // TODO(backend): persist trusted contacts and emergency state in the
-  // safe_location canister once the corresponding endpoints exist.
-  // Geofences are already persisted in the canister, not here.
+}
+
+function fromCanister(settings: SafeSettings): SafeLocationSettings {
+  return {
+    contacts: settings.contacts.map(contact => ({
+      id: contact.id,
+      name: contact.name,
+      handle: contact.handle,
+      relation: contact.relation,
+      permissions: contact.permissions.filter((p): p is ContactPermission =>
+        CONTACT_PERMISSIONS.some(known => known.id === p)
+      ),
+    })),
+    emergencyMode: settings.emergencyMode,
+    defaultDuration: toDurationId(settings.defaultDuration),
+    highAccuracy: settings.highAccuracy,
+    shareBattery: settings.shareBattery,
+  };
+}
+
+function toCanisterContacts(contacts: TrustedContact[]): CanisterContact[] {
+  return contacts.map(contact => ({
+    id: contact.id,
+    name: contact.name,
+    handle: contact.handle,
+    relation: contact.relation,
+    permissions: contact.permissions,
+  }));
+}
+
+/**
+ * Read the caller's configuration from the canister.
+ * Throws when the canister rejects the call so the UI can show the real error
+ * instead of silently rendering stale cache data.
+ */
+export async function fetchSettings(
+  safeLocation: SafeLocationService,
+  principal: string
+): Promise<SafeLocationSettings> {
+  const res = await safeLocation.getMySettings();
+  if ('err' in res) throw new Error(res.err);
+  const settings = fromCanister(res.ok);
+  cacheSettings(principal, settings);
+  return settings;
+}
+
+/**
+ * Persist the caller's configuration in the canister and return the stored
+ * record. Throws on any rejection — a failed write must never look successful.
+ */
+export async function persistSettings(
+  safeLocation: SafeLocationService,
+  principal: string,
+  settings: SafeLocationSettings
+): Promise<SafeLocationSettings> {
+  const res = await safeLocation.setMySettings(
+    toCanisterContacts(settings.contacts),
+    settings.emergencyMode,
+    settings.defaultDuration,
+    settings.highAccuracy,
+    settings.shareBattery
+  );
+  if ('err' in res) throw new Error(res.err);
+  const saved = fromCanister(res.ok);
+  cacheSettings(principal, saved);
+  return saved;
 }
 
 /** Distance in metres between two coordinates (haversine). */

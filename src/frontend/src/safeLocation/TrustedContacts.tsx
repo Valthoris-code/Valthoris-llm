@@ -6,12 +6,14 @@ import type { ContactPermission, TrustedContact } from './model';
 interface Props {
   contacts: TrustedContact[];
   onChange: (contacts: TrustedContact[]) => void;
+  /** True while the canister-backed configuration is still being fetched. */
+  loading?: boolean;
 }
 
 const EMPTY_FORM = { name: '', handle: '', relation: '' };
 
 /** Trusted contacts list with per-contact permission management. */
-export default function TrustedContacts({ contacts, onChange }: Props) {
+export default function TrustedContacts({ contacts, onChange, loading = false }: Props) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -75,7 +77,9 @@ export default function TrustedContacts({ contacts, onChange }: Props) {
         </button>
       </form>
 
-      {contacts.length === 0 ? (
+      {loading ? (
+        <div className="spinner" role="status" aria-label="Loading trusted contacts" />
+      ) : contacts.length === 0 ? (
         <EmptyState
           icon="👥"
           title="No trusted contacts yet"
