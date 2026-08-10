@@ -15,375 +15,374 @@
 </div>
 
 ---
+Valthoris
 
-> **Valthoris is an AI-oriented cybersecurity and fraud-prevention platform
-> under active development, combining Internet Computer canisters,
-> Internet Identity, a React/TypeScript web application, threat intelligence,
-> identity/reputation services, Safe Location and a separate AI/service layer.**
+AI Cybersecurity & Fraud Prevention Platform
+
+Valthoris is a cybersecurity and fraud-prevention platform designed to combine artificial intelligence, decentralized infrastructure, identity intelligence, threat intelligence, community intelligence and security-oriented user protection.
+
+Valthoris is being developed around the principles of:
+
+- Security by Design
+- Privacy by Design
+- Zero Trust
+- Data minimisation
+- Strong authentication
+- Least-privilege access
+- Auditable security operations
+- Resilient infrastructure
+- Responsible AI
+- Regulatory awareness
+
+The platform currently uses the Internet Computer Protocol (ICP) as its decentralized application and backend infrastructure, with a React/TypeScript web application delivered as an ICP asset canister and multiple Motoko canisters providing independent backend services.
+
+Valthoris also contains an integration layer for operational services including Supabase and external AI providers. These integrations are documented separately from the decentralized ICP infrastructure because their production status and end-to-end synchronization require independent validation.
 
 ---
 
-## ⚠️ DEVELOPMENT AND VALIDATION NOTICE
+Important Documentation Statement
 
-Valthoris is an active development project.
+This README describes the current state of the Valthoris repository and implementation.
 
-This repository contains working frontend code, Internet Computer canisters,
-authentication, persistence mechanisms, threat-intelligence services,
-Safe Location functionality and an AI/fraud-analysis service architecture.
+It intentionally distinguishes between:
 
-However, not every component is currently validated end-to-end in production.
-
-This README deliberately distinguishes between:
-
-- functionality implemented in source code;
-- functionality successfully built;
-- functionality deployed;
-- functionality verified in production;
-- functionality whose persistence has been validated;
+- functionality that is implemented and verified;
+- functionality implemented but still undergoing validation;
 - functionality under development;
-- future roadmap capabilities.
+- planned functionality;
+- research and future capabilities.
 
-A feature appearing in the architecture or roadmap must not be interpreted
-as a claim that the feature is currently operational in production.
+A feature appearing in the user interface, architecture documentation or roadmap is not automatically considered operational.
 
----
+Valthoris follows the following documentation rule:
 
-# 📊 CURRENT PROJECT STATUS
+«Documentation must describe the system that exists today, not the system we intend to build tomorrow.»
 
-| Status | Meaning |
-|---|---|
-| 🟢 Operational | Implemented, deployed and verified in production |
-| 🟡 Implemented / Validation | Code exists and builds, but complete production validation is pending |
-| 🟠 In Development | Implementation exists but integration or operational work remains |
-| 🔵 Planned | Roadmap capability; not currently operational |
-| ⚪ Research | Future research direction |
+This principle is particularly important when Valthoris is presented to:
 
----
-
-# 🟢 CURRENTLY OPERATIONAL / VERIFIED
-
-The following capabilities have been observed working in the deployed
-Valthoris application:
-
-- Valthoris Web/PWA interface
-- Internet Computer frontend canister
-- Internet Identity authentication
-- User profile creation through the ICP backend
-- Safe Location interface
-- OpenStreetMap-based location interface
-- Threat Scanner interface
-- ICP actor integration
-- navigation between platform modules
-
-Operational status is continuously subject to validation as the platform evolves.
+- cybersecurity professionals;
+- public institutions;
+- law-enforcement organisations;
+- financial institutions;
+- regulators;
+- technical auditors;
+- researchers;
+- investors;
+- strategic partners.
 
 ---
 
-# 🟡 IMPLEMENTED / VALIDATION
+Project Status
 
-The repository contains implemented code for:
+Valthoris is a substantial working software project with a deployed ICP frontend, multiple backend canisters, authentication infrastructure, security-oriented modules and an expanding service architecture.
 
-- ICP backend user profiles
-- ICP RBAC/user management
-- Community fraud reports
-- Community voting
-- Identity/reputation lookup
-- Threat Intelligence IOC storage and lookup
-- Safe Location sharing
-- Safe Location geofencing
-- persistent canister storage
-- React/TypeScript frontend
-- Internet Identity integration
-- Supabase client integration
-- Supabase profile persistence layer
-- AI provider abstraction
-- OpenAI provider
-- Anthropic provider
-- fraud analysis service
-- fraud pipeline
-- PGMQ fraud-event queue infrastructure
-- ICP fraud-ingest service
-- audit services
-- notification services
+However, several areas still require systematic end-to-end production validation, particularly:
 
-The existence of code does not by itself constitute production validation.
+- persistent user data;
+- profile synchronization;
+- Community persistence;
+- Safe Location persistence and multi-user workflows;
+- Identity workflows;
+- Threat Intelligence workflows;
+- AI request/response pipelines;
+- Supabase synchronization;
+- production integration between individual services.
+
+Therefore, Valthoris should not be described as a completely finished cybersecurity platform.
+
+It is a working platform under controlled validation and continued development.
 
 ---
 
-# 🟠 CURRENT DEVELOPMENT AREAS
+Official Implementation Status Model
 
-Current validation and integration work includes:
+Valthoris uses five official implementation states.
 
-- complete persistence testing;
-- production verification of all ICP canisters;
-- frontend-to-backend end-to-end testing;
-- Supabase authentication/RLS integration;
-- Supabase synchronisation;
-- AI pipeline production connectivity;
-- fraud-worker deployment;
-- PGMQ queue processing;
-- realtime fraud decision delivery;
-- notification delivery;
-- reconciliation between the GitHub source HEAD and deployed ICP versions;
-- final ICP custom-domain configuration.
+Status| Meaning
+🟢 Operational| Implemented, deployed and verified in the relevant production workflow
+🟡 Implemented / Validation| Code and/or deployment exists, but complete end-to-end validation is still required
+🟠 In Development| Partial implementation is present and development continues
+🔵 Planned| Defined roadmap functionality that is not currently operational
+⚪ Research| Research, experimentation or future investigation
+
+These classifications are deliberately conservative.
+
+When production evidence is insufficient, Valthoris does not claim that a capability is operational.
 
 ---
 
-# 🔵 ROADMAP
+Current Platform Status
 
-The following capabilities are part of the longer-term Valthoris roadmap
-and must not be interpreted as currently operational:
-
-- Advanced Audio Intelligence
-- Advanced Visual Intelligence
-- Independent Malware Intelligence platform
-- Enterprise SIEM integrations
-- Enterprise SOAR integrations
-- Banking integrations
-- Law-enforcement integrations
-- large-scale institutional threat-sharing integrations
-- advanced multi-chain intelligence
-- advanced MEV risk analysis
-- large-scale enterprise security operations
-- future mobile-native protection layers
-- additional automated fraud-prevention capabilities
-
-Roadmap items will only be promoted to an implemented status after
-corresponding source code, integration and validation evidence exists.
-
----
-
-# 🎯 MISSION
-
-Valthoris is being built around a simple objective:
-
-> **Reduce digital fraud before it becomes a victim's problem.**
-
-The platform is designed to combine:
-
-- cybersecurity;
-- fraud intelligence;
-- digital identity and reputation;
-- threat intelligence;
-- artificial intelligence;
-- decentralized infrastructure;
-- user reporting;
-- location safety;
-- explainable risk information.
-
-The goal is not to replace human judgement.
-
-The goal is to provide better information before a risky decision is made.
+Component| Status
+Valthoris Web Application| 🟢 Operational
+ICP Frontend| 🟢 Operational
+React / TypeScript / Vite frontend| 🟢 Operational
+Internet Identity authentication| 🟢 Implemented
+ICP Backend| 🟡 Implemented / Validation
+Identity| 🟡 Implemented / Validation
+Community| 🟡 Implemented / Validation
+Safe Location| 🟡 Implemented / Validation
+Threat Intelligence| 🟡 Implemented / Validation
+Profile persistence| 🟡 Validation
+Supabase integration| 🟡 Implemented / Validation
+Supabase synchronization| 🟠 In Development / Validation
+AI architecture| 🟡 Implemented / Validation
+AI end-to-end production pipeline| 🟡 Validation
+AutoShield| 🟠 In Development
+Audio Intelligence| 🔵 Planned
+Visual Intelligence| 🔵 Planned
+Malware Intelligence| 🔵 Planned
+Enterprise SIEM/SOAR| 🔵 Planned
+Banking integrations| 🔵 Planned
+Institutional integrations| 🔵 Planned
+Advanced blockchain intelligence| 🔵 Planned / Research
 
 ---
 
-# 🛡️ SECURITY PRINCIPLES
+Architecture
 
-Valthoris follows these architectural principles:
+Valthoris is currently implemented as a modular application built around the Internet Computer Protocol (ICP).
 
-### Security by Design
+The current implementation consists of:
 
-Security considerations should be incorporated into the system architecture
-rather than added after implementation.
+1. a React/TypeScript frontend;
+2. Internet Identity authentication;
+3. multiple independent Motoko canisters;
+4. ICP actor communication;
+5. persistent decentralized state in selected canisters;
+6. Supabase integration for operational services;
+7. AI/service abstraction components;
+8. security-oriented application modules.
 
-### Privacy by Design
+The architecture below represents the current implementation, not the future target architecture.
 
-Personal and sensitive information should be handled according to
-privacy requirements from the beginning of the design process.
-
-### Zero Trust
-
-Identity and access should not be trusted implicitly.
-
-### Least Privilege
-
-Components and users should receive only the permissions required for
-their intended operations.
-
-### Auditability
-
-Important security decisions and system operations should be traceable
-where appropriate.
-
-### Human-Centric Protection
-
-Security decisions should provide understandable information that helps
-users make safer decisions.
-
----
-
-# 🧠 WHAT VALTHORIS IS
-
-Valthoris is not currently presented as a finished global cybersecurity
-platform.
-
-It is a substantial technical platform under active development.
-
-The current implementation combines two major layers:
-
-1. a decentralized application layer running on the Internet Computer;
-2. a separate service layer containing AI, fraud-processing and operational
-   infrastructure.
-
-This distinction is important because the current architecture is not simply:
-
-USER → AI → ICP → Supabase
-
-Instead, different components have different responsibilities.
-
-🏗️ Architecture
-Valthoris is currently implemented as a modular security platform built around the Internet Computer Protocol (ICP), with a React/TypeScript web application, Progressive Web App (PWA) capabilities, Internet Identity authentication and multiple independent Motoko canisters.
-This section documents the architecture that currently exists in the repository and has been observed in the deployed system.
-It does not describe the complete future architecture.
-Features that are not currently verified end-to-end are explicitly classified as:
-🟢 Operational
-🟡 Implemented / Validation
-🟠 In Development
-🔵 Planned
-⚪ Research
-This distinction is a fundamental part of Valthoris documentation.
-Current Architecture
                          ┌──────────────────────────┐
                          │          USERS           │
                          │                          │
-                         │    Web / PWA / Mobile    │
+                         │     Web / PWA / Mobile   │
                          └────────────┬─────────────┘
                                       │
                                       ▼
                          ┌──────────────────────────┐
                          │    VALTHORIS FRONTEND    │
                          │                          │
-                         │ React + TypeScript       │
-                         │ Vite + PWA               │
+                         │ React + TypeScript + Vite │
+                         │          PWA             │
                          └────────────┬─────────────┘
                                       │
-                  ┌───────────────────┼───────────────────┐
-                  │                   │                   │
-                  ▼                   ▼                   ▼
-        ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-        │ Internet        │  │ ICP Actors      │  │ Supabase        │
-        │ Identity        │  │                 │  │ Integration     │
-        └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
-                 │                    │                    │
-                 │          ┌─────────┼──────────┐         │
-                 │          │         │          │         │
-                 │          ▼         ▼          ▼         │
-                 │      Backend   Community   Identity     │
-                 │          │         │          │         │
-                 │          │         │          ▼         │
-                 │          │         │   Threat Intel.   │
-                 │          │         │          │         │
-                 │          │         └──────────┤         │
-                 │          │                    ▼         │
-                 │          │              Safe Location  │
-                 │          │                              │
-                 └──────────┴──────────────┬───────────────┘
-                                           │
-                                           ▼
-                                Operational Services
-Important architectural distinction
-The architecture above represents the current software structure.
-It does not imply that every component is already connected through one complete, verified end-to-end production pipeline.
-For example, the existence of:
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+             Internet Identity   ICP Actors        Supabase
+                    │                 │                 │
+                    │        ┌────────┼────────┐        │
+                    │        │        │        │        │
+                    │        ▼        ▼        ▼        │
+                    │     Backend  Community Identity   │
+                    │        │        │        │         │
+                    │        │        │        │         │
+                    │        ▼        ▼        ▼         │
+                    │   Threat Intel. Safe Location     │
+                    │                                  │
+                    └────────────────┬─────────────────┘
+                                     │
+                                     ▼
+                           Operational Services
+
+The existence of these components does not mean that every component is currently connected into one fully verified end-to-end production pipeline.
+
+That distinction is intentional.
+
+---
+
+Internet Computer Infrastructure
+
+The current "dfx.json" defines the following ICP canisters:
+
+Canister| Technology| Role| Status
+"frontend"| React / TypeScript / Vite / ICP Assets| Web application| 🟢
+"backend"| Motoko| Core backend services| 🟡
+"community"| Motoko| Community functionality| 🟡
+"identity"| Motoko| Identity and reputation functionality| 🟡
+"threat_intelligence"| Motoko| Threat intelligence functionality| 🟡
+"safe_location"| Motoko| Location sharing and geofencing| 🟡
+
+These are actual project components defined in the repository and deployed to the ICP network.
+
+---
+
+Mainnet Canister Identifiers
+
+The current deployed frontend canister is:
+
+frontend
+v63rh-lqaaa-aaaaa-qewvq-cai
+
+The backend canister currently deployed is:
+
+backend
+c6sjf-tqaaa-aaaap-qsiea-cai
+
+The Community canister is:
+
+community
+7w5qg-6aaaa-aaaab-ael4a-cai
+
+The Identity canister is:
+
+identity
+ezroe-caaaa-aaaac-bcdeq-cai
+
+The Safe Location canister is:
+
+safe_location
+sodv3-uiaaa-aaaak-qxubq-cai
+
+The Threat Intelligence canister is:
+
+threat_intelligence
+e2m3q-yqaaa-aaaas-qekva-cai
+
+These identifiers are documented because they represent the currently observed deployment state.
+
+They should always be rechecked against the repository and live ICP deployment before being used for a formal release or audit.
+
+---
+
 Frontend
-    ↓
-Service
-    ↓
-Canister
-    ↓
-Database
-in source code does not by itself prove that a production user can successfully:
-Create
-  ↓
-Write
-  ↓
-Read
-  ↓
-Reload
-  ↓
-Read again
-and recover the same information.
-That distinction is intentionally maintained throughout this README.
-🧩 Current System Components
-The current ICP deployment configuration defines the following canisters:
-Component
-Technology
-Current Role
-Status
-Frontend
-React / TypeScript / Vite
-Web/PWA application
-🟢
-Backend
-Motoko
-Core backend services
-🟡
-Community
-Motoko
-Community functionality
-🟡
-Identity
-Motoko
-Identity/reputation functionality
-🟡
-Threat Intelligence
-Motoko
-Threat intelligence functionality
-🟡
-Safe Location
-Motoko
-Location sharing and geofencing
-🟡
-These are actual components of the repository and ICP deployment configuration.
-They are not merely conceptual modules.
-However, the status column reflects the distinction between:
-source-code existence;
-successful compilation;
-deployment;
-frontend integration;
-production behaviour;
-persistence verification.
-🌐 Frontend
-The Valthoris frontend is a real React/TypeScript application built with Vite and deployed as an ICP asset canister.
-The frontend source is located under:
-src/frontend/
-The application contains the production build structure generated by Vite:
-src/frontend/
-├── public/
-├── src/
-├── dist/
-├── index.html
-├── 404.html
-├── package.json
-├── package-lock.json
-├── tsconfig.json
-└── vite.config.ts
-The frontend currently provides application interfaces covering areas such as:
-Authentication
-Profile
-Assistant
-Scanner
-Global Radar
-Safe Location
-Community-related functionality
-Threat Intelligence
-Security navigation
-Legal/informational pages
-The application is therefore not a static mock-up.
-However, a visible interface does not automatically prove that its underlying operation is fully persistent in production.
-For that reason, frontend functionality is evaluated independently from persistence.
-Frontend status
-🟢 Operational — application/deployment layer
-This means:
-the frontend exists;
-the application builds successfully;
-the frontend is deployed on ICP;
-the production frontend is reachable.
-It does not mean that every individual feature exposed by the interface has already passed complete end-to-end persistence validation.
-🔐 Authentication
-Valthoris currently uses Internet Identity as its authentication mechanism.
-The frontend contains authentication-related services and context responsible for resolving the authenticated Internet Computer principal.
-The conceptual authentication flow is:
+
+The Valthoris frontend is a real React/TypeScript application built with Vite.
+
+The application is deployed as an ICP asset canister.
+
+The frontend contains application areas including:
+
+- authentication;
+- profile;
+- assistant;
+- scanner;
+- global radar;
+- Safe Location;
+- community-related functionality;
+- threat intelligence;
+- security navigation;
+- legal pages;
+- informational pages.
+
+The frontend is not a static HTML mock-up.
+
+However, a functioning interface does not automatically prove that every action is permanently persisted.
+
+Therefore every important workflow must be independently tested.
+
+---
+
+Frontend Technology
+
+The current frontend uses:
+
+- React;
+- TypeScript;
+- Vite;
+- PWA functionality;
+- ICP actor communication;
+- Internet Identity authentication;
+- browser-side application state;
+- integration services;
+- security-oriented UI components.
+
+The production build currently succeeds through:
+
+npm --prefix src/frontend run build
+
+The build process performs TypeScript validation followed by the Vite production build.
+
+---
+
+Build Verification
+
+The current production build has been successfully executed.
+
+The build performs:
+
+TypeScript validation
+        ↓
+Vite production build
+        ↓
+Static asset generation
+        ↓
+ICP asset deployment
+
+The current build generates the frontend distribution under:
+
+src/frontend/dist
+
+The generated distribution contains:
+
+index.html
+404.html
+manifest.webmanifest
+sitemap.xml
+assets/
+legal/
+.well-known/
+
+---
+
+ICP Custom Domain Verification
+
+Valthoris contains the ICP custom-domain verification file:
+
+src/frontend/public/.well-known/ic-domains
+
+Its current content is:
+
+valthoris.com
+
+After the production build, the file is also present at:
+
+src/frontend/dist/.well-known/ic-domains
+
+The deployed ICP frontend successfully returns the verification resource:
+
+https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/.well-known/ic-domains
+
+The observed response is HTTP "200".
+
+This proves that the ICP canister is serving the required verification resource.
+
+The custom-domain process is therefore partially configured and verified at the ICP application layer.
+
+The final DNS routing must still be treated as a separate infrastructure step.
+
+---
+
+Production Frontend
+
+The current ICP frontend can be accessed through:
+
+https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/
+
+The application also exposes application routes such as:
+
+/assistant
+
+The ICP gateway must recognise the requested hostname before a custom domain can serve the application correctly.
+
+An "Unknown Domain" response from the ICP HTTP gateway does not necessarily indicate that the canister itself is broken.
+
+It can indicate that the requested hostname has not yet been correctly associated with the ICP custom-domain configuration.
+
+---
+
+Internet Identity
+
+Valthoris uses Internet Identity for authentication.
+
+The frontend contains an authentication context and authentication service based on the Internet Computer authentication model.
+
+The authentication flow is conceptually:
+
 User
   │
   ▼
@@ -397,170 +396,121 @@ Valthoris Frontend
   │
   ├── ICP Canisters
   │
-  └── Supabase Integration
-The authenticated principal is important because it provides the identity context used when communicating with backend services.
+  └── Operational Services
+
 Authentication status
-Layer
-Status
-Internet Identity integration
+
 🟢 Implemented
-Authentication context
-🟢 Implemented
-Principal resolution
-🟢 Implemented
-Backend authorization
-🟡 Validation
-Complete persistence validation
-🟡 Validation
-Important distinction
-Successful authentication proves that the authentication mechanism works.
-It does not automatically prove that:
-profiles are persisted correctly;
-profile changes survive reload;
-profile information is synchronised correctly;
-every canister applies the intended access control;
-Supabase synchronization is functioning in production.
-Those behaviours require separate tests.
-👤 Identity
-The Valthoris Identity component is implemented as a dedicated Motoko canister.
-The implementation contains functionality related to identifier and reputation analysis, including mechanisms for handling identifiers such as:
-phone numbers;
-email addresses;
-domains;
-IBANs;
-wallet addresses;
-reputation information;
-trust information;
-risk information;
-report counts;
-known-scammer status;
-verified-business status;
-suspicious identifier registration;
-batch lookup operations.
-The Identity canister also contains persistent state mechanisms intended to preserve information across canister upgrades.
-The existence of these mechanisms establishes that Identity is a genuine implemented backend component.
+
+Persistence status
+
+🟡 Validation required
+
+Authentication success does not automatically prove that all user profile data or application records are correctly stored and recovered.
+
+Those workflows require independent persistence testing.
+
+---
+
+Identity
+
+The Identity canister is a real Motoko canister.
+
+The implementation contains functionality associated with identifiers and reputation information including:
+
+- phone lookup;
+- email lookup;
+- domain lookup;
+- IBAN lookup;
+- wallet address lookup;
+- reputation records;
+- trust scores;
+- risk scores;
+- report counts;
+- known-scammer state;
+- verified-business state;
+- suspicious identifier registration;
+- batch lookup.
+
+The canister uses persistent actor state and reconstructs runtime indexes after upgrades.
+
 Identity status
-Layer
-Status
-Source code
-🟢
-Motoko implementation
-🟢
-Canister definition
-🟢
-Mainnet deployment
-🟢
-Frontend integration
-🟡
-End-to-end write test
-🟡
-End-to-end read test
-🟡
-Persistence after reload
-🟡
-Production validation
-🟡
-Official documentation statement
-Identity is implemented and deployed as an ICP/Motoko component. Complete production validation of every frontend workflow and persistence path remains pending.
-This wording is deliberately conservative.
-📍 Safe Location
-Safe Location is one of the more substantial backend modules currently present in Valthoris.
-The Safe Location canister contains persistent state associated with:
-location shares;
-current locations;
-geofence zones;
-share counters;
-geofence counters.
-The implementation includes functionality for:
-location sharing;
-share expiration;
-share revocation;
-recipient restrictions;
-location updates;
-location retrieval;
-user-owned share listing;
-geofence creation;
-geofence listing;
-geofence deletion;
-coordinate validation;
-distance calculations;
-geofence checks.
-The system is designed around persistent actor state.
-Safe Location architecture
-User
- │
- ▼
-Valthoris Frontend
- │
- ▼
-Safe Location Actor
- │
- ├── Location Shares
- │
- ├── Current Locations
- │
- ├── Geofences
- │
- └── Access / Validation Logic
+
+Layer| Status
+Source code| 🟢
+Motoko implementation| 🟢
+Canister definition| 🟢
+Mainnet deployment| 🟢
+Frontend integration| 🟡
+End-to-end persistence| 🟡
+Production validation| 🟡
+
+The correct statement is:
+
+«Identity functionality is implemented and deployed, while complete production workflow validation remains in progress.»
+
+---
+
+Safe Location
+
+Safe Location is one of the more substantial implemented Valthoris modules.
+
+The current implementation includes persistent state associated with:
+
+- location shares;
+- current locations;
+- geofence zones;
+- share counters;
+- geofence counters.
+
+The canister includes functionality for:
+
+- location sharing;
+- share expiration;
+- share revocation;
+- recipient restrictions;
+- location updates;
+- location retrieval;
+- user-owned share listing;
+- geofence creation;
+- geofence listing;
+- geofence deletion;
+- coordinate validation;
+- geographic distance calculation;
+- geofence checking.
+
+The implementation uses persistent actor state and rebuilds transient runtime structures after upgrades.
+
 Safe Location status
-Layer
-Status
-Motoko source code
-🟢
-Persistent state design
-🟢
-ICP canister
-🟢
-Frontend integration
-🟢
-Map interface
-🟢
-Location-sharing workflow
-🟡
-Persistence after reload
-🟡
-Multi-user validation
-🟡
-Full production verification
-🟡
-Official statement
-Safe Location is implemented and deployed, with complete end-to-end persistence, access-control and multi-user behaviour still requiring systematic production validation.
-🛡️ Threat Intelligence
-Valthoris contains a dedicated Threat Intelligence Motoko canister.
-The component is independently defined in the ICP deployment configuration.
-This confirms the existence of a dedicated decentralized backend component for threat-intelligence functionality.
-However, Valthoris does not currently use the existence of this canister as evidence that a globally comprehensive threat-intelligence network is already operational.
-Threat Intelligence status
-🟡 Implemented / Validation
-The distinction is important:
-Threat Intelligence canister exists
-        ↓
-Source code exists
-        ↓
-Canister deployed
-        ↓
-Frontend integration
-        ↓
-Production data flow
-        ↓
-End-to-end verification
-The first stages are established.
-The later stages require systematic verification before the module can be described as fully operational.
-👥 Community
+
+Layer| Status
+Motoko source| 🟢
+Persistent state design| 🟢
+ICP canister| 🟢
+Frontend| 🟢
+Map interface| 🟢
+Location sharing workflow| 🟡
+Persistence after reload| 🟡
+Multi-user validation| 🟡
+
+Therefore:
+
+«Safe Location is implemented and deployed, while complete end-to-end persistence and multi-user production validation remain to be completed.»
+
+---
+
+Community
+
 Community functionality exists as a dedicated Motoko canister.
-This creates a decentralized backend component specifically intended for community-related operations.
-The current architecture therefore includes:
-Valthoris Frontend
-       │
-       ▼
-Community Actor
-       │
-       ├── Write
-       ├── Read
-       └── Community Data
-The critical audit question is not whether the Community canister exists.
-It does.
-The important question is whether a complete production workflow has been demonstrated:
+
+The architecture therefore contains a decentralized component specifically intended for community-related operations.
+
+Current status:
+
+🟡 Implemented / Validation
+
+The critical validation flow is:
+
 User Action
     ↓
 Frontend
@@ -571,275 +521,228 @@ Write
     ↓
 Read
     ↓
-Application Reload
+Reload
     ↓
 Read Again
     ↓
-Same Data
-Community status
+Data Still Exists
+
+Until this complete cycle is verified, Community should not be described as fully operational.
+
+---
+
+Threat Intelligence
+
+Valthoris contains a dedicated Threat Intelligence Motoko canister.
+
+The canister is independently defined in the ICP deployment configuration.
+
+Current status:
+
 🟡 Implemented / Validation
-Until this complete cycle has been verified, the README will not describe Community as fully operational.
-💾 Persistence Model
+
+The existence of a dedicated canister proves the implementation foundation.
+
+It does not by itself prove that Valthoris currently operates a globally comprehensive threat-intelligence network.
+
+Claims regarding coverage, freshness, external feeds, automated enrichment or global intelligence must therefore be tied to independently verified functionality.
+
+---
+
+Persistence Architecture
+
 Valthoris currently contains more than one persistence mechanism.
-This is a critical architectural characteristic.
-The two principal persistence layers currently present in the project are:
+
+This is an important architectural distinction.
+
+The principal persistence layers are:
+
                     VALTHORIS
-                        │
-              ┌─────────┴─────────┐
-              │                   │
-              ▼                   ▼
-             ICP              Supabase
-        Decentralized       Operational /
-          Canisters           Integration
-These layers should not be described as if they were already one completely synchronized database architecture.
-They have different roles and their synchronization must be independently verified.
-⛓️ ICP Persistence
-Several Valthoris Motoko actors use persistent state mechanisms.
-For example, the Identity and Safe Location implementations contain persistent actor state intended to survive canister upgrades.
-This is significant because it means the project does not depend exclusively on browser-local storage for its decentralized backend state.
-The architectural model is:
-Frontend
-   │
-   ▼
-ICP Actor
-   │
-   ▼
-Persistent Canister State
-However, the existence of persistent state in the canister does not automatically prove that every frontend workflow writes to that state successfully.
-Therefore:
-ICP persistence capability is implemented; individual production persistence paths remain subject to end-to-end verification.
-🗄️ Supabase Integration
-Supabase is present in the Valthoris repository as an additional operational-data integration layer.
-The frontend uses environment variables corresponding to:
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+             ▼                       ▼
+       ICP Persistent State      Supabase
+             │                       │
+       Motoko Canisters        Operational Services
+             │                       │
+             ▼                       ▼
+       Decentralized Data       Application Data
+
+These layers should not be considered interchangeable.
+
+---
+
+ICP Persistence
+
+Several Motoko canisters use persistent actor state.
+
+For example, Identity uses stable state for its database and rebuilds runtime indexes after upgrades.
+
+Safe Location similarly maintains persistent state for:
+
+- shares;
+- locations;
+- geofences;
+- associated counters.
+
+This provides a genuine decentralized persistence mechanism.
+
+However, the frontend must still be tested to prove that the user-facing workflows correctly write and retrieve this persistent state.
+
+---
+
+Supabase Integration
+
+Supabase is present in the repository as an operational integration layer.
+
+The frontend contains a Supabase client using:
+
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
-The frontend architecture therefore uses the public anonymous Supabase credential rather than exposing a service-role credential to the browser.
-The repository also contains Supabase-related service abstractions associated with areas including:
-PostgreSQL;
-PGMQ;
-Storage;
-Realtime;
-audit-related functionality;
-notifications.
-This establishes code-level Supabase integration.
-It does not, by itself, establish that the complete Supabase synchronization pipeline is currently operating correctly in production.
-🔄 Profile Synchronization
-The current application contains a profile synchronization mechanism.
-The authentication/profile architecture includes synchronization behaviour associated with the authenticated principal.
-The profile service supports operations including:
-reading local profile information;
-storing local profile information;
-synchronizing profile information;
-updating last_seen;
-retrieving cloud profile fields;
-merging profile information.
-The architecture therefore supports the intended concept:
-Internet Identity
-       │
-       ▼
-Authenticated Principal
-       │
-       ▼
-Local Profile
-       │
-       ▼
-Supabase Profile
-However, the implementation also contains fallback behaviour.
-This is extremely important when analysing why the application may appear to work while information does not necessarily appear in Supabase.
-A fallback architecture can behave approximately like:
-             Profile Operation
-                    │
-                    ▼
-             Local Application
-                    │
-             ┌──────┴──────┐
-             │             │
-          Supabase       Fallback
-             │             │
-             ▼             ▼
-        Cloud Data      Local Data
-Therefore, the existence of a synchronization service is not sufficient evidence that production synchronization is currently complete.
-Official status
-🟡 Implemented / Validation
-with the synchronization path requiring dedicated production testing.
-⚠️ Persistence Audit Principle
-Valthoris adopts a strict persistence verification rule.
-The project will not claim that data is persisted simply because:
-a database exists;
-a canister exists;
-a service contains a write function;
-a frontend contains a save button;
-Supabase credentials are configured;
-a local-storage fallback exists.
-The required proof is:
-CREATE
-  │
-  ▼
-WRITE
-  │
-  ▼
-READ
-  │
-  ▼
-RELOAD
-  │
-  ▼
-READ AGAIN
-  │
-  ▼
-DATA STILL EXISTS
-For sensitive or multi-user functionality, additional testing is required:
-User A
-  │
-  ▼
-CREATE / WRITE
-  │
-  ▼
-Backend
-  │
-  ▼
-User B
-  │
-  ▼
-AUTHORIZED READ
-and:
-Unauthorized User
-        │
-        ▼
-       READ
-        │
-        ▼
-    ACCESS DENIED
-Only after these behaviours have been verified should the relevant functionality receive the:
-🟢 Operational
-classification.
-🧪 Verification Matrix
-Valthoris uses the following verification model when assessing implementation status:
-Verification
-Meaning
-Source exists
-Code exists in repository
-Build succeeds
-Code compiles successfully
-Canister deployed
-ICP deployment exists
-Frontend connected
-UI communicates with backend
-Write succeeds
-Data can be created
-Read succeeds
-Data can be retrieved
-Reload succeeds
-Data survives application reload
-Upgrade survives
-Data survives canister upgrade
-Multi-user succeeds
-Access control and sharing work correctly
-Production verified
-Behaviour confirmed against live deployment
-A component is not automatically Operational because the first three conditions are true.
-The complete verification chain is:
-SOURCE
-  ↓
-BUILD
-  ↓
-DEPLOY
-  ↓
-CONNECT
-  ↓
-WRITE
-  ↓
-READ
-  ↓
-RELOAD
-  ↓
-UPGRADE
-  ↓
-MULTI-USER
-  ↓
-PRODUCTION VERIFIED
-📊 Official Valthoris Status Model
-Valthoris uses the following official classification throughout its technical documentation.
-Status
-Meaning
-🟢 Operational
-Implemented, deployed and verified in production
-🟡 Implemented / Validation
-Code and deployment exist, but complete validation remains pending
-🟠 In Development
-Partial implementation is present
-🔵 Planned
-Roadmap item not yet implemented as an operational capability
-⚪ Research
-Investigation or future technical research
-Documentation rule
-A feature must never be marked 🟢 merely because:
-it appears in the UI;
-it appears in documentation;
-it appears in an architecture diagram;
-a service exists in source code;
-a canister exists;
-an API abstraction exists;
-a future implementation has been specified.
-The 🟢 classification requires production evidence.
-🧭 Current Module Classification
-Based on the repository evidence and production observations currently available:
-Module
-Current Classification
-Valthoris Web/PWA
-🟢 Operational
-ICP Frontend
-🟢 Operational
-Internet Identity
-🟢 Implemented
-Backend ICP
-🟡 Implemented / Validation
-Identity
-🟡 Implemented / Validation
-Community
-🟡 Implemented / Validation
-Safe Location
-🟡 Implemented / Validation
-Threat Intelligence
-🟡 Implemented / Validation
-Profile persistence
-🟡 Validation
-Supabase integration
-🟡 Implemented / Validation
-Supabase synchronization
+
+The browser-side integration is designed around the public anonymous key rather than exposing a service-role key to the browser.
+
+The repository also contains Supabase-related service abstractions associated with areas such as:
+
+- PostgreSQL;
+- PGMQ;
+- Storage;
+- Realtime;
+- audit;
+- notifications.
+
+This confirms code-level integration.
+
+It does not by itself prove complete production synchronization.
+
+---
+
+Supabase Security Boundary
+
+The intended security boundary is:
+
+Frontend
+   │
+   │ Public anon key
+   ▼
+Supabase client
+   │
+   ▼
+RLS / database permissions
+   │
+   ▼
+Supabase services
+
+Sensitive service-role credentials must never be embedded into frontend source code.
+
+Any privileged Supabase operation should remain on a trusted backend/server-side execution boundary.
+
+This is a fundamental security requirement for the platform.
+
+---
+
+Profile Synchronization
+
+The current application contains profile synchronization functionality.
+
+The authentication context can invoke synchronization after authentication.
+
+The profile service contains functionality associated with:
+
+- reading local profile information;
+- storing local profile information;
+- upserting profile information;
+- updating "last_seen";
+- retrieving cloud profile information;
+- merging profile data.
+
+The integration references a Supabase "profiles" table.
+
+However, the existence of the synchronization code does not prove that production synchronization is currently reliable.
+
+The application contains fallback behaviour.
+
+Therefore:
+
+Code exists
+     ↓
+Integration exists
+     ↓
+Fallback exists
+     ↓
+Production synchronization
+     ↓
+Requires verification
+
+Current status:
+
 🟠 In Development / Validation
-AI architecture
-🟡 Implemented / Validation
-AI end-to-end pipeline
-🟡 Validation
-AutoShield
-🟠 In Development
-Audio Intelligence
-🔵 Planned
-Visual Intelligence
-🔵 Planned
-Malware Intelligence
-🔵 Planned
-Enterprise SIEM/SOAR
-🔵 Planned
-Banking integrations
-🔵 Planned
-Large-scale institutional integrations
-🔵 Planned
-Advanced blockchain intelligence
-🔵 Planned / Research
-This classification is intentionally conservative.
-Where production behaviour cannot currently be demonstrated, Valthoris does not call the capability Operational.
-🤖 Artificial Intelligence
-Artificial Intelligence is a central part of the Valthoris product architecture.
-The repository contains an AI/service architecture intended to support security and fraud-analysis functionality.
-However, the README distinguishes between:
-AI architecture
-Implemented / present in the repository
-and:
-Complete production AI pipeline
-Requires end-to-end validation
-The intended conceptual flow is:
+
+---
+
+Persistence Verification Standard
+
+Valthoris adopts a strict persistence verification procedure.
+
+For every important data workflow:
+
+CREATE
+  ↓
+WRITE
+  ↓
+READ
+  ↓
+RELOAD APPLICATION
+  ↓
+READ AGAIN
+  ↓
+DATA STILL EXISTS
+
+For backend persistence:
+
+CREATE
+  ↓
+CANISTER WRITE
+  ↓
+CANISTER READ
+  ↓
+APPLICATION RELOAD
+  ↓
+CANISTER READ
+  ↓
+DATA STILL EXISTS
+
+For synchronization:
+
+USER ACTION
+     ↓
+LOCAL / ICP WRITE
+     ↓
+SYNC
+     ↓
+SUPABASE WRITE
+     ↓
+SUPABASE READ
+     ↓
+APPLICATION RELOAD
+     ↓
+DATA STILL EXISTS
+
+A database client being present is not sufficient evidence of persistence.
+
+A write function existing in source code is not sufficient evidence of persistence.
+
+The behaviour must be tested.
+
+---
+
+AI Architecture
+
+Valthoris is designed around artificial intelligence and contains an AI/service architecture.
+
+The intended analysis flow is:
+
 User Input
     │
     ▼
@@ -849,63 +752,355 @@ Valthoris Frontend
 Analysis / API Layer
     │
     ▼
-AI Provider / Model
+AI Provider
     │
     ▼
-Fraud / Risk Analysis
+Risk / Fraud Analysis
     │
     ▼
-Risk Result
+Security Result
     │
     ▼
-Valthoris Interface
-The existence of each component in source code does not automatically prove that the entire chain is functioning successfully in production.
-Therefore:
-Valthoris will not describe the complete AI analysis pipeline as Operational until a complete production request → analysis → result workflow has been successfully demonstrated.
-🔬 AI Provider Architecture
-The repository contains an abstraction intended to support external AI providers without permanently coupling Valthoris to a single model provider.
-The architectural concept is:
-                 Valthoris AI Layer
-                         │
-                ┌────────┴────────┐
-                │                 │
-                ▼                 ▼
-             Provider A        Provider B
-                │                 │
-                └────────┬────────┘
-                         ▼
-                  Analysis Result
-The exact production behaviour depends on:
-environment configuration;
-credentials;
-API availability;
-request routing;
-response handling;
-error handling;
-persistence;
-frontend integration.
-Therefore the documentation distinguishes:
-AI Layer
-Status
-Provider abstraction
-Implemented / Validation
-Provider configuration
-🟡 Environment-dependent
-Production request
-🟡 Validation
-Production AI response
-🟡 Validation
-Complete end-to-end pipeline
-🟡 Validation
-🛡️ AutoShield
-AutoShield is a core part of the Valthoris product direct.
-🗺️ Repository Map, Modules, Deployment & Production Audit
-This section documents the actual Valthoris repository structure, deployed ICP canisters, build process, production endpoints, custom-domain preparation, persistence architecture and current verification state.
-The objective is simple:
-Every statement in this document must be traceable to code, configuration, deployment output or a reproducible production test.
-Where evidence is incomplete, the status remains explicitly marked as validation, development, planned or research.
-📁 Repository Structure
-The current Valthoris repository is:
+User
+
+The repository contains an abstraction for external AI providers.
+
+This allows the platform to avoid permanently coupling the application to a single model provider.
+
+Possible provider integrations must nevertheless be classified according to actual implementation and deployment status.
+
+---
+
+AI Provider Security
+
+AI provider credentials must never be exposed to the browser.
+
+The intended architecture is:
+
+Browser
+   │
+   ▼
+Trusted API / Backend
+   │
+   ▼
+AI Provider
+
+rather than:
+
+Browser
+   │
+   └──────► AI Provider using secret API key
+
+The second architecture would expose credentials and is not acceptable for a production security platform.
+
+---
+
+AI Status
+
+Capability| Status
+AI service abstraction| 🟡 Implemented / Validation
+Provider abstraction| 🟡 Implemented / Validation
+AI configuration| 🟡 Environment dependent
+Complete production request pipeline| 🟡 Validation
+Production AI result persistence| 🟡 Validation
+Fully verified end-to-end fraud analysis| 🟡 Validation
+
+Valthoris will not claim a complete operational AI pipeline until it has been verified from user input through to the final production response.
+
+---
+
+AutoShield
+
+AutoShield represents the intended real-time protection layer of Valthoris.
+
+Its long-term objective is to provide continuous protection and automated security analysis around user activity and potentially suspicious events.
+
+Current status:
+
+🟠 In Development
+
+The repository contains AutoShield-related architecture and implementation components, but the complete real-time protection pipeline must be validated before it can be described as fully operational.
+
+---
+
+Security Architecture
+
+Valthoris is designed around three principal security principles.
+
+Security by Design
+
+Security requirements are considered during architecture and implementation rather than being treated solely as a later security review.
+
+Examples include:
+
+- authentication boundaries;
+- least-privilege access;
+- separation of public and privileged credentials;
+- decentralized backend components;
+- persistent actor state;
+- security-oriented data handling.
+
+Privacy by Design
+
+The platform is designed to consider:
+
+- data minimisation;
+- purpose limitation;
+- access control;
+- protection of personal data;
+- separation of operational services;
+- controlled data exposure;
+- auditability.
+
+Zero Trust
+
+Valthoris follows a Zero Trust architectural direction in which:
+
+- identities should be explicitly authenticated;
+- requests should be authorised;
+- internal location should not automatically imply trust;
+- services should be independently validated;
+- access should follow least-privilege principles.
+
+These principles describe the architecture and security objectives.
+
+They do not constitute a claim that every future security control has already been implemented.
+
+---
+
+NIS2 Security Alignment
+
+Valthoris is being designed with the cybersecurity risk-management principles and organisational expectations associated with the EU NIS2 framework in mind.
+
+The project therefore considers areas such as:
+
+- cybersecurity risk management;
+- incident handling;
+- business continuity;
+- disaster recovery;
+- crisis management;
+- supply-chain security;
+- secure development;
+- vulnerability management;
+- access control;
+- authentication;
+- cryptographic protection where appropriate;
+- logging and monitoring;
+- security governance;
+- incident reporting processes;
+- business resilience;
+- third-party risk.
+
+However:
+
+«Valthoris does not claim formal NIS2 compliance merely because these principles appear in the architecture.»
+
+Formal compliance depends on the applicable legal scope, organisational role, sector, jurisdiction, technical controls, governance processes, evidence, risk assessments and potentially independent legal or security assessment.
+
+The appropriate project description is therefore:
+
+NIS2-aligned security architecture and development approach
+
+rather than:
+
+NIS2 Certified, NIS2 Compliant, or NIS2 Ready.
+
+---
+
+GDPR and Data Protection
+
+Valthoris is designed with data-protection principles in mind, including:
+
+- data minimisation;
+- purpose limitation;
+- access control;
+- authentication;
+- privacy by design;
+- controlled processing;
+- security of personal data;
+- retention considerations;
+- auditability.
+
+The project does not use a generic claim of:
+
+GDPR COMPLIANT
+
+without a formal legal and organisational assessment.
+
+Instead, Valthoris should be described as:
+
+«Designed with GDPR and privacy-by-design principles in mind.»
+
+Actual GDPR compliance depends on the complete processing activities, purposes, legal bases, data flows, retention policies, data-subject rights, processor/controller relationships, security measures and organisational procedures applicable to the deployed service.
+
+---
+
+Regulatory Documentation Principle
+
+Valthoris will not use regulatory compliance badges merely as marketing claims.
+
+The following claims require appropriate evidence before being used:
+
+- GDPR Compliant;
+- NIS2 Compliant;
+- NIS2 Ready;
+- ISO certified;
+- SOC certified;
+- PCI compliant;
+- legally approved;
+- government approved;
+- law-enforcement approved.
+
+Where formal certification or legal assessment has not occurred, the README will use accurate language such as:
+
+- designed with;
+- aligned with;
+- informed by;
+- security-oriented;
+- privacy-oriented;
+- intended to support;
+- under assessment.
+
+This approach protects both the credibility of the project and the integrity of its technical documentation.
+
+---
+
+Roadmap
+
+The following capabilities are part of the Valthoris roadmap and should not currently be interpreted as fully operational production capabilities unless independently verified.
+
+Audio Intelligence
+
+🔵 Planned
+
+Future functionality may include analysis of suspicious audio and voice-related fraud indicators.
+
+---
+
+Visual Intelligence
+
+🔵 Planned
+
+Future functionality may include image and visual-content analysis for fraud and security signals.
+
+---
+
+Malware Intelligence
+
+🔵 Planned
+
+Future functionality may include deeper malware and malicious-file analysis.
+
+---
+
+Enterprise SIEM / SOAR
+
+🔵 Planned
+
+Future enterprise capabilities may include integrations with:
+
+- SIEM platforms;
+- SOAR platforms;
+- security operations workflows;
+- enterprise incident-response systems.
+
+No claim is made that these integrations are currently operational.
+
+---
+
+Banking Integrations
+
+🔵 Planned
+
+Future integrations may target financial institutions and payment-security environments.
+
+Any such integration would require:
+
+- technical integration;
+- security assessment;
+- contractual agreements;
+- regulatory assessment;
+- appropriate data-processing arrangements.
+
+---
+
+Institutional Integrations
+
+🔵 Planned
+
+Future integrations may involve public-sector or institutional environments.
+
+Such integrations would require independent technical, legal, security and procurement processes.
+
+---
+
+Advanced Blockchain Intelligence
+
+🔵 Planned / Research
+
+Future work may expand blockchain and crypto-security intelligence across multiple networks.
+
+Specific network coverage, risk models, transaction analysis and automated detection capabilities must not be represented as operational until implemented and independently verified.
+
+---
+
+Target Architecture
+
+The future Valthoris architecture may evolve toward a more complete security-analysis and decision platform.
+
+                         ┌──────────────────────┐
+                         │        USERS         │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │ Valthoris Experience │
+                         │   Web / PWA / Mobile │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │   Security Gateway   │
+                         └──────────┬───────────┘
+                                    │
+                 ┌──────────────────┼──────────────────┐
+                 ▼                  ▼                  ▼
+             Identity           AI Analysis       Threat Intel.
+                 │                  │                  │
+                 └──────────────────┼──────────────────┘
+                                    ▼
+                              Risk Engine
+                                    │
+                  ┌─────────────────┼─────────────────┐
+                  ▼                 ▼                 ▼
+              AutoShield        Reputation        Detection
+                  │                 │                 │
+                  └─────────────────┼─────────────────┘
+                                    ▼
+                              Decision Layer
+                                    │
+                         ┌──────────┴──────────┐
+                         ▼                     ▼
+                    User Alert             Protection
+                                   
+                         ┌──────────┴──────────┐
+                         ▼                     ▼
+                        ICP                Supabase
+                  Decentralized          Operational
+                     Layer                  Layer
+
+This is target architecture.
+
+It must not be interpreted as a description of the complete current production system.
+
+---
+
+Repository Structure
+
+The repository should be understood according to the actual project structure rather than an aspirational directory diagram.
+
+The principal areas currently include:
+
 Valthoris-llm/
 │
 ├── dfx.json
@@ -913,7 +1108,6 @@ Valthoris-llm/
 │
 ├── src/
 │   └── frontend/
-│       │
 │       ├── public/
 │       │   ├── .well-known/
 │       │   │   └── ic-domains
@@ -924,1373 +1118,1089 @@ Valthoris-llm/
 │       │   └── valthoris-shield.png
 │       │
 │       ├── src/
-│       │   ├── components/
-│       │   ├── contexts/
-│       │   ├── services/
-│       │   └── ...
 │       │
 │       ├── dist/
-│       │   ├── .well-known/
-│       │   │   └── ic-domains
-│       │   ├── assets/
-│       │   ├── legal/
-│       │   ├── 404.html
-│       │   ├── index.html
-│       │   ├── manifest.webmanifest
-│       │   ├── sitemap.xml
-│       │   ├── valthoris-logo.png
-│       │   └── valthoris-shield.png
 │       │
-│       ├── index.html
-│       ├── 404.html
 │       ├── package.json
 │       ├── package-lock.json
 │       ├── tsconfig.json
-│       └── vite.config.ts
+│       ├── vite.config.ts
+│       ├── index.html
+│       └── 404.html
 │
 └── ...
-The exact repository may contain additional files and directories not shown in this abbreviated map. The README deliberately avoids inventing a complete tree where it has not been independently verified.
-🧱 Main Technology Stack
-Layer
-Technology
-Status
-Frontend
-React + TypeScript
-🟢 Implemented
-Build system
-Vite
-🟢 Implemented
-Type checking
-TypeScript
-🟢 Implemented
-PWA
-Web App Manifest
-🟢 Implemented
-Decentralized backend
-Internet Computer
-🟢 Implemented
-Smart-contract/backend language
-Motoko
-🟢 Implemented
-Authentication
-Internet Identity
-🟢 Implemented
-Decentralized persistence
-ICP stable state
-🟢 Implemented in relevant canisters
-Operational database integration
-Supabase
-🟡 Implemented / Validation
-AI service architecture
-Provider abstraction/services
-🟡 Implemented / Validation
-Custom domain
-ICP custom-domain mechanism
-🟡 Configuration in progress
-Mobile packaging
-Part of product direction
-🟠 Development
-🔗 ICP Canister Architecture
-The current dfx.json defines the following principal application canisters:
-Canister
-Role
-Technology
-Mainnet ID
-Status
-frontend
-Valthoris web application
-ICP Assets / React
-v63rh-lqaaa-aaaaa-qewvq-cai
-🟢
-backend
-Core backend functionality
-Motoko
-c6sjf-tqaaa-aaaap-qsiea-cai
-🟡
-community
-Community functionality
-Motoko
-7w5qg-6aaaa-aaaab-ael4a-cai
-🟡
-identity
-Identity/reputation functionality
-Motoko
-ezroe-caaaa-aaaac-bcdeq-cai
-🟡
-safe_location
-Location and geofencing functionality
-Motoko
-sodv3-uiaaa-aaaak-qxubq-cai
-🟡
-threat_intelligence
-Threat intelligence functionality
-Motoko
-e2m3q-yqaaa-aaaas-qekva-cai
-🟡
-The IDs above correspond to the mainnet deployment output obtained during the current audit.
-The distinction between deployed and operational is intentional.
-A deployed canister proves that a canister exists on the ICP network.
-It does not, by itself, prove that every frontend workflow connected to that canister is working correctly.
-🌐 Frontend Production Deployment
-The Valthoris frontend is deployed as an ICP asset canister.
-Current production canister:
-v63rh-lqaaa-aaaaa-qewvq-cai
-The ICP gateway provides the frontend at:
-https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/
-The frontend was successfully accessed during the audit.
-The application also exposes application routes beneath the ICP gateway.
-For example:
-/assistant
-is accessible through the deployed frontend.
-This confirms that the application is not merely present in the GitHub repository.
-It is deployed and serving production content through ICP.
-🧪 Production Build Verification
-The frontend was built using:
+
+The exact repository structure may evolve as development continues.
+
+Documentation should therefore be updated whenever major architectural changes are introduced.
+
+---
+
+Build Requirements
+
+The frontend currently requires a working Node.js/npm environment.
+
+From the repository root:
+
 npm --prefix src/frontend run build
-The build executes:
-tsc --noEmit && vite build
-The production build completed successfully.
-Observed output included:
-✓ 313 modules transformed.
-and:
-✓ built in 10.21s
-The resulting production assets included:
-dist/404.html
-dist/index.html
-dist/assets/main-DTolIWLZ.css
-dist/assets/main-BG2jLb2Z.js
-The build therefore passed both:
-TypeScript validation
-Vite production compilation
-Build warning
-Vite reported a JavaScript bundle larger than 500 kB after minification.
-This is currently a performance optimisation warning, not a build failure.
-The project can later consider:
-dynamic imports;
-route-based code splitting;
-Rollup manualChunks;
-bundle optimisation.
-This is not currently classified as a deployment blocker.
-🚀 ICP Deployment Verification
-The frontend was successfully deployed to the ICP mainnet.
-The deployment command used was:
-DFX_WARNING=-mainnet_plaintext_identity dfx deploy frontend --network ic
-The deployment completed successfully.
-The deployment output confirmed:
-Upgraded code for canister frontend,
-with canister ID v63rh-lqaaa-aaaaa-qewvq-cai
-followed by:
-Deployed canisters.
-Therefore:
-Verification
-Result
-Frontend source exists
-✅
-Frontend builds
-✅
-ICP frontend canister exists
-✅
-Mainnet deployment completed
-✅
-Production frontend accessible
-✅
-Important security note
-The deployment required an explicit override because the currently selected DFX identity is stored in plaintext.
-DFX reported:
-The dev identity is not stored securely.
-This did not prevent the deployment, but it is an important security issue to address before the project reaches a higher-security production posture.
-The recommended future approach is a properly secured DFX identity rather than routinely relying on:
-DFX_WARNING=-mainnet_plaintext_identity
-This should be treated as a security hardening item, not ignored.
-🔐 Internet Identity
-Internet Identity is integrated into the Valthoris application.
-The authentication architecture follows the ICP model:
-User
- │
- ▼
-Internet Identity
- │
- ▼
-Authenticated Principal
- │
- ▼
-Valthoris Frontend
- │
- ├───────────────┐
- ▼               ▼
-ICP Actors    Application Services
-Authentication should therefore be considered separate from persistence.
-A user being successfully authenticated proves:
-Identity → Principal
-It does not automatically prove:
-Principal
-   ↓
+
+The build performs:
+
+tsc --noEmit
+        ↓
+vite build
+
+A successful build is required before deployment.
+
+---
+
+ICP Deployment
+
+The frontend is deployed through DFX.
+
+The general deployment workflow is:
+
+dfx deploy frontend --network ic
+
+When using an insecure plaintext mainnet identity, DFX may block the operation.
+
+The recommended long-term approach is to use a secure DFX identity.
+
+For environments where the operator explicitly understands the security implications, the warning can be temporarily suppressed through the environment configuration required by DFX.
+
+Mainnet operations should always be performed carefully because they can control real canisters and consume real cycles.
+
+---
+
+Deployment Principle
+
+Valthoris follows this deployment sequence:
+
+Source Code
+    ↓
+TypeScript Validation
+    ↓
+Production Build
+    ↓
+Artifact Verification
+    ↓
+DFX Deployment
+    ↓
+ICP Canister
+    ↓
+Live Production
+    ↓
+End-to-End Verification
+
+A successful deployment command alone does not prove that every application workflow works correctly.
+
+---
+
+Production Verification
+
+Production verification should include:
+
+1. open the live frontend;
+2. authenticate;
+3. inspect the authenticated principal;
+4. test profile operations;
+5. test backend operations;
+6. test Identity operations;
+7. test Community operations;
+8. test Safe Location;
+9. test Threat Intelligence;
+10. reload the application;
+11. repeat reads;
+12. verify persistence;
+13. test multi-user access where applicable;
+14. test error handling;
+15. verify security boundaries.
+
+Only after successful testing should a capability be upgraded from 🟡 to 🟢.
+
+---
+
+Persistence Audit
+
+The Valthoris persistence audit follows a module-by-module approach.
+
+Profile
+
 Profile
    ↓
-Database
-   ↓
-Persistent record
-That second chain requires independent verification.
-👤 Identity Canister
-The identity canister is a real Motoko canister deployed to ICP.
-Its implementation includes functionality associated with identifier and reputation intelligence, including lookup and risk-related records.
-The implementation includes areas such as:
-phone lookup;
-email lookup;
-domain lookup;
-IBAN lookup;
-wallet address lookup;
-reputation records;
-trust scores;
-risk scores;
-report counts;
-known-scammer state;
-verified-business state;
-suspicious identifier registration;
-batch lookup.
-The implementation also contains persistent state mechanisms intended to survive canister upgrades.
-Current classification
-Source code                  🟢
-Canister definition          🟢
-Mainnet deployment           🟢
-Frontend integration         🟡
-End-to-end write test        🟡
-End-to-end read test         🟡
-Persistence after reload     🟡
-Upgrade persistence          🟡
-Production operational proof 🟡
-Therefore:
-Identity is implemented and deployed, but its complete production workflow remains under validation.
-📍 Safe Location Canister
-The safe_location canister is independently deployed on ICP.
-Its implementation contains persistent structures for functionality including:
-location shares;
-current locations;
-geofence zones;
-share counters;
-geofence counters.
-The implementation also includes functionality for:
-location sharing;
-expiration;
-revocation;
-recipient restrictions;
-location updates;
-location retrieval;
-user-owned share listing;
-geofence creation;
-geofence listing;
-geofence deletion;
-coordinate validation;
-geographic distance calculation;
-geofence checking.
-The presence of these functions demonstrates substantial implementation.
-However, production verification still needs to demonstrate the complete lifecycle:
-Create share
-     ↓
-Write to canister
-     ↓
-Read from canister
-     ↓
-Reload application
-     ↓
-Read again
-     ↓
-Data still present
-Current classification
-Motoko implementation       🟢
-Persistent state design      🟢
-Canister deployment          🟢
-Frontend module              🟢
-Map interface                🟢
-Create/write workflow        🟡
-Read workflow                🟡
-Reload persistence           🟡
-Multi-user verification      🟡
-Production operational proof 🟡
-👥 Community Canister
-The community canister exists as an independent Motoko canister.
-The architectural model is:
-User
- ↓
-Valthoris Frontend
- ↓
-Community Actor
- ↓
-Write
- ↓
-Read
- ↓
-Reload
- ↓
-Record remains available
-The existence of the actor is verified.
-The complete frontend-to-canister persistence lifecycle is not yet classified as fully verified.
-Current classification
-Source code                  🟢
-Canister definition          🟢
-Mainnet deployment           🟢
-Frontend integration         🟡
-Create/write verification    🟡
-Read verification            🟡
-Reload verification          🟡
-Multi-user verification      🟡
-Production status            🟡
-🛡️ Threat Intelligence Canister
-The threat_intelligence canister exists as an independent ICP canister.
-Its presence in the deployment configuration and mainnet deployment confirms that this is not merely a README concept.
-However, the project does not currently claim that it represents a fully operational global threat-intelligence network.
-The correct classification remains:
-🟡 Implemented / Validation
-Further validation must establish:
 Frontend
    ↓
-Threat Intelligence actor
+Backend / persistence layer
    ↓
-Query / write
+Write
    ↓
-Result
+Read
    ↓
-Persistent state
+Reload
    ↓
-Production verification
-🗄️ Persistence Architecture
-Valthoris currently contains two distinct persistence layers.
-ICP persistence
-The decentralized layer is provided by ICP canisters using persistent actor state.
-Conceptually:
-Valthoris Application
-        │
-        ▼
-   ICP Canister
-        │
-        ▼
- Persistent State
-Relevant canisters contain persistent data structures.
-This is a real architectural component of the project.
-Supabase persistence
-The project also contains Supabase integration.
-The frontend uses environment variables including:
+Read again
+
+Community
+
+Community action
+   ↓
+Community actor
+   ↓
+Write
+   ↓
+Read
+   ↓
+Reload
+   ↓
+Read again
+
+Safe Location
+
+Create share/geofence
+   ↓
+Safe Location canister
+   ↓
+Write
+   ↓
+Read
+   ↓
+Reload
+   ↓
+Read again
+
+Identity
+
+Create/update identity record
+   ↓
+Identity canister
+   ↓
+Write
+   ↓
+Lookup
+   ↓
+Reload
+   ↓
+Lookup again
+
+Threat Intelligence
+
+Threat record
+   ↓
+Threat Intelligence canister
+   ↓
+Write / update
+   ↓
+Lookup
+   ↓
+Reload
+   ↓
+Lookup again
+
+---
+
+Production Verification Matrix
+
+The following matrix defines the evidence required for each component.
+
+Component| Source| Build| Deploy| Production| Persistence| Current State
+Frontend| ✅| ✅| ✅| ✅| N/A| 🟢
+Internet Identity| ✅| ✅| ✅| ✅| 🟡| 🟢/🟡
+Backend ICP| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Identity| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Community| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Safe Location| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Threat Intelligence| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Profile| ✅| ✅| ✅| 🟡| 🟡| 🟡
+Supabase integration| ✅| ✅| Configuration-dependent| 🟡| 🟡| 🟡
+Supabase synchronization| ✅| ✅| Configuration-dependent| 🟡| 🟡| 🟠
+AI architecture| ✅| ✅| Configuration-dependent| 🟡| 🟡| 🟡
+AI end-to-end pipeline| ✅| 🟡| 🟡| 🟡| 🟡| 🟡
+AutoShield| ✅| 🟡| 🟡| 🟡| 🟡| 🟠
+Custom domain verification| ✅| ✅| ✅| ✅| N/A| 🟢
+Final custom-domain routing| ✅| N/A| DNS-dependent| 🟡| N/A| 🟡
+
+---
+
+What Valthoris Can Demonstrate Today
+
+Based on the current repository and deployment evidence, Valthoris can demonstrate:
+
+- a real React/TypeScript frontend;
+- a production Vite build;
+- deployment to the Internet Computer;
+- a real ICP frontend canister;
+- multiple Motoko backend canisters;
+- Internet Identity integration;
+- a dedicated Identity canister;
+- a dedicated Community canister;
+- a dedicated Threat Intelligence canister;
+- a dedicated Safe Location canister;
+- persistent state mechanisms in selected Motoko actors;
+- a custom-domain verification resource;
+- Supabase integration code;
+- AI/service architecture;
+- security-oriented application design;
+- an explicit roadmap and implementation-status model.
+
+---
+
+What Still Requires Verification
+
+The following areas require further end-to-end testing before being represented as fully operational:
+
+- complete profile persistence;
+- complete profile synchronisation;
+- Community write/read persistence;
+- Safe Location persistence after reload;
+- Safe Location multi-user workflows;
+- Identity frontend workflows;
+- Threat Intelligence frontend workflows;
+- complete AI request pipeline;
+- production AI response handling;
+- AI result persistence;
+- Supabase production synchronization;
+- complete integration between ICP and operational services;
+- final custom-domain routing;
+- broader security and compliance validation.
+
+---
+
+What Is Not Currently Claimed
+
+Valthoris does not currently claim that the following are fully operational:
+
+- global fraud prevention coverage;
+- universal scam detection;
+- fully autonomous fraud prevention;
+- complete real-time AI protection;
+- complete malware analysis;
+- complete audio intelligence;
+- complete visual intelligence;
+- enterprise SIEM integration;
+- enterprise SOAR integration;
+- banking integrations;
+- law-enforcement integrations;
+- government integrations;
+- universal blockchain intelligence;
+- complete multi-chain risk coverage;
+- formal GDPR compliance;
+- formal NIS2 compliance;
+- ISO certification;
+- SOC certification;
+- regulatory approval.
+
+These may be future capabilities, integration objectives or areas under development.
+
+---
+
+Security Development Lifecycle
+
+Valthoris development should follow a controlled lifecycle:
+
+Requirement
+    ↓
+Threat Model
+    ↓
+Architecture
+    ↓
+Implementation
+    ↓
+Security Review
+    ↓
+Testing
+    ↓
+Deployment
+    ↓
+Production Verification
+    ↓
+Monitoring
+    ↓
+Incident Response
+    ↓
+Continuous Improvement
+
+Security should not be treated as a final stage.
+
+---
+
+Secure Development Principles
+
+Development should prioritise:
+
+- secure defaults;
+- input validation;
+- output encoding;
+- authentication;
+- authorisation;
+- least privilege;
+- secrets management;
+- dependency management;
+- vulnerability remediation;
+- logging;
+- monitoring;
+- auditability;
+- error handling;
+- secure configuration;
+- protection of sensitive data.
+
+---
+
+Secrets Management
+
+Sensitive credentials must not be committed to the repository.
+
+Examples include:
+
+AI provider API keys
+Supabase service-role keys
+private signing keys
+administrative credentials
+deployment credentials
+database passwords
+third-party secrets
+
+Frontend environments may contain public configuration such as:
+
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
-The frontend is therefore designed to use the public Supabase anonymous key.
-The service-role key must remain server-side and must never be embedded into the browser application.
-The repository contains Supabase-related services associated with areas such as:
-PostgreSQL;
-PGMQ;
-Storage;
-Realtime;
-audit;
-notifications;
-profile synchronisation.
-However:
-The existence of Supabase code is not proof that Supabase synchronisation is currently functioning end-to-end in production.
-This remains under audit.
-🔄 Profile Persistence
-The profile architecture includes a synchronisation mechanism associated with authentication.
-The conceptual flow is:
-Internet Identity
-       │
-       ▼
-Authenticated Principal
-       │
-       ▼
-Profile Synchronisation
-       │
-       ├───────────────► Local profile
-       │
-       └───────────────► Supabase profile
-The profile service contains functionality for:
-reading profile data;
-storing profile data;
-updating profiles;
-synchronising last_seen;
-retrieving cloud profile information;
-merging profile information.
-However, fallback behaviour exists.
-That means the application can potentially continue operating with local data even when the cloud persistence layer is unavailable or incorrectly configured.
-Therefore:
-Profile UI works
-        ≠
-Profile permanently persisted
-The required test remains:
-Create profile
-      ↓
-Write
-      ↓
-Read
-      ↓
-Reload browser
-      ↓
-Authenticate again
-      ↓
-Read
-      ↓
-Data remains
-Until that test is demonstrated against the production system, the official status remains:
-🟡 Implemented / Validation
-🔬 Persistence Verification Standard
-For every important Valthoris module, the project uses the following standard:
-SOURCE
-  ↓
-BUILD
-  ↓
-DEPLOY
-  ↓
-FRONTEND CONNECTION
-  ↓
-CREATE / WRITE
-  ↓
-READ
-  ↓
-RELOAD
-  ↓
-READ AGAIN
-  ↓
-PERSISTENCE CONFIRMED
-For security-sensitive modules, an additional test is required:
-User A
-   ↓
-Create data
-   ↓
-User B
-   ↓
-Attempt access
-   ↓
-Access-control result verified
-For ICP canisters, an additional upgrade test is desirable:
-Create data
-   ↓
-Verify data
-   ↓
-Canister upgrade
-   ↓
-Read data again
-   ↓
-Data survives
-Only after the appropriate tests succeed should the module receive:
-🟢 Operational
-🌍 Custom Domain — valthoris.com
-The project is currently preparing the ICP custom-domain configuration.
-The frontend contains:
-src/frontend/public/.well-known/ic-domains
-with the content:
-valthoris.com
-After the production build, the file was confirmed in:
-src/frontend/dist/.well-known/ic-domains
-The file contents were verified as:
-valthoris.com
-✅ ICP Domain Proof Verification
-The production endpoint was tested with:
-curl -i -L "https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/.well-known/ic-domains"
-The response returned:
-HTTP/2 200
-and:
-content-length: 13
-The response body contained:
-valthoris.com
-The response also identified the ICP canister:
-x-ic-canister-id: v63rh-lqaaa-aaaaa-qewvq-cai
-This is important evidence.
-It demonstrates that the required domain-verification file is now being served by the deployed ICP frontend.
-Current domain status
-.ic-domains file in source       ✅
-.ic-domains included in build   ✅
-.ic-domains deployed to ICP     ✅
-.ic-domains accessible publicly  ✅
-HTTP 200 verification             ✅
-valthoris.com content             ✅
-Custom domain fully active        🟡
-DNS finalisation                   🟡
-Therefore:
-The ICP domain proof is successfully published. The custom domain itself should not yet be described as fully operational until DNS configuration and ICP domain activation are verified end-to-end.
-☁️ Cloudflare
-The domain valthoris.com is managed through Cloudflare.
-The DNS zone currently contains existing records.
-One observed record is:
-valthoris.com
-CNAME
-valthoris-code.github.io
-with proxy enabled.
-This existing configuration must not be casually replaced.
-The custom-domain migration therefore needs to be handled as a controlled DNS change.
-The current audit does not authorise modification of unrelated DNS records.
-The rule is:
-Do not change the other existing DNS records unless an independent requirement is established and explicitly approved.
-⚠️ DNS Migration Principle
-The final ICP custom-domain configuration must be performed carefully because DNS records affect:
-website availability;
-email;
-verification;
-TLS;
-third-party services;
-existing GitHub hosting;
-Cloudflare routing.
-The project therefore treats the custom-domain operation as a controlled production change rather than a casual DNS edit.
-📊 Definitive Audit Matrix — Current State
-The current evidence supports the following classification:
-Component
-Code
-Build
-Deploy
-Production
-Persistence
-Official State
-Valthoris Frontend
-✅
-✅
-✅
-✅
-—
-🟢
-ICP Frontend
-✅
-✅
-✅
-✅
-—
-🟢
-Internet Identity
-✅
-✅
-✅
-✅
-🟡
-🟡
-Backend ICP
-✅
-✅
-✅
-🟡
-🟡
-🟡
-Identity
-✅
-✅
-✅
-🟡
-🟡
-🟡
-Community
-✅
-✅
-✅
-🟡
-🟡
-🟡
-Safe Location
-✅
-✅
-✅
-🟡
-🟡
-🟡
-Threat Intelligence
-✅
-✅
-✅
-🟡
-🟡
-🟡
-Profile persistence
-✅
-✅
-🟡
-🟡
-🟡
-🟡
-Supabase integration
-✅
-✅
-—
-🟡
-🟡
-🟡
-Supabase synchronisation
-✅
-✅
-—
-🟡
-🟡
-🟠
-AI architecture
-✅
-✅
-🟡
-🟡
-🟡
-🟡
-AI end-to-end pipeline
-🟡
-🟡
-🟡
-🟡
-🟡
-🟡
-AutoShield
-🟠
-🟠
-🟡
-🟡
-🟡
-🟠
-Audio Intelligence
-—
-—
-—
-—
-—
-🔵
-Visual Intelligence
-—
-—
-—
-—
-—
-🔵
-Malware Intelligence
-—
-—
-—
-—
-—
-🔵
-Enterprise SIEM/SOAR
-—
-—
-—
-—
-—
-🔵
-Banking integrations
-—
-—
-—
-—
-—
-🔵
-Advanced blockchain intelligence
-🟡/🟠
-🟡/🟠
-—
-—
-—
-🔵/⚪
-valthoris.com ICP proof
-✅
-✅
-✅
-🟡
-—
-🟡
-🧾 What Has Actually Been Proven
-The current audit has established that Valthoris has:
-a real repository;
-a real React/TypeScript frontend;
-a successful production build;
-a deployed ICP frontend;
-multiple real Motoko canisters;
-real mainnet canister IDs;
-Internet Identity integration;
-persistent ICP canister architecture;
-a real Safe Location implementation;
-a real Identity implementation;
-a real Community canister;
-a real Threat Intelligence canister;
-Supabase integration in the codebase;
-AI/service architecture in the codebase;
-a published ICP custom-domain proof file;
-successful production retrieval of /.well-known/ic-domains.
-These facts are materially different from claiming that every planned Valthoris capability is already fully operational.
-That distinction is now part of the official documentation standard.
-❌ What Has Not Yet Been Proven
-The following must not be described as fully operational until tested:
-Every profile write persists correctly
-Every Community operation persists correctly
-Every Safe Location workflow survives reload
-Every Identity workflow works end-to-end
-Supabase synchronisation is complete
-AI analysis works end-to-end in production
-AI results are persistently stored
-AutoShield provides complete real-time protection
-All external AI providers are production-connected
-valthoris.com is fully active through ICP custom-domain routing
-Enterprise integrations exist operationally
-Banking integrations exist operationally
-Law-enforcement integrations exist operationally
-Audio Intelligence is operational
-Visual Intelligence is operational
-Malware Intelligence is operational
-SIEM/SOAR integrations are operational
-These distinctions are deliberate.
-🎯 Current Technical Priority
-The immediate priority is not adding more features.
-The priority is proving the existing ones.
-The recommended sequence is:
-1. Production frontend
-        ↓
-2. Authentication
-        ↓
-3. Profile
-        ↓
-4. Backend
-        ↓
-5. Identity
-        ↓
-6. Community
-        ↓
-7. Safe Location
-        ↓
-8. Threat Intelligence
-        ↓
-9. Persistence verification
-        ↓
-10. AI end-to-end
-        ↓
-11. Supabase synchronisation
-        ↓
-12. Custom domain finalisation
-        ↓
-13. README final status
-This prevents the project from accumulating additional functionality while fundamental persistence remains uncertain.
-🏛️ Valthoris Documentation Rule
-From this point forward, the repository follows one fundamental rule:
-If we cannot demonstrate it, we do not call it operational.
-A feature can still be:
-Implemented
-In Validation
-In Development
-Planned
-Research
-without being presented as production-ready.
-This is not a weakness.
-It is a technical integrity requirement.
-For a cybersecurity and fraud-prevention platform intended eventually to interact with institutions, financial organisations and public-sector entities, accurate technical documentation is itself part of the security posture.
 
-Operations, Security, Compliance, Roadmap, Verification & Project Status
-🧪 Verification and Quality Assurance
-Valthoris follows a verification-first approach.
-A feature is not considered operational merely because:
-source code exists;
-a UI component exists;
-a canister is deployed;
-an API client exists;
-a database service is configured;
-a feature appears in the product specification;
-or a function can be called successfully once.
-For a feature to receive the 🟢 Operational classification, its relevant production workflow must be demonstrated.
-Verification model
-SOURCE CODE
-    │
-    ▼
-BUILD
-    │
-    ▼
-DEPLOYMENT
-    │
-    ▼
-FRONTEND CONNECTION
-    │
-    ▼
-USER ACTION
-    │
-    ▼
-BACKEND OPERATION
-    │
-    ▼
-WRITE
-    │
-    ▼
-READ
-    │
-    ▼
-APPLICATION RELOAD
-    │
-    ▼
-READ AGAIN
-    │
-    ▼
-PERSISTENCE CONFIRMED
-    │
-    ▼
-PRODUCTION VERIFIED
-Where applicable, additional tests are required:
-Persistence
-    +
+but public browser configuration must never be confused with privileged secrets.
+
+---
+
+Access Control
+
+Valthoris follows a least-privilege approach.
+
+Access should be granted according to:
+
+Identity
+   +
 Authentication
-    +
-Authorization
-    +
-Multi-user behaviour
-    +
-Upgrade resilience
-    +
-Error handling
-    +
-Security validation
-Only after the relevant checks succeed should the feature be considered operational.
-📋 Production Verification Criteria
-Each major Valthoris component should be evaluated against the following criteria.
-Verification
-Meaning
+   +
+Authorisation
+   +
+Required Permission
+   ↓
+Allowed Operation
+
+Authentication alone must not automatically imply unrestricted access.
+
+---
+
+Data Protection
+
+Sensitive information must be handled according to:
+
+- purpose limitation;
+- data minimisation;
+- access control;
+- retention requirements;
+- security requirements;
+- appropriate legal basis;
+- user rights;
+- secure transmission;
+- secure storage;
+- controlled disclosure.
+
+The exact legal and organisational obligations depend on the deployment context.
+
+---
+
+Incident Response
+
+A mature Valthoris deployment should maintain procedures for:
+
+1. detection;
+2. triage;
+3. containment;
+4. investigation;
+5. eradication;
+6. recovery;
+7. notification where legally required;
+8. post-incident review;
+9. corrective action.
+
+These procedures are part of the security maturity roadmap and must be operationalised before claiming complete organisational compliance.
+
+---
+
+Supply Chain Security
+
+Valthoris depends on software libraries and external services.
+
+Future production hardening should include:
+
+- dependency inventory;
+- dependency updates;
+- vulnerability scanning;
+- lockfile management;
+- software provenance;
+- build reproducibility;
+- controlled third-party integrations;
+- secret management;
+- dependency review.
+
+The "package-lock.json" file is maintained as part of the frontend dependency structure.
+
+---
+
+Auditability
+
+A security platform must be capable of explaining important security events.
+
+The long-term audit architecture should provide evidence for:
+
+Who
+ ↓
+Did what
+ ↓
+When
+ ↓
+Using which identity
+ ↓
+Against which resource
+ ↓
+With which result
+
+Where legally and technically appropriate, security-relevant actions should be logged in a controlled and tamper-resistant manner.
+
+---
+
+Responsible AI
+
+AI capabilities within Valthoris should follow principles including:
+
+- explainability where practical;
+- controlled use of automated decisions;
+- human oversight where appropriate;
+- protection of sensitive information;
+- prevention of unnecessary data exposure;
+- model-output validation;
+- abuse prevention;
+- secure provider integration;
+- auditability;
+- clear separation between automated analysis and confirmed facts.
+
+AI output should not automatically be treated as proof of criminal activity or malicious intent.
+
+Risk scores and AI assessments should be treated as security signals requiring appropriate interpretation.
+
+---
+
+Risk Scoring
+
+Where Valthoris produces risk scores, the score should represent an analytical security signal rather than an unquestionable conclusion.
+
+A conceptual model is:
+
+Observed Signals
+       │
+       ├── Identity signals
+       ├── Reputation signals
+       ├── Threat intelligence
+       ├── Behavioural signals
+       ├── Historical reports
+       └── Context
+              │
+              ▼
+        Risk Analysis
+              │
+              ▼
+         Risk Score
+              │
+              ▼
+      Security Decision
+
+The exact scoring methodology must be documented and validated before being represented as a formally calibrated risk model.
+
+---
+
+Privacy and False Positives
+
+Fraud prevention systems must account for false positives.
+
+A suspicious indicator does not automatically mean that a person, organisation, account or identifier is malicious.
+
+Valthoris should therefore distinguish between:
+
+- observed indicator;
+- reported information;
+- automated assessment;
+- verified information;
+- confirmed malicious activity.
+
+This distinction is essential for responsible security intelligence.
+
+---
+
+Legal and Ethical Principles
+
+Valthoris is intended to support fraud prevention and cybersecurity.
+
+It is not intended to:
+
+- unlawfully identify individuals;
+- facilitate harassment;
+- enable unlawful surveillance;
+- expose private information without a lawful basis;
+- make unsupported criminal allegations;
+- bypass access controls;
+- facilitate cyber abuse.
+
+Security intelligence must be handled according to applicable law and legitimate security purposes.
+
+---
+
+Production Readiness
+
+Production readiness is not defined solely by:
+
+Build successful
+
+or:
+
+Canister deployed
+
+A production-ready component should satisfy:
+
 Source Code
-Implementation exists in the repository
+     ↓
 Build
-Project compiles successfully
+     ↓
 Deployment
-Component is deployed
-Frontend Connection
-Frontend communicates with the component
-Create / Write
-User can create or submit data
-Read
-Previously submitted data can be retrieved
-Reload
-Data remains available after application reload
-Persistence
-Data survives beyond temporary browser state
+     ↓
 Authentication
-Correct user identity is enforced
-Authorization
-Users cannot access unauthorised data
-Multi-user
-Relevant multi-user workflows work correctly
-Upgrade Resilience
-Persistent state survives canister upgrades where applicable
-Production
-Behaviour has been verified against the live deployment
-A component may therefore have working source code and a successful deployment while still remaining in 🟡 Implemented / Validation.
-This is intentional.
-🔐 Security Model
-Security is a fundamental architectural principle of Valthoris.
-The project is designed around three primary principles:
-Security by Design
-Security controls should be considered during architecture and implementation rather than added only after functionality has been completed.
-Privacy by Design
-The system should minimise unnecessary personal information, restrict access to sensitive data and separate public application functionality from protected information.
-Zero Trust
-Authentication alone does not imply trust.
-Requests, identities, services and data access should be validated according to the permissions and context applicable to the operation.
-🔑 Identity and Access Control
-Valthoris uses Internet Identity as part of its authentication architecture.
-The authenticated user is represented by an Internet Computer principal.
-Conceptually:
-Internet Identity
-       │
-       ▼
-Authenticated Principal
-       │
-       ▼
-Valthoris Application
-       │
-       ├── Profile
-       ├── Identity
-       ├── Community
-       ├── Safe Location
-       ├── Threat Intelligence
-       └── Other protected services
-Authentication and authorisation are separate concerns.
-A successful login does not automatically prove that every protected operation has been correctly authorised.
-Consequently, access-control behaviour remains part of the verification process for each module.
-🛡️ Data Protection
-Valthoris is designed to handle security-sensitive information.
-Depending on the functionality involved, this may include identifiers, reputation information, security reports, location information and other potentially sensitive data.
-The project therefore follows a principle of:
-Collect only what is required
-          ↓
-Restrict access
-          ↓
-Protect sensitive operations
-          ↓
-Persist securely
-          ↓
-Audit behaviour
-The exact legal and regulatory status of the platform must be determined through appropriate legal and security assessments.
-The README therefore does not claim formal certification or regulatory compliance unless such certification or assessment has actually been completed.
-⚖️ GDPR and Regulatory Position
-Valthoris is designed with privacy and data-protection principles in mind.
-The architecture takes into consideration principles such as:
-data minimisation;
-access control;
-purpose limitation;
-privacy-aware architecture;
-secure processing;
-separation of services;
-controlled persistence;
-protection of sensitive information.
-However, the project does not use the README to claim:
-"GDPR Compliant"
-as a formal legal certification.
-Instead, the appropriate description is:
-Designed with GDPR and privacy principles in mind.
-Formal GDPR compliance requires an appropriate legal and technical assessment based on the final production implementation, processing activities, data flows, legal bases, retention policies, user rights and organisational controls.
-🇪🇺 NIS2 Position
-Valthoris is being designed with cybersecurity principles that are relevant to modern European cybersecurity requirements.
-However, the project does not claim:
-"NIS2 Ready"
-as a formal certification.
-The more accurate description is:
-NIS2-oriented security architecture.
-Formal applicability and compliance depend on the organisation, services provided, jurisdiction, sector, implementation and applicable regulatory requirements.
-🧾 Documentation Integrity Policy
-Valthoris adopts a strict documentation principle:
-The documentation must describe the system that exists, not the system that is planned.
-This means that the README intentionally separates:
-Operational
-Functionality verified in production.
-Implemented / Validation
-The implementation and deployment exist, but complete production validation remains outstanding.
-In Development
-The functionality is partially implemented.
-Planned
-The functionality belongs to the roadmap but is not currently operational.
-Research
-The functionality remains an investigation or future research direction.
-This policy applies to both technical and business-facing documentation.
-🗺️ Roadmap
-The Valthoris roadmap remains ambitious.
-However, roadmap features are explicitly separated from currently verified functionality.
-The following capabilities are not represented as operational unless independently verified:
-Audio Intelligence;
-Visual Intelligence;
-Malware Intelligence;
-advanced automated threat response;
-enterprise SIEM integrations;
-enterprise SOAR integrations;
-banking integrations;
-institutional integrations;
-law-enforcement integrations;
-advanced blockchain intelligence;
-advanced MEV intelligence;
-large-scale multi-chain intelligence;
-future enterprise security integrations.
-These capabilities remain part of the long-term development direction.
-They are not deleted from the Valthoris vision.
-They are simply not represented as completed functionality.
-🤖 AI Roadmap
-Artificial Intelligence is a central component of the Valthoris vision.
-The current repository contains AI-related architecture and service components.
-The intended evolution is:
-User Input
-    │
-    ▼
-Valthoris Frontend
-    │
-    ▼
-Security / Analysis Layer
-    │
-    ▼
-AI Provider
-    │
-    ▼
-Threat / Fraud Analysis
-    │
-    ▼
-Risk Evaluation
-    │
-    ▼
-Result
-    │
-    ▼
-User
-The complete production chain must be validated end-to-end before being classified as fully operational.
-Future AI capabilities may include:
-fraud detection;
-security analysis;
-behavioural analysis;
-threat interpretation;
-risk scoring;
-contextual security assistance;
-automated protection;
-multimodal security analysis;
-advanced threat intelligence correlation.
-These capabilities will be promoted from roadmap status only when they are implemented and verified.
-🛡️ AutoShield Roadmap
-AutoShield represents the intended real-time protection layer of Valthoris.
-Its long-term purpose is to move Valthoris from:
-Detection
-towards:
-Detection
-   ↓
-Risk Assessment
-   ↓
-Decision
-   ↓
-Protection
-   ↓
-User Notification
-The current project contains AutoShield-related architecture and implementation work.
-The complete real-time production protection pipeline remains under development and validation.
-Current classification
-🟠 In Development
-🌍 Future Intelligence Capabilities
-Valthoris may progressively expand into several security-intelligence domains.
-Potential future areas include:
-Identity Intelligence
-        │
-Threat Intelligence
-        │
-Fraud Intelligence
-        │
-AI Security Analysis
-        │
-Blockchain Intelligence
-        │
-Behavioural Intelligence
-        │
-Location Intelligence
-        │
-Automated Protection
-Each capability will be independently verified before being promoted to an operational status.
-🏢 Enterprise Direction
-The long-term Valthoris enterprise direction may include integration with:
-security operations centres;
-SIEM platforms;
-SOAR platforms;
-financial institutions;
-payment providers;
-telecommunications providers;
-cybersecurity organisations;
-public-sector institutions;
-law-enforcement organisations;
-other authorised institutional partners.
-These integrations are future development objectives unless an integration is explicitly implemented and verified.
-The README therefore does not represent potential partnerships or future integrations as existing integrations.
-🔬 Research Direction
-Some Valthoris capabilities require further research before they can become production features.
-Research areas may include:
-advanced fraud intelligence;
-cross-chain risk analysis;
-MEV-related security analysis;
-behavioural threat modelling;
-automated threat correlation;
-advanced AI security models;
-privacy-preserving intelligence;
-decentralised security intelligence;
-large-scale threat-data correlation.
-These areas should be considered research directions, not current product capabilities.
-📈 Product Evolution
-The development strategy follows a controlled progression:
-Existing Implementation
-        ↓
-Verification
-        ↓
-Hardening
-        ↓
-Production Validation
-        ↓
-Operational Status
-        ↓
-Expansion
-        ↓
-New Capability
-        ↓
-Verification Again
-This prevents the project from accumulating undocumented or unverified functionality.
-🧭 Development Priorities
-The current priority order is:
-1. Production stability
-Ensure that the existing application remains functional.
-2. Persistence
-Verify that important user actions actually create durable records.
-3. Backend validation
-Verify each ICP canister independently.
-4. Authentication and authorisation
-Verify identity and access-control behaviour.
-5. AI validation
-Verify the actual end-to-end AI path.
-6. Supabase
-Validate synchronization only after the primary application persistence model is understood.
-7. Domain
-Complete and verify the production custom-domain configuration.
-8. Documentation
-Keep the README aligned with the verified implementation.
-9. Roadmap development
-Only then expand the platform with additional capabilities.
-🌐 Production Domain
-The Valthoris production web application is intended to operate through:
-valthoris.com
-The ICP frontend canister currently deployed for the Valthoris application is:
-v63rh-lqaaa-aaaaa-qewvq-cai
-The ICP domain verification file has been implemented at:
-/.well-known/ic-domains
-with:
-valthoris.com
-The file has been successfully included in the production frontend build and was confirmed to be served by the ICP frontend canister.
-This establishes the required application-side domain proof.
-The remaining DNS and custom-domain configuration must be treated separately from the application deployment.
-🧱 Deployment Model
-The current Valthoris deployment uses the Internet Computer.
-The frontend is deployed as an ICP asset canister.
-The backend services are implemented through independent Motoko canisters.
-The current mainnet canisters identified during deployment are:
-Component
-Canister ID
+     ↓
+Authorisation
+     ↓
+Write
+     ↓
+Read
+     ↓
+Reload
+     ↓
+Persistence
+     ↓
+Error Handling
+     ↓
+Security Validation
+     ↓
+Production Verification
+
+---
+
+Release Criteria
+
+Before a feature is classified as 🟢 Operational, Valthoris should verify:
+
+- source code exists;
+- build succeeds;
+- deployment succeeds;
+- frontend integration works;
+- authentication works;
+- authorisation works;
+- write operation works;
+- read operation works;
+- data survives reload;
+- data survives relevant upgrades;
+- invalid input is handled;
+- unauthorised access is rejected;
+- security-sensitive operations are logged where appropriate;
+- production behaviour is verified.
+
+---
+
+Development Roadmap
+
+Phase 1 — Production Baseline
+
+Focus:
+
+- repository integrity;
+- production deployment;
+- frontend stability;
+- canister verification;
+- authentication;
+- domain configuration.
+
+Status:
+
+🟢 / 🟡
+
+---
+
+Phase 2 — Persistence
+
+Priority:
+
+1. Profile
+2. Community
+3. Safe Location
+4. Identity
+5. Threat Intelligence
+6. Backend services
+
+Every workflow follows the persistence verification standard.
+
+Status:
+
+🟡
+
+---
+
+Phase 3 — AI
+
+Validate:
+
 Frontend
-v63rh-lqaaa-aaaaa-qewvq-cai
-Backend
-c6sjf-tqaaa-aaaap-qsiea-cai
-Community
-7w5qg-6aaaa-aaaab-ael4a-cai
-Identity
-ezroe-caaaa-aaaac-bcdeq-cai
-Safe Location
-sodv3-uiaaa-aaaak-qxubq-cai
-Threat Intelligence
-e2m3q-yqaaa-aaaas-qekva-cai
-These identifiers refer to deployed ICP canisters associated with the current Valthoris deployment.
-🏗️ Build Verification
-The frontend has been successfully built using:
-npm --prefix src/frontend run build
-The build process performs:
-TypeScript validation
-        ↓
-Vite production build
-        ↓
-Production assets
-The current production build successfully completes.
-The build reports a warning concerning a JavaScript bundle larger than the recommended 500 kB threshold.
-This is a performance optimisation issue rather than a build failure.
-Potential future optimisation:
-Code splitting
-Dynamic imports
-Manual chunks
-Bundle optimisation
-The warning should therefore be tracked as a technical improvement rather than represented as a production failure.
-📦 Repository Structure
-The README must remain synchronized with the actual repository.
-The documented structure should therefore be periodically checked against:
-dfx.json
-package.json
-src/
-.github/
-README.md
-No directory, module, integration or service should be documented as existing unless it can be located in the repository or independently verified.
-🔄 Change Management
-Valthoris development should follow controlled changes.
-Before modifying production infrastructure:
-Identify problem
+   ↓
+Trusted API
+   ↓
+AI Provider
+   ↓
+Analysis
+   ↓
+Result
+   ↓
+Frontend
+   ↓
+Persistence
+
+Status:
+
+🟡
+
+---
+
+Phase 4 — Operational Services
+
+Validate:
+
+- Supabase;
+- PostgreSQL;
+- Realtime;
+- Storage;
+- queues;
+- notifications;
+- audit services;
+- synchronization.
+
+Status:
+
+🟠 / 🟡
+
+---
+
+Phase 5 — AutoShield
+
+Build and validate:
+
+- real-time detection;
+- security event processing;
+- risk evaluation;
+- user alerts;
+- protection actions;
+- audit trails.
+
+Status:
+
+🟠
+
+---
+
+Phase 6 — Advanced Intelligence
+
+Future work:
+
+- audio intelligence;
+- visual intelligence;
+- malware intelligence;
+- advanced blockchain intelligence;
+- broader threat intelligence;
+- enterprise integrations.
+
+Status:
+
+🔵 / ⚪
+
+---
+
+Custom Domain
+
+The intended public domain is:
+
+valthoris.com
+
+The ICP frontend currently has the domain verification resource:
+
+/.well-known/ic-domains
+
+with:
+
+valthoris.com
+
+The ICP canister successfully serves this resource.
+
+The final DNS configuration must be maintained independently from the application source code.
+
+DNS changes should be performed carefully and only after confirming the required ICP custom-domain configuration.
+
+Existing unrelated DNS records should not be modified unnecessarily.
+
+---
+
+Current DNS Principle
+
+The Valthoris domain should use the minimum DNS changes required to establish the intended production routing.
+
+Unrelated records should remain untouched unless there is a specific technical reason to change them.
+
+This reduces the risk of:
+
+- email disruption;
+- verification failures;
+- unrelated service outages;
+- accidental DNS takeover;
+- configuration drift.
+
+---
+
+Testing Strategy
+
+Testing should occur at several levels.
+
+Unit Testing
+
+Individual functions and modules.
+
+Integration Testing
+
+Frontend-to-canister and service-to-service communication.
+
+Persistence Testing
+
+Write/read/reload/upgrade verification.
+
+Security Testing
+
+Authentication, authorisation, input validation and access-control testing.
+
+Production Testing
+
+Verification against the actual deployed environment.
+
+Regression Testing
+
+Ensuring fixes do not break previously verified functionality.
+
+---
+
+Audit Methodology
+
+Every major Valthoris component should eventually have an evidence record containing:
+
+Component
+Source file
+Function
+Canister
+Canister ID
+Frontend integration
+Build result
+Deployment result
+Production URL
+Write test
+Read test
+Reload test
+Upgrade test
+Security test
+Final status
+
+This makes the project auditable rather than dependent on assumptions.
+
+---
+
+Evidence-Based Documentation
+
+Valthoris documentation follows an evidence hierarchy.
+
+Strong evidence:
+
+1. live production test;
+2. successful end-to-end workflow;
+3. deployed canister behaviour;
+4. integration test;
+5. build result;
+6. source code.
+
+Weaker evidence:
+
+- UI presence;
+- documentation;
+- architecture diagrams;
+- roadmap specifications.
+
+A feature should not be classified as operational based solely on weaker evidence.
+
+---
+
+What "Implemented" Means
+
+Implemented means that meaningful source code exists for the capability.
+
+It does not necessarily mean:
+
+- production validated;
+- fully integrated;
+- persistent;
+- secure under all conditions;
+- complete;
+- compliant;
+- commercially ready.
+
+---
+
+What "Operational" Means
+
+Operational means:
+
+«The feature has been implemented, deployed and verified through the relevant production workflow.»
+
+This is the highest standard used by this README.
+
+---
+
+What "Planned" Means
+
+Planned means:
+
+«The capability is part of the Valthoris roadmap but is not currently being represented as an operational production feature.»
+
+Planned capabilities remain part of the product vision.
+
+---
+
+What "Research" Means
+
+Research means:
+
+«The concept is being investigated or evaluated and may become a future implementation.»
+
+Research items must not be presented as product capabilities.
+
+---
+
+Project Philosophy
+
+Valthoris is being built around a simple principle:
+
+«Build first. Verify second. Claim third.»
+
+The project should never reverse that order.
+
+The objective is not to create the appearance of a complete cybersecurity platform.
+
+The objective is to build a platform that can withstand technical scrutiny.
+
+---
+
+Transparency
+
+Valthoris intentionally documents incomplete areas.
+
+This is not considered a weakness.
+
+A cybersecurity platform is more credible when it clearly distinguishes:
+
+What exists
       ↓
-Inspect current implementation
+What works
       ↓
-Back up relevant configuration
+What has been verified
       ↓
-Make one controlled change
+What is being developed
+      ↓
+What is planned
+
+This approach is particularly important for institutional and professional environments.
+
+---
+
+Institutional Readiness Direction
+
+Future institutional deployments may require additional work in areas such as:
+
+- formal risk assessments;
+- documented security policies;
+- incident-response procedures;
+- business continuity;
+- disaster recovery;
+- vulnerability management;
+- security monitoring;
+- access governance;
+- supplier risk management;
+- privacy assessments;
+- data-processing agreements;
+- retention policies;
+- audit procedures;
+- formal compliance assessments.
+
+These requirements should be addressed according to the specific organisation, sector and jurisdiction.
+
+---
+
+Security and Compliance Position
+
+Valthoris is being developed with security and regulatory requirements in mind.
+
+The project specifically aims to support an architecture compatible with:
+
+- Security by Design;
+- Privacy by Design;
+- Zero Trust principles;
+- GDPR-oriented data protection practices;
+- NIS2-oriented cybersecurity risk management;
+- secure software development;
+- operational resilience.
+
+Formal compliance must be determined through the appropriate legal, organisational and technical assessment.
+
+---
+
+Disclaimer
+
+Valthoris is a cybersecurity and fraud-prevention technology project.
+
+Nothing in this README constitutes:
+
+- legal advice;
+- regulatory certification;
+- formal compliance certification;
+- a guarantee of security;
+- a guarantee of fraud detection;
+- a guarantee of risk-score accuracy;
+- a government endorsement;
+- law-enforcement endorsement;
+- financial advice.
+
+Regulatory and legal claims must be independently assessed against the actual deployment, organisation, jurisdiction and applicable legislation.
+
+---
+
+Current Development Priority
+
+The immediate technical priority is not to add more features simply because they exist in the roadmap.
+
+The immediate priority is:
+
+Production
+    ↓
+Persistence
+    ↓
+Integration
+    ↓
+AI validation
+    ↓
+Security validation
+    ↓
+Documentation
+    ↓
+Expansion
+
+The project should first prove that existing functionality works reliably.
+
+Only then should additional complexity be introduced.
+
+---
+
+Valthoris Development Rule
+
+Every new feature should follow:
+
+Specification
+      ↓
+Implementation
       ↓
 Build
       ↓
-Test
+Integration
       ↓
-Deploy only when necessary
+Security Review
       ↓
-Verify production
-This is particularly important for:
-dfx.json;
-canister configuration;
-authentication;
-persistence;
-Supabase;
-DNS;
-custom domains;
-production deployment.
-🚫 What Valthoris Will Not Claim Without Evidence
-Valthoris will not claim that a feature is operational merely because:
-it appears in the UI;
-it exists in a README;
-it appears in a roadmap;
-source code exists;
-a database schema exists;
-an API adapter exists;
-a canister exists;
-a provider is configured;
-a test was performed only locally.
-Production claims require production evidence.
-🧑‍💻 Technical Transparency
-Valthoris is intentionally documented in a way that allows technical reviewers to distinguish:
-What exists
-     ↓
-What is deployed
-     ↓
-What is connected
-     ↓
-What persists
-     ↓
-What has been verified
-     ↓
-What remains under development
-This approach is particularly important when the project is presented to:
-cybersecurity professionals;
-public institutions;
-law-enforcement organisations;
-financial institutions;
-technology partners;
-researchers;
-auditors;
-investors;
-potential enterprise customers.
-Technical credibility is more important than the appearance of completeness.
-🏛️ Institutional and Professional Positioning
-Valthoris is being developed as a serious cybersecurity and fraud-prevention platform.
-Its objective is not simply to provide another security interface.
-The long-term goal is to combine:
-AI
-+
-Fraud Prevention
-+
-Cybersecurity
-+
-Threat Intelligence
-+
-Identity Intelligence
-+
-Decentralised Infrastructure
-+
-Privacy
-+
-Real-Time Protection
-into a unified security platform.
-However, the current implementation status remains the authoritative reference for what is actually available.
-📊 Current Official Project Status
-Area
-Status
-Valthoris Web/PWA
-🟢 Operational
-ICP Frontend
-🟢 Operational
-Internet Identity
-🟢 Implemented
-Backend ICP
-🟡 Implemented / Validation
-Identity
-🟡 Implemented / Validation
-Community
-🟡 Implemented / Validation
-Safe Location
-🟡 Implemented / Validation
-Threat Intelligence
-🟡 Implemented / Validation
-Profile Persistence
-🟡 Validation
-Supabase Integration
-🟡 Implemented / Validation
-Supabase Synchronisation
-🟠 In Development / Validation
-AI Architecture
-🟡 Implemented / Validation
-Complete AI Pipeline
-🟡 Validation
-AutoShield
-🟠 In Development
-Audio Intelligence
-🔵 Planned
-Visual Intelligence
-🔵 Planned
-Malware Intelligence
-🔵 Planned
-Enterprise SIEM/SOAR
-🔵 Planned
-Banking Integrations
-🔵 Planned
-Institutional Integrations
-🔵 Planned
-Advanced Blockchain Intelligence
-🔵 Planned / Research
-Advanced MEV Intelligence
-🔵 Planned / Research
-Custom ICP Domain
-🟡 Configuration / Validation
-Documentation Integrity
-🟢 Active Policy
-🎯 Immediate Technical Objective
-The immediate objective is not to add more features simply to increase the feature list.
-The immediate objective is to prove the reliability of the existing platform.
-The priority is:
+Production Deployment
+      ↓
+End-to-End Verification
+      ↓
+Documentation
+
+No feature should be documented as operational before the verification stage.
+
+---
+
+Conclusion
+
+Valthoris is a real software platform with:
+
+- a React/TypeScript frontend;
+- PWA capabilities;
+- Internet Identity authentication;
+- an Internet Computer deployment;
+- multiple Motoko backend canisters;
+- decentralized persistence mechanisms;
+- Identity functionality;
+- Community functionality;
+- Safe Location functionality;
+- Threat Intelligence infrastructure;
+- Supabase integration;
+- AI/service architecture;
+- an expanding cybersecurity roadmap.
+
+The platform is substantial, but it is still undergoing validation and development.
+
+The project deliberately avoids presenting future capabilities as completed functionality.
+
+Its development direction is based on:
+
+«Security by Design.»
+
+«Privacy by Design.»
+
+«Zero Trust.»
+
+«Evidence-based engineering.»
+
+«Transparent implementation status.»
+
+«NIS2-oriented cybersecurity practices.»
+
+«Responsible handling of personal and security-sensitive information.»
+
+The long-term objective is to evolve Valthoris into a robust cybersecurity and fraud-prevention platform capable of supporting individuals, organisations and institutional environments while maintaining a clear distinction between implemented technology, verified production capabilities and future research.
+
+---
+
 Valthoris
-   │
-   ├── Authentication
-   │
-   ├── Profile
-   │
-   ├── Identity
-   │
-   ├── Community
-   │
-   ├── Safe Location
-   │
-   ├── Threat Intelligence
-   │
-   └── Assistant / AI
-          │
-          ▼
-     WRITE DATA
-          │
-          ▼
-      READ DATA
-          │
-          ▼
-       RELOAD
-          │
-          ▼
-      READ AGAIN
-Once these workflows are independently verified, the platform can confidently progress to the next development stage.
-🚀 Long-Term Vision
-Valthoris aims to evolve into a global AI-powered cybersecurity and fraud-prevention platform capable of helping individuals, organisations and institutions identify, understand and respond to digital threats.
-The long-term vision includes:
-              VALTHORIS
-                  │
-       ┌──────────┴──────────┐
-       │                     │
-   Detection             Prevention
-       │                     │
-       ▼                     ▼
- AI + Threat Intel      AutoShield
-       │                     │
-       └──────────┬──────────┘
-                  ▼
-             Risk Engine
-                  │
-                  ▼
-          Security Decision
-                  │
-        ┌─────────┴─────────┐
-        ▼                   ▼
-      Alert             Protection
-The vision is intentionally ambitious.
-The implementation status is intentionally conservative.
-Both can coexist.
-📜 Final Documentation Principle
-Valthoris will never use documentation to make the product appear more complete than it is.
-If a capability works:
-We will show it.
-If the implementation exists but requires validation:
-We will say so.
-If development has started:
-We will classify it as in development.
-If it is planned:
-We will label it as planned.
-If it is research:
-We will identify it as research.
-This principle protects the credibility of the Valthoris project and provides a reliable technical reference for future development, audits, partnerships and institutional discussions.
-Valthoris
+
 AI Cybersecurity & Fraud Prevention
-Security by Design · Privacy by Design · Zero Trust
-Built on the Internet Computer
-HCenterprise — Portugal
-Status Legend
-🟢 Operational
-    Implemented, deployed and verified in production.
 
-🟡 Implemented / Validation
-    Code and deployment exist; complete validation is pending.
+Build.
+Verify.
+Secure.
+Protect.
 
-🟠 In Development
-    Partial implementation or active development.
+Project: Valthoris
+Repository: Valthoris-llm
+Infrastructure: Internet Computer Protocol
+Frontend: React + TypeScript + Vite
+Backend: Motoko Canisters
+Authentication: Internet Identity
+Operational Data Layer: Supabase integration
+Architecture: Security by Design · Privacy by Design · Zero Trust
 
-🔵 Planned
-    Approved roadmap capability not yet operational.
+---
 
-⚪ Research
-    Future research or investigation.
-This status model is part of the Valthoris documentation standard and should be maintained whenever the implementation changes.
+Documentation Integrity Statement
 
+«If a capability cannot be demonstrated, it will not be described as operational.»
 
-
+This is a permanent principle of the Valthoris project.
