@@ -1,3625 +1,2307 @@
+
 <div align="center">
 
-  <!-- Banner Animado -->
-  <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
+<img src="documentos/valthoris-desktop-scene.png" alt="Valthoris" width="850">
 
-  <br><br>
+# VALTHORIS
 
-  <!-- Logótipo Completo Principal -->
- <img src="documentos/valthoris-desktop-scene.png" width="260" alt="Valthoris Logo">
+### AI Cybersecurity & Fraud Prevention
 
-
-  <br><br>
-
-  <!-- Escudo Correto (valthoris-3d-shield.png) -->
-  <p align="center">
-    <img src="documentos/valthoris-3d-shield.png" width="40" height="40" alt="Valthoris Shield">
-  </p>
-
-  <h3>INTELLIGENCE • PREVENTION • PROTECTION</h3>
-  <h4>CYBERSECURITY • ARTIFICIAL INTELLIGENCE • BLOCKCHAIN • INTERNET COMPUTER</h4>
-
-  <br>
-
-  <!-- Badges em Inglês -->
-  <p align="center">
-    <img src="https://img.shields.io/badge/Status-Under%20Construction%20%2F%20Active%20Development-yellow?style=for-the-badge&logo=github" alt="Project Status">
-    <img src="https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=for-the-badge" alt="Alpha Version">
-  </p>
+**Intelligence · Prevention · Protection**
 
 </div>
 
----
-
-> ⚠️ **Development Notice:** The **Valthoris platform is currently under active development and model training**. Modules and features are being progressively deployed.
-
----
-
-<p align="center">
-  A next-generation Artificial Intelligence platform focused on <strong>Fraud Prevention</strong>, <strong>Cybersecurity</strong>, <strong>Threat Intelligence</strong> and <strong>Digital Identity Protection</strong>.
-</p>
-
-
----
-
-<p align="center">
-
-<img src="https://img.shields.io/badge/STATUS-UNDER_DEVELOPMENT-FFD700?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/AI-VALTHORIS_CORE-00E5FF?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/BLOCKCHAIN-INTERNET_COMPUTER-6F42C1?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/SUPABASE-POSTGRESQL-3ECF8E?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/NIS2-READY-0078D7?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/GDPR-COMPLIANT-009688?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/LICENSE-MIT-blue?style=for-the-badge"/>
-
-</p>
-
----
+# VALTHORIS
 
 <div align="center">
 
- Valthoris Elderly Protection
-
-Valthoris protection for the senior members of your family.
+<img src="documentos/valthoris-desktop-scene.png" alt="Valthoris" width="850">
 
 <br>
 
-<img src="documentos/valthoris-elderly-protection.png" alt="Valthoris Elderly Protection" width="100%">
+## AI CYBERSECURITY & FRAUD PREVENTION
 
-<br>
-
-*Ensuring digital security for your loved ones.*
-
-</div>
-
-
-
- **"The best fraud is the one that never happens."**
-
-### Official Valthoris Manifesto
-
-
----
-
-# 🌍 Why Valthoris?
-
-Traditional cybersecurity solutions react **after** an attack.
-
-**Valthoris was designed to act before the attack succeeds.**
-
-Using Artificial Intelligence, Behaviour Analysis, Blockchain and Threat Intelligence, the platform continuously evaluates digital interactions and provides risk assessments in real time.
-
-The objective is simple:
-
-> **Protect people before they become victims.**
-
----
-
-# ⚡ Core Platform
-
-| Module | Description |
-|:-------|:------------|
-| 🛡 AutoShield | Real-time fraud prevention engine |
-| 🌍 Global Radar | Worldwide fraud intelligence |
-| 🧠 AI Core | Transformer-based language model |
-| 📡 Threat Intelligence | Global threat feeds |
-| 💰 Crypto Intelligence | Wallet & blockchain analysis |
-| 👤 Identity Intelligence | Reputation & trust scoring |
-| 📍 Safe Location | Secure family location system |
-| 🏢 Enterprise | Business security platform |
-
-------
-
-# 🚀 Platform Overview
-
-<div align="center">
-
-| 🛡️ Protection | 🧠 Intelligence | 🌍 Global | ⚡ Real-Time |
-|:-------------:|:--------------:|:---------:|:-----------:|
-| Fraud Prevention | AI Engine | Threat Intelligence | Instant Analysis |
-
-| 🔐 Privacy | ⛓ Blockchain | 📡 Detection | 🏢 Enterprise |
-|:----------:|:------------:|:-----------:|:------------:|
-| GDPR by Design | Internet Computer | Behaviour Analysis | Corporate Security |
+### Intelligence · Prevention · Protection
 
 </div>
 
 ---
 
-# 🌐 Ecosystem
-
-```text
-                    🌍 USERS
-
-        Android • iPhone • Web • Desktop
-
-                        │
-                        ▼
-
-             ┌──────────────────────┐
-             │   VALTHORIS CORE AI  │
-             └──────────────────────┘
-
-      ┌──────────┬──────────┬──────────┐
-
-      ▼          ▼          ▼
-
- AutoShield   Threat AI   Reputation
-
-      ▼          ▼          ▼
-
- Crypto AI   Identity AI  Geo AI
-
-      └──────────┬──────────┘
-
-                 ▼
-
-        Internet Computer (ICP)
-
-                 ▼
-
-        Immutable Security Layer
-
-                 ▼
-
-          Supabase PostgreSQL
-```
+> **Valthoris is an AI-oriented cybersecurity and fraud-prevention platform
+> under active development, combining Internet Computer canisters,
+> Internet Identity, a React/TypeScript web application, threat intelligence,
+> identity/reputation services, Safe Location and a separate AI/service layer.**
 
 ---
 
-# ⭐ Main Capabilities
+## ⚠️ DEVELOPMENT AND VALIDATION NOTICE
 
-| Feature | Description |
-|----------|-------------|
-| 🛡 **AutoShield** | Detects fraud before users interact with malicious content |
-| 🌍 **Global Radar** | Worldwide collaborative fraud intelligence |
-| 🧠 **LLM Engine** | Transformer model specialised in fraud detection |
-| 📡 **Threat Intelligence** | Aggregates multiple cybersecurity feeds |
-| 💰 **Crypto Intelligence** | Blockchain and wallet reputation analysis |
-| 👤 **Identity Intelligence** | Digital trust and reputation scoring |
-| 📍 **Safe Location** | Secure family and trusted contact tracking |
-| 🏢 **Enterprise Security** | Security platform for organisations |
+Valthoris is an active development project.
 
----
-# 🎯 Mission
+This repository contains working frontend code, Internet Computer canisters,
+authentication, persistence mechanisms, threat-intelligence services,
+Safe Location functionality and an AI/fraud-analysis service architecture.
 
-Valthoris was created with a single objective:
+However, not every component is currently validated end-to-end in production.
 
-> **Prevent digital fraud before victims exist.**
+This README deliberately distinguishes between:
 
-Unlike traditional cybersecurity platforms that analyse incidents after they occur, Valthoris continuously evaluates digital interactions in real time, calculating risk before damage happens.
+- functionality implemented in source code;
+- functionality successfully built;
+- functionality deployed;
+- functionality verified in production;
+- functionality whose persistence has been validated;
+- functionality under development;
+- future roadmap capabilities.
 
-Every component of the platform follows three immutable principles:
-
-- 🧠 Intelligence
-- 🛡 Prevention
-- 🔒 Protection
+A feature appearing in the architecture or roadmap must not be interpreted
+as a claim that the feature is currently operational in production.
 
 ---
 
-# 💡 Why Valthoris Exists
+# 📊 CURRENT PROJECT STATUS
 
-Digital fraud is evolving faster than traditional security systems.
-
-Every day millions of people are exposed to:
-
-- Phishing campaigns
-- Social engineering
-- Fake investment platforms
-- Cryptocurrency scams
-- Identity theft
-- Business Email Compromise (BEC)
-- QR Code attacks
-- Voice cloning
-- Deepfake scams
-
-Current security solutions usually react **after** the attack.
-
-Valthoris changes this paradigm.
-
-Its mission is simple:
-
-> **Predict. Detect. Protect.**
+| Status | Meaning |
+|---|---|
+| 🟢 Operational | Implemented, deployed and verified in production |
+| 🟡 Implemented / Validation | Code exists and builds, but complete production validation is pending |
+| 🟠 In Development | Implementation exists but integration or operational work remains |
+| 🔵 Planned | Roadmap capability; not currently operational |
+| ⚪ Research | Future research direction |
 
 ---
 
-# 🧠 The Valthoris Philosophy
+# 🟢 CURRENTLY OPERATIONAL / VERIFIED
 
-Traditional cybersecurity asks:
+The following capabilities have been observed working in the deployed
+Valthoris application:
 
-> *"How do we respond after the attack?"*
+- Valthoris Web/PWA interface
+- Internet Computer frontend canister
+- Internet Identity authentication
+- User profile creation through the ICP backend
+- Safe Location interface
+- OpenStreetMap-based location interface
+- Threat Scanner interface
+- ICP actor integration
+- navigation between platform modules
 
-Valthoris asks:
-
-> **"How do we stop the attack before it succeeds?"**
-
-This philosophy guides every decision inside the platform.
-
-Artificial Intelligence is not the objective.
-
-Artificial Intelligence is only the tool.
-
-The real objective is protecting people.
-
----
-
-# 🛡 The Three Pillars
-
-<div align="center">
-
-| 🧠 Intelligence | 🛡 Prevention | 🔒 Protection |
-|:---------------:|:------------:|:-------------:|
-| Understand threats | Predict attacks | Protect users |
-
-</div>
+Operational status is continuously subject to validation as the platform evolves.
 
 ---
 
-## 🧠 Intelligence
+# 🟡 IMPLEMENTED / VALIDATION
 
-Artificial Intelligence analyses context.
+The repository contains implemented code for:
 
-Not just keywords.
+- ICP backend user profiles
+- ICP RBAC/user management
+- Community fraud reports
+- Community voting
+- Identity/reputation lookup
+- Threat Intelligence IOC storage and lookup
+- Safe Location sharing
+- Safe Location geofencing
+- persistent canister storage
+- React/TypeScript frontend
+- Internet Identity integration
+- Supabase client integration
+- Supabase profile persistence layer
+- AI provider abstraction
+- OpenAI provider
+- Anthropic provider
+- fraud analysis service
+- fraud pipeline
+- PGMQ fraud-event queue infrastructure
+- ICP fraud-ingest service
+- audit services
+- notification services
 
-Not just blacklists.
-
-But behaviour.
-
-Patterns.
-
-Intent.
-
-Relationships.
-
-Confidence.
-
----
-
-## 🛡 Prevention
-
-The safest fraud is the one that never reaches the victim.
-
-Every Valthoris engine is designed to warn the user **before** interacting with malicious content.
-
----
-
-## 🔒 Protection
-
-When prevention is no longer possible,
-
-the protection layer activates automatically.
-
-Examples:
-
-- Smart Alerts
-- Risk Scoring
-- Reputation Analysis
-- Threat Intelligence
-- Blockchain Validation
-- Behaviour Analysis
+The existence of code does not by itself constitute production validation.
 
 ---
 
-# 🌍 Designed for Everyone
+# 🟠 CURRENT DEVELOPMENT AREAS
 
-Valthoris is built for:
+Current validation and integration work includes:
 
-👤 Citizens
-
-🏢 Companies
-
-🏦 Financial Institutions
-
-🎓 Universities
-
-🏥 Healthcare
-
-🏛 Governments
-
-👮 Security Agencies
-
-🌐 International Organizations
+- complete persistence testing;
+- production verification of all ICP canisters;
+- frontend-to-backend end-to-end testing;
+- Supabase authentication/RLS integration;
+- Supabase synchronisation;
+- AI pipeline production connectivity;
+- fraud-worker deployment;
+- PGMQ queue processing;
+- realtime fraud decision delivery;
+- notification delivery;
+- reconciliation between the GitHub source HEAD and deployed ICP versions;
+- final ICP custom-domain configuration.
 
 ---
 
-# ❤️ Human-Centric AI
-
-Artificial Intelligence should never replace human judgement.
-
-Instead,
-
-it should provide enough information for people to make safer decisions.
-
-Technology exists to protect people.
-
-Never to manipulate them.
-
----
-
-> **"Technology evolves every day. Principles remain forever."**
-
-— Valthoris
----
-
-# 🏛 The Origin of Valthoris
-
-Every great technology begins with a question.
-
-Google wanted to organise the world's information.
-
-OpenAI wanted to democratise Artificial Intelligence.
-
-Cloudflare wanted to make the Internet faster and safer.
-
-**Valthoris was created to answer a different question.**
-
-> **"How can we stop digital fraud before there is a victim?"**
-
----
-
-## A Name Created From Scratch
-
-**Valthoris** is not a dictionary word.
-
-It does not belong to any language.
-
-It was not generated by Artificial Intelligence.
-
-It was not purchased.
-
-It was not adapted.
-
-It was conceived and created by **Hermínio Coragem** to represent a completely new vision for digital protection.
-
-A name designed to become synonymous with trust, intelligence and cybersecurity.
-
----
-
-# VAL
-
-The first part of the name represents four fundamental principles.
-
-### ✔ Validation
-
-Trust begins with verification.
-
-Every interaction should be validated.
-
-Every identity should be verified.
-
-Every digital action should be analysed.
-
----
-
-### ✔ Value
-
-Technology should protect what truly matters.
-
-People.
-
-Businesses.
-
-Institutions.
-
-Data.
-
-Identity.
-
-Trust.
-
----
-
-### ✔ Vigilance
-
-Security is not passive.
-
-Threats evolve every second.
-
-Valthoris remains vigilant every second.
-
----
-
-### ✔ Virtue
-
-Artificial Intelligence should never manipulate people.
-
-It should empower them.
-
-Ethics is not an optional feature.
-
-It is part of the architecture.
-
----
-
-# THORIS
-
-The second part of the name was created to transmit strength.
-
-Not physical strength.
-
-Digital strength.
-
-Resilience.
-
-Authority.
-
-Protection.
-
-Reliability.
-
-Stability.
-
-Its sound immediately evokes confidence without depending on mythology, fiction or existing brands.
-
----
-
-# More Than A Name
-
-When combined,
-
-**VAL**
-
-+
-
-**THORIS**
-
-becomes more than a brand.
-
-It becomes a philosophy.
-
-A commitment.
-
-A mission.
-
-A platform designed to protect millions of people across the world.
-
----
-
-<div align="center">
-
-## 🧠 Intelligence
-
-Understanding before reacting.
-
----
-
-## 🛡 Prevention
-
-Stopping fraud before damage exists.
-
----
-
-## 🔒 Protection
-
-Technology at the service of people.
-
-</div>
-
----
-
-> **"Trust should never be assumed. Trust must always be validated."**
-
-### — Valthoris Philosophy
-
----
----
-
-# 🌍 Vision
-
-Valthoris was never designed to become just another cybersecurity application.
-
-It was conceived as an intelligent ecosystem capable of protecting people, businesses and institutions through Artificial Intelligence, Behaviour Analysis, Blockchain and Threat Intelligence.
-
-The long-term objective is ambitious.
-
-To become one of the world's leading AI platforms dedicated exclusively to fraud prevention.
-
-Not by replacing existing security solutions.
-
-But by complementing them with predictive intelligence.
-
----
-
-# 🎯 Mission
-
-Our mission is simple.
-
-Build an Artificial Intelligence capable of reducing digital fraud before financial, operational or reputational damage occurs.
-
-Every component of Valthoris follows the same objective:
-
-- Detect threats earlier.
-- Explain risks clearly.
-- Protect users ethically.
-- Learn continuously.
-- Improve every single day.
-
----
-
-# 🚀 Vision Statement
-
-We believe the future of cybersecurity will not depend only on stronger passwords or larger firewalls.
-
-It will depend on intelligent systems capable of understanding context.
-
-Understanding behaviour.
-
-Understanding intention.
-
-Understanding trust.
-
-That future is what Valthoris is being built for.
-
----
-
-# ❤️ Core Values
-
-## 🧠 Intelligence
-
-Knowledge always comes before action.
-
-Artificial Intelligence exists to assist human judgement, never replace it.
-
----
-
-## 🛡 Prevention
-
-The safest cyberattack is the one that never reaches the victim.
-
-Everything inside Valthoris is designed around prediction instead of reaction.
-
----
-
-## 🔒 Protection
-
-Technology only has value when it protects people.
-
-Every algorithm.
-
-Every model.
-
-Every decision.
-
-Must contribute to a safer digital world.
-
----
-
-## ⚖ Ethics
-
-Artificial Intelligence must always remain accountable.
-
-Transparent.
-
-Auditable.
-
-Explainable.
-
-Responsible.
-
-Users should understand why a risk exists.
-
-Not simply receive a warning.
-
----
-
-## 🌍 Privacy
-
-Privacy is not a feature.
-
-It is a fundamental right.
-
-Valthoris follows:
-
-- Privacy by Design
-- Privacy by Default
-- Security by Design
-- Zero Trust Architecture
-
-from the very beginning.
-
----
-
-## 🚀 Innovation
-
-Cybercrime evolves every day.
-
-So must we.
-
-Research.
-
-Learning.
-
-Improvement.
-
-Continuous innovation is part of the Valthoris DNA.
-
----
-
-## 🤝 Collaboration
-
-No organisation can fight digital fraud alone.
-
-Real protection requires collaboration between:
-
-- Citizens
-- Businesses
-- Universities
-- Researchers
-- CERTs
-- CSIRTs
-- Financial Institutions
-- Governments
-
-Valthoris is designed to become the bridge between all of them.
-
----
-
-> **"Technology should never replace trust.
-Technology should strengthen it."**
-
-— Valthoris Principles
-
----
----
-
-# 🛡 Platform Philosophy
-
-## Security Should Never Be Reactive.
-
-It Should Be Predictive.
-
-For decades, cybersecurity has largely followed the same pattern.
-
-A cyberattack happens.
-
-The victim discovers the damage.
-
-Only then does the investigation begin.
-
-Logs are analysed.
-
-Evidence is collected.
-
-Recovery starts.
-
-By that point, the damage has already been done.
-
-Valthoris challenges that paradigm.
-
-Its philosophy is fundamentally different.
-
-The objective is not simply to detect fraud.
-
-The objective is to prevent fraud before a victim exists.
-
-That single principle influences every architectural decision made within the platform.
-
----
-
-# The Five Foundations of Valthoris
-
-Every component of the ecosystem has been designed around five fundamental pillars.
-
----
-
-# 🧠 Intelligence
-
-Artificial Intelligence is the foundation of Valthoris.
-
-Not as a marketing feature.
-
-Not as a chatbot.
-
-But as a distributed network of specialised engines capable of analysing context, behaviour, reputation and threat intelligence simultaneously.
-
-Every decision is based on evidence.
-
-Every model has a purpose.
-
-Every prediction contributes to reducing uncertainty.
-
----
-
-# 🛡 Prevention
-
-Traditional cybersecurity reacts.
-
-Valthoris anticipates.
-
-Whenever possible, users should receive a warning before interacting with potentially dangerous content.
-
-Examples include:
-
-- Suspicious phone calls
-- Fraudulent SMS
-- Phishing emails
-- Fake websites
-- QR codes
-- Cryptocurrency scams
-- Fake investment platforms
-- Social engineering attempts
-
-The safest incident is the one that never happens.
-
----
-
-# 🔒 Protection
-
-When prevention is no longer sufficient, protection takes over.
-
-Multiple security layers work together to minimise exposure.
-
-Examples include:
-
-- Intelligent warnings
-- Reputation scoring
-- Behaviour analysis
-- Risk validation
-- Multi-source verification
-- Dynamic threat correlation
-
-Security is never provided by a single mechanism.
-
-Protection comes from combining many independent layers.
-
----
-
-# 🌍 Trust
-
-Trust should never be assumed.
-
-Every entity receives a continuously updated Trust Score.
-
-Examples include:
-
-- Phone numbers
-- Email addresses
-- Domains
-- Websites
-- Companies
-- Wallet addresses
-- IBANs
-- IP addresses
-- Applications
-
-Trust is calculated.
-
-Never presumed.
-
----
-
-# 🚀 Evolution
-
-Cybercrime evolves every day.
-
-Therefore Valthoris must evolve every day.
-
-Every confirmed report.
-
-Every detected campaign.
-
-Every analysed behaviour.
-
-Every validated threat.
-
-Strengthens the intelligence of the platform.
-
-Learning never stops.
-
----
-
-# Security by Design
-
-Security is not added after development.
-
-It exists before development begins.
-
-Authentication.
-
-Encryption.
-
-Authorisation.
-
-Logging.
-
-Validation.
-
-Auditing.
-
-Monitoring.
-
-All security mechanisms are considered during architectural design rather than being integrated afterwards.
-
----
-
-# Privacy by Design
-
-Privacy follows exactly the same philosophy.
-
-The platform only processes the information that is strictly necessary.
-
-Where possible:
-
-- Minimal collection
-- Minimal retention
-- Minimal exposure
-- Maximum transparency
-- User control by default
-
-Privacy is treated as an engineering principle rather than a legal obligation.
-
----
-
-# Zero Trust Architecture
-
-Valthoris follows the Zero Trust model.
-
-**Never Trust. Always Verify.**
-
-No device.
-
-No user.
-
-No application.
-
-No API.
-
-No service.
-
-Is automatically trusted simply because it has already connected before.
-
-Every request is verified.
-
-Every interaction is validated.
-
-Every decision is contextual.
-
----
-
-# Defence in Depth
-
-Security exists across multiple independent layers.
-
-```text
-User
-
-↓
-
-Authentication
-
-↓
-
-Authorisation
-
-↓
-
-API Gateway
-
-↓
-
-Artificial Intelligence
-
-↓
-
-Threat Intelligence
-
-↓
-
-Risk Engine
-
-↓
-
-Blockchain Validation
-
-↓
-
-Immutable Audit Logs
-
-↓
-
-Monitoring
-```
-
-Even if one layer fails,
-
-the remaining layers continue protecting the platform.
-
----
-
-# Human-Centred Artificial Intelligence
-
-Artificial Intelligence should never replace human judgement.
-
-Its role is different.
-
-To provide better information.
-
-Earlier.
-
-More accurately.
-
-More transparently.
-
-Every recommendation generated by Valthoris should help people make better decisions rather than making decisions for them.
-
----
-
-> **"True innovation is not reacting faster.
-It is preventing the attack from happening."**
-
-### — Valthoris Platform Philosophy
-
----
----
-
-# 🏗 Global Architecture
-
-## One Platform.
-
-## One Ecosystem.
-
-## One Distributed Intelligence.
-
-Valthoris has never been designed as a standalone application.
-
-From its very first blueprint, it was envisioned as a distributed cybersecurity ecosystem capable of protecting individuals, organisations and public institutions on a global scale.
-
-Instead of concentrating every service inside a single server, the platform distributes intelligence across specialised components.
-
-Each module has a single responsibility.
-
-Each component can evolve independently.
-
-Each service contributes to a collective intelligence greater than the sum of its parts.
-
-This architecture provides:
-
-- Scalability
-- High Availability
-- Fault Tolerance
-- Security by Design
-- Modular Evolution
-- Global Expansion
-
----
-
-# High-Level Architecture
-
-```text
-                    🌍 USERS
-
-        Android • iPhone • Web • Desktop
-
-                        │
-                        ▼
-
-        ┌──────────────────────────────────┐
-        │       React + TypeScript         │
-        │         Capacitor / PWA          │
-        └──────────────────────────────────┘
-
-                        │
-
-                        ▼
-
-        ┌──────────────────────────────────┐
-        │      VALTHORIS API GATEWAY       │
-        └──────────────────────────────────┘
-
-          │             │             │
-
-          ▼             ▼             ▼
-
-   ┌────────────┐ ┌────────────┐ ┌────────────┐
-
-   │ Supabase   │ │ AI Engines │ │ ICP Chain │
-
-   └────────────┘ └────────────┘ └────────────┘
-
-          │             │             │
-
-          ▼             ▼             ▼
-
-   PostgreSQL      Threat AI      Canisters
-
-   Auth            Prediction     Immutable Logs
-
-   Storage         Reputation     Distributed Storage
-
-   Realtime        Behaviour      Smart Contracts
-```
-
----
-
-# Layer One
-
-## User Experience
-
-The first layer represents every interaction with the platform.
-
-The objective is to provide exactly the same experience regardless of the device being used.
-
-Supported platforms include:
-
-- Android
-- iOS
-- Windows
-- macOS
-- Linux
-- Progressive Web App
-
-Only presentation logic exists within the client.
-
-Sensitive processing never occurs inside the user interface.
-
----
-
-# Layer Two
-
-## API Gateway
-
-Every request passes through a central gateway.
-
-This gateway performs:
-
-- Authentication
-- Authorisation
-- Validation
-- Rate Limiting
-- Monitoring
-- Request Routing
-- Logging
-- Security Policies
-
-No internal service communicates directly without passing through this gateway.
-
-This simplifies security auditing and greatly reduces the attack surface.
-
----
-
-# Layer Three
-
-## Operational Data Layer
-
-Operational information is managed through Supabase.
-
-Responsibilities include:
-
-- User Accounts
-- Authentication
-- Sessions
-- Permissions
-- Reports
-- Notifications
-- Analytics
-- Configuration
-- Community Data
-- Dashboards
-
-The relational database stores operational information while maintaining strong consistency and high performance.
-
----
-
-# Layer Four
-
-## Artificial Intelligence Layer
-
-This layer represents the cognitive core of the platform.
-
-Instead of relying on a single monolithic model, Valthoris distributes intelligence across specialised engines.
-
-Each engine performs a different task.
-
-Examples include:
-
-- Fraud Detection
-- Behaviour Analysis
-- Threat Prediction
-- Reputation Analysis
-- Identity Intelligence
-- Crypto Intelligence
-- Conversation Intelligence
-
-The AI Gateway coordinates communication between every model.
-
----
-
-# Layer Five
-
-## Internet Computer Protocol
-
-The Internet Computer Protocol provides decentralisation where decentralisation genuinely creates value.
-
-Rather than replacing traditional databases, ICP complements them.
-
-Typical responsibilities include:
-
-- Immutable audit logs
-- Digital evidence
-- Hash validation
-- Certificates
-- Distributed storage
-- Cryptographic verification
-- Long-term integrity
-
-Sensitive evidence can therefore be verified independently from any single organisation.
-
----
-
-# Distributed Canisters
-
-The architecture anticipates multiple specialised canisters.
-
-Examples include:
-
-- Authentication
-- Users
-- Reports
-- Threat Intelligence
-- Safe Location
-- Community
-- Crypto Intelligence
-- Notifications
-- Audit
-- Enterprise
-- Statistics
-- AI Gateway
-
-Each canister remains independent.
-
-Each can be upgraded individually.
-
-Each scales independently.
-
----
-
-# Communication Model
-
-Every component communicates through clearly defined interfaces.
-
-```text
-Frontend
-
-↓
-
-API Gateway
-
-↓
-
-Authentication
-
-↓
-
-Service Layer
-
-↓
-
-Artificial Intelligence
-
-↓
-
-Database
-
-↓
-
-Blockchain Validation
-
-↓
-
-Response
-```
-
-The result is a predictable, secure and highly maintainable architecture.
-
----
-
-# High Availability
-
-The platform has been designed with resilience as a primary objective.
-
-Future deployments are expected to support:
-
-- Horizontal Scaling
-- Geographic Distribution
-- Automatic Failover
-- Redundant Services
-- Continuous Deployment
-- Rolling Updates
-- Disaster Recovery
-
-No single component should become a single point of failure.
-
----
-
-# Designed For The Future
-
-The architecture is intended to support:
-
-- Millions of users
-- Millions of fraud reports
-- Thousands of requests per second
-- Real-time Artificial Intelligence
-- International expansion
-- Government integration
+# 🔵 ROADMAP
+
+The following capabilities are part of the longer-term Valthoris roadmap
+and must not be interpreted as currently operational:
+
+- Advanced Audio Intelligence
+- Advanced Visual Intelligence
+- Independent Malware Intelligence platform
+- Enterprise SIEM integrations
+- Enterprise SOAR integrations
 - Banking integrations
-- Telecommunications operators
-- CERTs
-- Law Enforcement cooperation (where legally applicable)
+- Law-enforcement integrations
+- large-scale institutional threat-sharing integrations
+- advanced multi-chain intelligence
+- advanced MEV risk analysis
+- large-scale enterprise security operations
+- future mobile-native protection layers
+- additional automated fraud-prevention capabilities
 
-Every architectural decision has been taken with long-term evolution in mind.
+Roadmap items will only be promoted to an implemented status after
+corresponding source code, integration and validation evidence exists.
 
 ---
 
-> **"Great architecture is not the one that solves today's problems.
-It is the one that remains prepared for tomorrow's challenges."**
+# 🎯 MISSION
 
-### — Valthoris Architecture
----
----
-
-# 🧠 Artificial Intelligence Ecosystem
-
-## One Intelligence.
-
-## Multiple Brains.
-
-## One Mission.
-
-Artificial Intelligence is the beating heart of Valthoris.
-
-But unlike traditional AI platforms, Valthoris is not built around a single model.
-
-Instead, it relies on a distributed ecosystem of specialised AI engines.
-
-Each engine has one responsibility.
-
-Each engine becomes exceptionally good at solving a specific problem.
-
-Together they form a collaborative intelligence capable of understanding, analysing and predicting digital threats before they become real incidents.
-
----
-
-# Cognitive Architecture
-
-```text
-                    User Request
-
-                         │
-
-                         ▼
-
-                 AI Gateway Core
-
-                         │
-
- ┌──────────┬──────────┬──────────┬──────────┬──────────┐
-
- ▼          ▼          ▼          ▼          ▼
-
-Fraud    Behaviour  Reputation Identity Prediction
-
-Engine      AI          AI          AI          AI
-
- └──────────┴──────────┴──────────┴──────────┴──────────┘
-
-                         │
-
-                         ▼
-
-              Risk Decision Engine
-
-                         │
-
-                         ▼
-
-                Final Intelligent Result
-```
-
----
-
-# AI Gateway
-
-The AI Gateway is the coordinator of the entire cognitive ecosystem.
-
-Rather than performing analysis itself, it distributes tasks to specialised engines and combines their conclusions into a unified response.
-
-Responsibilities include:
-
-- Model orchestration
-- Context management
-- Confidence calculation
-- Decision aggregation
-- Explainability
-- Request optimisation
-- Security validation
-
-Every AI request passes through this gateway.
-
----
-
-# Fraud Detection Engine
-
-The first specialised intelligence engine.
-
-Designed specifically to detect fraud indicators.
-
-It analyses:
-
-- SMS
-- Emails
-- URLs
-- QR Codes
-- Websites
-- PDF Documents
-- Phone Calls
-- Messages
-- Wallet Addresses
-- IBANs
-- Domains
-
-Its objective is simple:
-
-Identify malicious intent before user interaction.
-
----
-
-# Behaviour Intelligence
-
-Fraud rarely depends on technology alone.
-
-It depends on human manipulation.
-
-The Behaviour Engine analyses communication patterns rather than isolated words.
-
-Examples include:
-
-- Artificial urgency
-- Emotional pressure
-- Fear induction
-- Fake authority
-- Financial coercion
-- Romance scams
-- Business Email Compromise
-- Social Engineering
-
-Instead of asking
-
-*"What was written?"*
-
-it asks
-
-*"Why was it written this way?"*
-
----
-
-# Reputation Intelligence
-
-Every digital entity accumulates a continuously evolving reputation.
-
-Entities include:
-
-- Telephone Numbers
-- Email Addresses
-- Domains
-- Companies
-- Cryptocurrency Wallets
-- Applications
-- Websites
-- IBANs
-- IP Addresses
-
-Reputation is never static.
-
-It evolves dynamically as new evidence becomes available.
-
----
-
-# Identity Intelligence
-
-Identity Intelligence evaluates trust without attempting to identify private individuals.
-
-It focuses on publicly available technical indicators such as:
-
-- Domain history
-- Digital consistency
-- Public registrations
-- Certificate validity
-- Infrastructure quality
-- Historical behaviour
-
-Its purpose is not surveillance.
-
-Its purpose is validation.
-
----
-
-# Prediction Engine
-
-Traditional security reacts.
-
-Valthoris predicts.
-
-Using historical patterns and behavioural models, the Prediction Engine estimates future risk.
-
-Examples include:
-
-- Emerging phishing campaigns
-- Newly weaponised domains
-- Coordinated scam operations
-- Fraud propagation
-- Cryptocurrency attacks
-- Social engineering trends
-
-Prediction transforms Artificial Intelligence into proactive defence.
-
----
-
-# Conversation Intelligence
-
-Communication carries context.
-
-Conversation Intelligence analyses interactions across multiple platforms.
-
-Examples include:
-
-- WhatsApp
-- Signal
-- Telegram
-- Messenger
-- SMS
-- Email
-- Internal Chats
-
-Whenever technically possible, analysis is performed locally to maximise privacy.
-
----
-
-# Audio Intelligence
-
-Fraud increasingly happens through voice.
-
-The Audio Engine detects:
-
-- Voice cloning
-- Deepfake speech
-- Telephone scams
-- Fake technical support
-- Emotional manipulation
-- Identity spoofing
-
-Its objective is assistance during communication rather than recording conversations.
-
----
-
-# Visual Intelligence
-
-Images frequently contain hidden threats.
-
-The Visual Engine analyses:
-
-- Screenshots
-- Invoices
-- Documents
-- Identity Cards
-- QR Codes
-- Fake Interfaces
-- Banking Screens
-- Cryptocurrency Transactions
-
-Computer Vision complements language understanding.
-
----
-
-# Malware Intelligence
-
-Files are analysed before execution.
-
-Supported content includes:
-
-- APK files
-- Executables
-- Scripts
-- PDFs
-- Office Documents
-- Archives
-- URLs
-- Hashes
-
-Known malware signatures are combined with behavioural analysis.
-
----
-
-# Crypto Intelligence
-
-Blockchain ecosystems introduce entirely new fraud vectors.
-
-The Crypto Engine evaluates:
-
-- Wallet Addresses
-- Smart Contracts
-- Tokens
-- NFTs
-- Transactions
-- Rug Pulls
-- Honeypots
-- Mixers
-- Wash Trading
-- Scam Campaigns
-
-Each wallet receives its own dynamic reputation score.
-
----
-
-# Learning Engine
-
-Artificial Intelligence must evolve continuously.
-
-The Learning Engine allows the platform to improve through:
-
-- Confirmed reports
-- Expert validation
-- Community contributions
-- Emerging attack patterns
-- Threat Intelligence feeds
-
-Learning never occurs blindly.
-
-Human validation remains essential.
-
----
-
-# Human-in-the-Loop
-
-Artificial Intelligence should assist human judgement.
-
-Never replace it.
-
-Whenever confidence becomes insufficient:
-
-Requests may be escalated to:
-
-- Fraud Analysts
-- Security Researchers
-- Moderators
-- Technical Specialists
-
-Human expertise remains the final authority.
-
----
-
-# Explainable Artificial Intelligence
-
-Every decision should be understandable.
-
-Instead of returning:
-
-> High Risk
-
-Valthoris explains:
-
-- Indicators detected
-- Reputation changes
-- Behavioural patterns
-- Threat sources
-- Confidence level
-- Historical evidence
-
-Transparency builds trust.
-
----
-
-# Cognitive Principles
-
-Every AI engine follows the same philosophy.
-
-Think before reacting.
-
-Validate before trusting.
-
-Explain before deciding.
-
-Learn before evolving.
-
-Protect before damage exists.
-
----
-
-> **"Artificial Intelligence becomes truly valuable when it helps people understand risk rather than simply calculating it."**
-
-### — Valthoris Cognitive Architecture
-
----
----
-
-# 🌐 Threat Intelligence
-
-## Global Intelligence.
-
-## Continuous Awareness.
-
-## Real-Time Protection.
-
-Artificial Intelligence alone is not enough.
-
-The most advanced AI model cannot identify a threat it has never seen before.
-
-That is why Valthoris combines Artificial Intelligence with continuously updated Threat Intelligence.
-
-Every analysis is enriched with information collected from trusted cybersecurity sources around the world.
-
-The objective is simple.
-
-Always know more than the attacker.
-
----
-
-# What Is Threat Intelligence?
-
-Threat Intelligence is the process of collecting, validating and correlating information about cyber threats.
-
-Instead of relying exclusively on historical data,
-
-Valthoris continuously incorporates fresh intelligence from multiple independent sources.
-
-This allows the platform to identify:
-
-- Active phishing campaigns
-- Emerging malware
-- Compromised domains
-- Fraudulent infrastructure
-- Cryptocurrency scams
-- Fake identities
-- Botnet activity
-- Command & Control servers
-- Malicious IP addresses
-
-before traditional blacklists are updated.
-
----
-
-# Multi-Source Intelligence
-
-No single provider possesses complete visibility.
-
-For that reason, Valthoris aggregates intelligence from multiple trusted sources.
-
-Examples include:
-
-- AbuseIPDB
-- VirusTotal
-- PhishTank
-- OpenPhish
-- URLHaus
-- Spamhaus
-- AlienVault OTX
-- CISA Advisories
-- ENISA
-- CERT Portugal
-- MITRE ATT&CK
-- CVE Database
-
-Additional proprietary intelligence generated by the platform itself further strengthens detection capabilities.
-
----
-
-# Threat Correlation
-
-Threat Intelligence is not simply stored.
-
-It is correlated.
-
-Every indicator is evaluated against hundreds of contextual signals.
-
-Examples include:
-
-- Domain reputation
-- SSL certificates
-- WHOIS history
-- DNS records
-- Hosting infrastructure
-- ASN ownership
-- Geographic distribution
-- Previous reports
-- AI behavioural analysis
-
-A single suspicious indicator rarely defines a threat.
-
-Correlation creates confidence.
-
----
-
-# Threat Categories
-
-The platform classifies threats across multiple categories.
-
-### 🎣 Phishing
-
-Credential harvesting.
-
-Fake login pages.
-
-Bank impersonation.
-
-Corporate impersonation.
-
----
-
-### 💰 Financial Fraud
-
-Investment scams.
-
-Fake brokers.
-
-Advance-fee fraud.
-
-Business Email Compromise.
-
----
-
-### 🦠 Malware
-
-Ransomware.
-
-Spyware.
-
-Remote Access Trojans.
-
-Information stealers.
-
-Malicious APKs.
-
----
-
-### 🌍 Infrastructure
-
-Compromised domains.
-
-Malicious IP addresses.
-
-Suspicious hosting providers.
-
-Botnet infrastructure.
-
----
-
-### 💳 Cryptocurrency
-
-Fake exchanges.
-
-Wallet scams.
-
-Smart contract exploits.
-
-Rug Pulls.
-
-Ponzi schemes.
-
----
-
-# Dynamic Threat Scoring
-
-Every threat receives its own continuously updated score.
-
-The score considers:
-
-- Freshness
-- Confidence
-- Source credibility
-- Historical behaviour
-- Community validation
-- AI analysis
-- Reputation changes
-
-Threat intelligence is therefore never static.
-
-It evolves continuously.
-
----
-
-# Community Intelligence
-
-Users also contribute.
-
-Every validated report strengthens the platform.
-
-Community reports include:
-
-- Scam phone numbers
-- Fake websites
-- Fraudulent emails
-- Cryptocurrency scams
-- Fake companies
-- Suspicious wallets
-
-Each report undergoes automatic validation before affecting the global reputation database.
-
-Quality is always prioritised over quantity.
-
----
-
-# Real-Time Updates
-
-Threat Intelligence never sleeps.
-
-Feeds are continuously synchronised.
-
-Indicators are updated automatically.
-
-Artificial Intelligence immediately benefits from every newly discovered threat.
-
-This creates a constantly evolving defence network.
-
----
-
-# Threat Decision Engine
-
-The Threat Intelligence Engine works alongside every AI model.
-
-```text
-Threat Intelligence
-
-          │
-
-          ▼
-
-Reputation Analysis
-
-          │
-
-          ▼
-
-Behaviour Analysis
-
-          │
-
-          ▼
-
-Artificial Intelligence
-
-          │
-
-          ▼
-
-Global Risk Score
-```
-
-No decision depends on a single source.
-
-Confidence comes from multiple independent layers working together.
-
----
-
-# Global Threat Map
-
-Future versions of Valthoris will include a live global threat map.
-
-It will visualise:
-
-- Active phishing campaigns
-- Scam hotspots
-- Malware outbreaks
-- Fraud trends
-- Community reports
-- Geographic distribution
-
-Providing situational awareness in real time.
-
----
-
-# Continuous Evolution
-
-Threat Intelligence changes every minute.
-
-Therefore Valthoris continuously:
-
-- Collects
-- Validates
-- Correlates
-- Learns
-- Predicts
-
-Every confirmed threat improves the intelligence available to every user.
-
----
-
-> **"Information becomes intelligence only when it helps prevent the next attack."**
-
-### — Valthoris Threat Intelligence
-
----
----
-
-# 🛡 AutoShield
-
-## Protection That Never Sleeps.
-
-Traditional cybersecurity solutions wait for users to make mistakes.
-
-Valthoris does not.
-
-AutoShield is the platform's real-time protection layer, designed to analyse digital interactions before they become incidents.
-
-Rather than functioning as a passive antivirus or simple blacklist, AutoShield continuously evaluates risk using Artificial Intelligence, Threat Intelligence and behavioural analysis.
-
-Its objective is straightforward.
-
-Protect users before they become victims.
-
----
-
-# How AutoShield Works
-
-Every interaction follows the same intelligent pipeline.
-
-```text
-Incoming Event
-
-        │
-
-        ▼
-
-Threat Intelligence
-
-        │
-
-        ▼
-
-Artificial Intelligence
-
-        │
-
-        ▼
-
-Behaviour Analysis
-
-        │
-
-        ▼
-
-Reputation Engine
-
-        │
-
-        ▼
-
-Risk Decision Engine
-
-        │
-
-        ▼
-
-Protection Recommendation
-```
-
-Every stage contributes to the final decision.
-
-No single indicator is ever considered sufficient.
-
----
-
-# Continuous Monitoring
-
-AutoShield continuously evaluates:
-
-- SMS messages
-- Phone calls
-- Emails
-- URLs
-- QR Codes
-- Files
-- Cryptocurrency wallets
-- Bank information
-- Applications
-- Browser activity
-- Downloads
-
-Monitoring happens in real time whenever technically possible.
-
----
-
-# Intelligent Warnings
-
-Instead of generating unnecessary alerts,
-
-AutoShield prioritises quality over quantity.
-
-Warnings include:
-
-🟢 Safe
-
-🟡 Suspicious
-
-🟠 High Risk
-
-🔴 Critical Threat
-
-Every warning is accompanied by an explanation.
-
-Users should always understand why something has been classified as dangerous.
-
----
-
-# Multi-Layer Protection
-
-AutoShield combines several independent protection mechanisms.
-
-### Behaviour Analysis
-
-Detects manipulation techniques.
-
----
-
-### Reputation Verification
-
-Checks historical trust.
-
----
-
-### Threat Intelligence
-
-Searches active campaigns.
-
----
-
-### Artificial Intelligence
-
-Evaluates linguistic and contextual indicators.
-
----
-
-### Blockchain Validation
-
-Verifies immutable evidence where applicable.
-
----
-
-# Adaptive Protection
-
-Cybercriminals constantly change their tactics.
-
-AutoShield adapts accordingly.
-
-Its detection models evolve continuously through:
-
-- New intelligence feeds
-- Community reports
-- Human validation
-- Machine learning improvements
-- Behavioural feedback
-
-Protection therefore becomes progressively stronger over time.
-
----
-
-# Privacy First
-
-AutoShield has been designed according to Privacy by Design principles.
-
-Whenever possible:
-
-- Analysis occurs locally.
-- Only essential information is processed.
-- Personal data is minimised.
-- Users remain in control.
-
-Protection never requires unnecessary surveillance.
-
----
-
-# Future Capabilities
-
-Future versions of AutoShield will include:
-
-- Automatic scam call interception
-- Live browser protection
-- Real-time phishing blocking
-- QR Code verification
-- Cryptocurrency transaction validation
-- Smart notification prioritisation
-- Offline AI analysis
-- Enterprise security policies
-
----
-
-> **"Protection should begin before the first click."**
-
-### — AutoShield Philosophy
-
----
-
-# 🌍 Global Fraud Radar
-
-## Collective Intelligence Against Global Fraud.
-
-Fraud evolves through collaboration.
-
-Protection should do the same.
-
-The Global Fraud Radar transforms isolated reports into collective intelligence.
-
-Every validated report contributes to protecting every other user.
-
----
-
-# Community-Driven Protection
-
-Every report submitted to Valthoris becomes part of a continuously evolving intelligence network.
-
-Examples include:
-
-- Scam phone numbers
-- Fraudulent domains
-- Fake companies
-- Phishing campaigns
-- Cryptocurrency scams
-- Social engineering attacks
-
-Reports are never accepted automatically.
-
-Every submission undergoes technical validation before becoming part of the intelligence database.
-
----
-
-# Dynamic Risk Mapping
-
-The Global Fraud Radar continuously maps threats across regions.
-
-Future visualisations will display:
-
-- Active phishing campaigns
-- Fraud concentration
-- Emerging scam trends
-- Cryptocurrency attacks
-- Malicious infrastructure
-- Community alerts
-
-Users gain situational awareness before becoming targets.
-
----
-
-# Reputation Through Evidence
-
-Every validated report influences reputation scores.
-
-Confidence increases through:
-
-- Multiple independent reports
-- Threat Intelligence
-- Artificial Intelligence
-- Historical consistency
-- Human validation
-
-False reports are automatically filtered whenever possible.
-
----
-
-# Collaborative Security
-
-Security improves when knowledge is shared.
-
-The Global Fraud Radar enables collaboration between:
-
-- Citizens
-- Businesses
-- Security researchers
-- CERTs
-- Universities
-- Public institutions
-
-Each participant strengthens the ecosystem.
-
----
-
-# Designed For Scale
-
-The architecture has been designed to support:
-
-- Millions of reports
-- Global contributors
-- Real-time synchronisation
-- Distributed validation
-- International expansion
-
-Community intelligence becomes stronger as adoption increases.
-
----
-
-> **"One validated report can protect millions."**
-
-### — Global Fraud Radar
-
----
----
-
-# 🔎 Universal Intelligence Scanner
-
-## One Scan.
-
-## Complete Visibility.
-
-The Universal Scanner is designed to analyse virtually every digital element a user may encounter.
-
-Rather than requiring multiple specialised tools, Valthoris provides a single intelligent scanner capable of evaluating different types of content using the same security ecosystem.
-
-Every scan combines Artificial Intelligence, Threat Intelligence, Reputation Analysis and Behavioural Intelligence.
-
----
-
-# Supported Objects
-
-The scanner is designed to analyse:
-
-- URLs
-- Websites
-- Domains
-- QR Codes
-- Email Addresses
-- Phone Numbers
-- SMS
-- Images
-- PDF Documents
-- Office Files
-- APK Applications
-- Cryptocurrency Wallets
-- Smart Contracts
-- IBANs
-- Bank Accounts
-- IP Addresses
-
-Future versions will continuously expand supported formats.
-
----
-
-# Unified Analysis Pipeline
-
-Every object follows the same verification process.
-
-```text
-Input
-
-      │
-
-      ▼
-
-Format Detection
-
-      │
-
-      ▼
-
-Threat Intelligence
-
-      │
-
-      ▼
-
-Artificial Intelligence
-
-      │
-
-      ▼
-
-Behaviour Analysis
-
-      │
-
-      ▼
-
-Reputation Engine
-
-      │
-
-      ▼
-
-Risk Score
-
-      │
-
-      ▼
-
-Recommendation
-```
-
-This unified architecture guarantees consistent decision making across every module.
-
----
-
-# Intelligent Reports
-
-Instead of displaying raw technical information,
-
-the scanner produces structured reports including:
-
-- Overall Risk Score
-- Threat Classification
-- Reputation
-- Technical Indicators
-- AI Explanation
-- Confidence Level
-- Recommended Action
-
-The objective is clarity.
-
-Users should immediately understand the level of risk.
-
----
-
-# QR Code Analysis
-
-QR Codes have become one of the fastest growing fraud vectors.
-
-The scanner validates:
-
-- Destination URL
-- Hidden redirects
-- Reputation
-- Domain age
-- SSL configuration
-- Previous reports
-- Active phishing campaigns
-
-Before the QR Code is opened.
-
----
-
-# Email Intelligence
-
-Emails are analysed using multiple layers.
-
-Detection includes:
-
-- Domain spoofing
-- Display-name impersonation
-- Urgency indicators
-- Malicious attachments
-- Embedded URLs
-- Language manipulation
-- AI-generated fraud patterns
-
----
-
-# Document Inspection
-
-Documents can hide malicious content.
-
-Supported formats include:
-
-- PDF
-- DOCX
-- XLSX
-- PPTX
-
-The scanner evaluates:
-
-- Embedded links
-- Macros
-- Scripts
-- Metadata
-- Suspicious behaviour
-- Hidden payloads
-
----
+Valthoris is being built around a simple objective:
 
-# Cryptocurrency Verification
+> **Reduce digital fraud before it becomes a victim's problem.**
 
-The scanner validates:
+The platform is designed to combine:
 
-- Wallet reputation
-- Token legitimacy
-- Smart contract risks
-- Rug Pull indicators
-- Honeypot behaviour
-- Known scam databases
+- cybersecurity;
+- fraud intelligence;
+- digital identity and reputation;
+- threat intelligence;
+- artificial intelligence;
+- decentralized infrastructure;
+- user reporting;
+- location safety;
+- explainable risk information.
 
-Helping users make safer blockchain transactions.
+The goal is not to replace human judgement.
 
----
-
-# Explainable Results
-
-Every result answers three questions.
-
-**What was analysed?**
-
-**What was detected?**
-
-**Why was this classified as risky?**
-
-Transparency is always prioritised over black-box decisions.
-
----
-
-# Future Vision
-
-The Universal Scanner is expected to become the primary entry point into the Valthoris ecosystem.
-
-One scan.
-
-One report.
-
-One intelligent decision.
-
----
-
-> **"Knowledge is the first layer of protection."**
-
-### — Universal Scanner
-
----
-
-# 💰 Crypto Intelligence
-
-## Securing The Decentralised Economy.
-
-Blockchain technology has transformed finance.
-
-Unfortunately,
-
-it has also transformed fraud.
-
-Every day thousands of malicious wallets, fake tokens, phishing websites and fraudulent smart contracts appear across multiple blockchains.
-
-Crypto Intelligence was created to reduce that risk.
-
----
-
-# Supported Networks
-
-Future support includes:
-
-- Internet Computer
-- Bitcoin
-- Ethereum
-- Solana
-- Polygon
-- BNB Chain
-- Avalanche
-- Arbitrum
-- Optimism
-- Base
-
-The architecture remains blockchain agnostic.
-
----
-
-# Wallet Analysis
-
-Every wallet receives a continuously updated reputation profile.
-
-Evaluation considers:
-
-- Transaction history
-- Previous reports
-- Mixer interaction
-- Scam databases
-- AI behavioural analysis
-- Network relationships
-- Contract interaction
-
-The result becomes a dynamic Trust Score.
-
----
-
-# Smart Contract Analysis
-
-Contracts are inspected before interaction.
-
-The engine searches for:
-
-- Honeypots
-- Hidden permissions
-- Unlimited approvals
-- Rug Pull indicators
-- Ownership risks
-- Suspicious functions
-- External dependencies
-
-Helping users avoid malicious decentralised applications.
-
----
-
-# Token Intelligence
-
-Every token is evaluated using multiple indicators.
-
-Examples include:
-
-- Liquidity
-- Holder concentration
-- Mint permissions
-- Trading restrictions
-- Ownership decentralisation
-- Historical behaviour
-- Community reputation
-
-The objective is identifying abnormal risk before investment decisions are made.
-
----
-
-# Blockchain Threat Intelligence
-
-Crypto Intelligence combines:
-
-- On-chain analysis
-- Artificial Intelligence
-- Public threat databases
-- Community reports
-- Behavioural models
-
-Producing significantly stronger results than isolated blockchain explorers.
-
----
-
-# Risk Categories
-
-Crypto assets may receive classifications such as:
-
-🟢 Trusted
-
-🟡 Low Risk
-
-🟠 Suspicious
-
-🔴 High Risk
-
-⚫ Confirmed Scam
-
-Each classification includes technical justification.
-
----
-
-# Future Development
-
-Future versions will include:
-
-- Live transaction simulation
-- MEV risk detection
-- DeFi protocol analysis
-- NFT verification
-- Wallet monitoring
-- Portfolio Risk Dashboard
-- AI investment scam detection
-
----
-
-> **"Blockchain removes intermediaries.
-It should never remove security."**
-
-### — Crypto Intelligence
-
----
----
-
-# 🏢 Enterprise Intelligence
-
-## Cybersecurity Beyond The Individual.
-
-Modern cyber threats rarely target only individuals.
-
-Organised cybercriminals increasingly focus on businesses, hospitals, municipalities, financial institutions and critical infrastructure.
-
-Enterprise Intelligence extends the Valthoris ecosystem beyond personal protection, providing organisations with an intelligent platform capable of monitoring, analysing and mitigating digital risk across their entire infrastructure.
-
----
-
-# Designed For Organisations
-
-Enterprise Intelligence has been designed for:
-
-- Small Businesses
-- Medium Enterprises
-- Large Corporations
-- Financial Institutions
-- Government Agencies
-- Healthcare Organisations
-- Universities
-- Telecommunications Providers
-- Critical Infrastructure Operators
-
-Every deployment remains modular and scalable.
-
----
-
-# Central Security Dashboard
-
-Administrators gain access to a unified operational dashboard providing complete visibility over organisational security.
-
-Features include:
-
-- Active Threats
-- Incident Timeline
-- User Alerts
-- Reputation Monitoring
-- AI Decisions
-- Threat Intelligence
-- Device Status
-- API Health
-- Infrastructure Monitoring
-
-The dashboard becomes the central command centre of the organisation.
-
----
-
-# Role-Based Access Control
-
-Enterprise environments require precise permission management.
-
-Supported roles include:
-
-- Administrator
-- Security Analyst
-- SOC Operator
-- Auditor
-- Investigator
-- Compliance Officer
-- Read-Only Observer
-
-Every action is controlled through granular permissions.
-
----
-
-# Security Policies
-
-Organisations may define their own protection policies.
-
-Examples include:
-
-- Block High Risk URLs
-- Warn Before Crypto Transfers
-- Require Multi-Factor Confirmation
-- Restrict External Attachments
-- Validate QR Codes
-- Prevent Suspicious Downloads
-
-Policies are centrally managed and automatically enforced.
-
----
-
-# Incident Management
-
-Every detected event generates a structured incident.
-
-Each incident includes:
-
-- Timestamp
-- Severity
-- AI Explanation
-- Technical Evidence
-- Threat Intelligence
-- Recommended Actions
-- Investigation History
-
-Incidents remain fully traceable.
-
----
-
-# Security Analytics
-
-Enterprise Intelligence continuously generates operational metrics.
-
-Examples include:
-
-- Threat Volume
-- Detection Accuracy
-- Attack Categories
-- User Exposure
-- Response Times
-- False Positive Rates
-- Security Trends
-
-Historical analytics support strategic decision making.
+The goal is to provide better information before a risky decision is made.
 
 ---
-
-# Compliance Support
-
-The platform has been designed to assist organisations in meeting regulatory obligations.
-
-Future compliance support includes:
-
-- GDPR
-- NIS2
-- DORA
-- ISO 27001
-- ISO 22301
-- AI Act
-- eIDAS
-
-Compliance reporting becomes significantly simpler through automated evidence collection.
-
----
-
-# Audit Logs
-
-Every administrative operation is recorded.
-
-Examples include:
-
-- Login
-- Configuration Changes
-- User Management
-- Security Policy Updates
-- Investigation Actions
-- AI Decisions
-- Report Validation
-
-Logs may later be anchored on the Internet Computer Protocol for immutable verification.
-
----
-
-# Enterprise API
-
-Large organisations frequently require integration with existing infrastructure.
-
-Future APIs will support integration with:
-
-- SIEM Platforms
-- SOAR Solutions
-- Identity Providers
-- Ticketing Systems
-- Banking Systems
-- Government Services
-- Internal Security Platforms
-
-The objective is interoperability rather than replacement.
-
----
-
-# Future Vision
-
-Enterprise Intelligence is expected to evolve into a complete cybersecurity platform capable of protecting organisations through intelligent automation, explainable Artificial Intelligence and decentralised trust.
-
----
-
-> **"Cybersecurity is no longer only about protecting systems.
-It is about protecting trust."**
-
-### — Enterprise Intelligence
-
----
-
-# 📊 Security Dashboard
-
-## One View.
-
-## Complete Awareness.
-
-The Security Dashboard transforms complex cybersecurity information into clear operational intelligence.
-
-Rather than displaying isolated alerts, the dashboard correlates every source of information into a single operational view.
-
----
-
-# Live Overview
-
-The dashboard provides real-time visibility into:
-
-- Active Threats
-- Recent Alerts
-- Community Reports
-- AI Activity
-- Threat Intelligence
-- Infrastructure Health
-- Blockchain Status
-- API Performance
-
-Everything updates continuously.
-
----
-
-# Risk Indicators
-
-Every monitored entity receives its own dynamic score.
-
-Examples include:
-
-- Users
-- Devices
-- Domains
-- Wallets
-- Companies
-- Networks
-- Applications
-
-Scores evolve automatically as new evidence appears.
-
----
-
-# Global Metrics
-
-Typical metrics include:
-
-- Protected Users
-- Analysed URLs
-- Blocked Threats
-- AI Predictions
-- Community Reports
-- Reputation Changes
-- Threat Intelligence Updates
-
-Metrics focus on operational value rather than vanity numbers.
-
----
-
-# Visual Analytics
-
-The dashboard supports multiple visualisations.
-
-Examples include:
-
-- Threat Timeline
-- Geographic Distribution
-- Category Breakdown
-- Risk Evolution
-- Community Activity
-- Infrastructure Status
-
-Every chart is designed to simplify decision making.
-
----
-
-# Executive Reporting
-
-Future versions will generate automated reports suitable for:
-
-- Executives
-- Compliance Officers
-- Security Teams
-- Auditors
-- Government Agencies
-
-Reports remain clear, objective and technically verifiable.
-
----
-
-# Designed For Humans
-
-Cybersecurity information should never overwhelm users.
-
-The dashboard prioritises:
-
-- Simplicity
-- Clarity
-- Transparency
-- Actionable Information
-
-Complexity remains behind the scenes.
-
----
-
-> **"Information becomes valuable only when it supports better decisions."**
-
-### — Valthoris Dashboard
-
----
----
-
-# 🔐 Security, Privacy & Compliance
-
-## Trust Must Be Built.
-
-## Not Assumed.
-
-Cybersecurity is not a feature.
-
-It is the foundation upon which Valthoris is built.
-
-Every architectural decision, every AI model and every future module follows internationally recognised security principles designed to protect users by default.
-
----
-
-# Security by Design
-
-Security exists before functionality.
-
-Every component is designed with protection as its first requirement.
-
-Examples include:
-
-- Authentication
-- Authorization
-- Encryption
-- Validation
-- Audit Logging
-- Threat Monitoring
-- API Protection
-- Secure Development Lifecycle
-
-Security is never added afterwards.
-
-It is part of the architecture itself.
-
----
-
-# Privacy by Design
-
-Privacy is treated as a fundamental right.
-
-Valthoris follows European privacy principles from the very beginning.
-
-Whenever technically possible:
-
-- Minimum data collection
-- Minimum retention
-- Local processing
-- User control
-- Transparent consent
-- Secure storage
-- End-to-end encryption
-
-Personal information always belongs to the user.
-
-Never to the platform.
-
----
-
-# Zero Trust Architecture
-
-Valthoris adopts a Zero Trust security model.
-
-Its philosophy is simple.
-
-> Never Trust.
-
-> Always Verify.
-
-Every request is validated.
-
-Every session is verified.
-
-Every API call is authenticated.
-
-Every permission is checked.
-
-Nothing is automatically trusted.
-
----
-
-# Defence In Depth
-
-Security is distributed across multiple independent layers.
-
-```text
-User
-
-↓
-
-Authentication
-
-↓
-
-Authorization
-
-↓
-
-API Gateway
-
-↓
-
-Rate Limiting
 
-↓
+# 🛡️ SECURITY PRINCIPLES
 
-Artificial Intelligence
+Valthoris follows these architectural principles:
 
-↓
+### Security by Design
 
-Threat Intelligence
+Security considerations should be incorporated into the system architecture
+rather than added after implementation.
 
-↓
+### Privacy by Design
 
+Personal and sensitive information should be handled according to
+privacy requirements from the beginning of the design process.
+
+### Zero Trust
+
+Identity and access should not be trusted implicitly.
+
+### Least Privilege
+
+Components and users should receive only the permissions required for
+their intended operations.
+
+### Auditability
+
+Important security decisions and system operations should be traceable
+where appropriate.
+
+### Human-Centric Protection
+
+Security decisions should provide understandable information that helps
+users make safer decisions.
+
+---
+
+# 🧠 WHAT VALTHORIS IS
+
+Valthoris is not currently presented as a finished global cybersecurity
+platform.
+
+It is a substantial technical platform under active development.
+
+The current implementation combines two major layers:
+
+1. a decentralized application layer running on the Internet Computer;
+2. a separate service layer containing AI, fraud-processing and operational
+   infrastructure.
+
+This distinction is important because the current architecture is not simply:
+
+USER → AI → ICP → Supabase
+
+Instead, different components have different responsibilities.
+
+🏗️ Architecture
+Valthoris is currently implemented as a modular security platform built around the Internet Computer Protocol (ICP), with a React/TypeScript web application, Progressive Web App (PWA) capabilities, Internet Identity authentication and multiple independent Motoko canisters.
+This section documents the architecture that currently exists in the repository and has been observed in the deployed system.
+It does not describe the complete future architecture.
+Features that are not currently verified end-to-end are explicitly classified as:
+🟢 Operational
+🟡 Implemented / Validation
+🟠 In Development
+🔵 Planned
+⚪ Research
+This distinction is a fundamental part of Valthoris documentation.
+Current Architecture
+                         ┌──────────────────────────┐
+                         │          USERS           │
+                         │                          │
+                         │    Web / PWA / Mobile    │
+                         └────────────┬─────────────┘
+                                      │
+                                      ▼
+                         ┌──────────────────────────┐
+                         │    VALTHORIS FRONTEND    │
+                         │                          │
+                         │ React + TypeScript       │
+                         │ Vite + PWA               │
+                         └────────────┬─────────────┘
+                                      │
+                  ┌───────────────────┼───────────────────┐
+                  │                   │                   │
+                  ▼                   ▼                   ▼
+        ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+        │ Internet        │  │ ICP Actors      │  │ Supabase        │
+        │ Identity        │  │                 │  │ Integration     │
+        └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+                 │                    │                    │
+                 │          ┌─────────┼──────────┐         │
+                 │          │         │          │         │
+                 │          ▼         ▼          ▼         │
+                 │      Backend   Community   Identity     │
+                 │          │         │          │         │
+                 │          │         │          ▼         │
+                 │          │         │   Threat Intel.   │
+                 │          │         │          │         │
+                 │          │         └──────────┤         │
+                 │          │                    ▼         │
+                 │          │              Safe Location  │
+                 │          │                              │
+                 └──────────┴──────────────┬───────────────┘
+                                           │
+                                           ▼
+                                Operational Services
+Important architectural distinction
+The architecture above represents the current software structure.
+It does not imply that every component is already connected through one complete, verified end-to-end production pipeline.
+For example, the existence of:
+Frontend
+    ↓
+Service
+    ↓
+Canister
+    ↓
 Database
-
-↓
-
-ICP Blockchain
-
-↓
-
-Immutable Audit Logs
-```
-
-If one layer fails,
-
-the remaining layers continue protecting the platform.
-
----
-
-# Encryption
-
-Sensitive information is protected through modern cryptographic standards.
-
-Future implementations include:
-
-- AES-256
-- TLS 1.3
-- SHA-256
-- Ed25519
-- Secure Key Management
-- Digital Signatures
-
-Cryptography becomes the basis of trust.
-
----
-
-# Secure Authentication
-
-Future authentication mechanisms include:
-
-- Multi-Factor Authentication
-- Passwordless Authentication
-- WebAuthn
-- Hardware Security Keys
-- Biometric Authentication
-- Session Validation
-
-Identity verification continuously evolves with technology.
-
----
-
-# Immutable Audit
-
-Every critical action generates an audit event.
-
-Examples include:
-
-- Login
-- Logout
-- Threat Detection
-- Report Submission
-- Administrative Changes
-- AI Decisions
-- Security Policy Updates
-
-Future versions will optionally anchor critical audit records on the Internet Computer Protocol for tamper resistance.
-
----
-
-# Regulatory Compliance
-
-Valthoris has been designed with future regulatory compliance in mind.
-
-Relevant frameworks include:
-
-- GDPR
-- AI Act
-- NIS2
-- DORA
-- eIDAS
-- ISO 27001
-- ISO 22301
-
-Compliance should become a natural consequence of good engineering.
-
----
-
-# Responsible Artificial Intelligence
-
-Artificial Intelligence should remain accountable.
-
-Valthoris therefore adopts the following principles:
-
-- Transparency
-- Explainability
-- Fairness
-- Human Oversight
-- Privacy Protection
-- Bias Reduction
-- Continuous Validation
-
-Technology should always remain under human responsibility.
-
----
-
-# Security Philosophy
-
-Security is not measured by the number of detected attacks.
-
-Security is measured by the number of attacks that never succeed.
-
----
-
-> **"The strongest security system is the one users never notice because it prevents problems before they exist."**
-
-### — Security Principles of Valthoris
-
----
-
-# 🛣️ Roadmap
-
-## Building The Future Step By Step.
-
-Valthoris is being developed as a long-term project.
-
-Rather than rushing features,
-
-the platform follows a structured roadmap where every stage strengthens the next.
-
----
-
-# Phase I
-
-## Foundation
-
-Completed
-
-- Brand Identity
-- Vision
-- Architecture
-- GitHub Repository
-- Documentation
-- AI Specification
-
----
-
-# Phase II
-
-## Artificial Intelligence
-
-In Progress
-
-- Dataset Preparation
-- Tokenizer
-- Transformer Architecture
-- Training Pipeline
-- Evaluation Framework
-- Inference Engine
-
----
-
-# Phase III
-
-## Infrastructure
-
-Planned
-
-- Internet Computer Canisters
-- Supabase Integration
-- Authentication
-- API Gateway
-- Storage Layer
-- Security Monitoring
-
----
-
-# Phase IV
-
-## Core Platform
-
-Planned
-
-- AutoShield
-- Global Fraud Radar
-- Universal Scanner
-- Threat Intelligence
-- Crypto Intelligence
-- Safe Location
-
----
-
-# Phase V
-
-## Enterprise Platform
-
-Planned
-
-- Security Dashboard
-- Multi-Tenant Architecture
-- Enterprise Policies
-- API Integrations
-- Compliance Center
-- Reporting
-
----
-
-# Phase VI
-
-## Mobile Ecosystem
-
-Planned
-
-- Android
-- iOS
-- Progressive Web App
-- Desktop
-- Offline Artificial Intelligence
-
----
-
-# Phase VII
-
-## International Expansion
-
-Future
-
-- European Union
-- North America
-- Latin America
-- Asia
-- Global Threat Intelligence Network
-
----
-
-# Continuous Development
-
-The roadmap is intentionally flexible.
-
-Technology evolves.
-
-Cybercrime evolves.
-
-Artificial Intelligence evolves.
-
-Valthoris will evolve with them.
-
----
-
-> **"Innovation is not a destination.
-It is a continuous process."**
-
-### — Valthoris Development Roadmap
-
----
-
----
-
-# 📂 Repository Structure
-
-The Valthoris repository has been designed to remain modular, scalable and easy to maintain as the platform evolves.
-
-Every component has a clearly defined responsibility.
-
-```
-Valthoris/
-
+in source code does not by itself prove that a production user can successfully:
+Create
+  ↓
+Write
+  ↓
+Read
+  ↓
+Reload
+  ↓
+Read again
+and recover the same information.
+That distinction is intentionally maintained throughout this README.
+🧩 Current System Components
+The current ICP deployment configuration defines the following canisters:
+Component
+Technology
+Current Role
+Status
+Frontend
+React / TypeScript / Vite
+Web/PWA application
+🟢
+Backend
+Motoko
+Core backend services
+🟡
+Community
+Motoko
+Community functionality
+🟡
+Identity
+Motoko
+Identity/reputation functionality
+🟡
+Threat Intelligence
+Motoko
+Threat intelligence functionality
+🟡
+Safe Location
+Motoko
+Location sharing and geofencing
+🟡
+These are actual components of the repository and ICP deployment configuration.
+They are not merely conceptual modules.
+However, the status column reflects the distinction between:
+source-code existence;
+successful compilation;
+deployment;
+frontend integration;
+production behaviour;
+persistence verification.
+🌐 Frontend
+The Valthoris frontend is a real React/TypeScript application built with Vite and deployed as an ICP asset canister.
+The frontend source is located under:
+src/frontend/
+The application contains the production build structure generated by Vite:
+src/frontend/
+├── public/
+├── src/
+├── dist/
+├── index.html
+├── 404.html
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+└── vite.config.ts
+The frontend currently provides application interfaces covering areas such as:
+Authentication
+Profile
+Assistant
+Scanner
+Global Radar
+Safe Location
+Community-related functionality
+Threat Intelligence
+Security navigation
+Legal/informational pages
+The application is therefore not a static mock-up.
+However, a visible interface does not automatically prove that its underlying operation is fully persistent in production.
+For that reason, frontend functionality is evaluated independently from persistence.
+Frontend status
+🟢 Operational — application/deployment layer
+This means:
+the frontend exists;
+the application builds successfully;
+the frontend is deployed on ICP;
+the production frontend is reachable.
+It does not mean that every individual feature exposed by the interface has already passed complete end-to-end persistence validation.
+🔐 Authentication
+Valthoris currently uses Internet Identity as its authentication mechanism.
+The frontend contains authentication-related services and context responsible for resolving the authenticated Internet Computer principal.
+The conceptual authentication flow is:
+User
+  │
+  ▼
+Internet Identity
+  │
+  ▼
+Authenticated Principal
+  │
+  ▼
+Valthoris Frontend
+  │
+  ├── ICP Canisters
+  │
+  └── Supabase Integration
+The authenticated principal is important because it provides the identity context used when communicating with backend services.
+Authentication status
+Layer
+Status
+Internet Identity integration
+🟢 Implemented
+Authentication context
+🟢 Implemented
+Principal resolution
+🟢 Implemented
+Backend authorization
+🟡 Validation
+Complete persistence validation
+🟡 Validation
+Important distinction
+Successful authentication proves that the authentication mechanism works.
+It does not automatically prove that:
+profiles are persisted correctly;
+profile changes survive reload;
+profile information is synchronised correctly;
+every canister applies the intended access control;
+Supabase synchronization is functioning in production.
+Those behaviours require separate tests.
+👤 Identity
+The Valthoris Identity component is implemented as a dedicated Motoko canister.
+The implementation contains functionality related to identifier and reputation analysis, including mechanisms for handling identifiers such as:
+phone numbers;
+email addresses;
+domains;
+IBANs;
+wallet addresses;
+reputation information;
+trust information;
+risk information;
+report counts;
+known-scammer status;
+verified-business status;
+suspicious identifier registration;
+batch lookup operations.
+The Identity canister also contains persistent state mechanisms intended to preserve information across canister upgrades.
+The existence of these mechanisms establishes that Identity is a genuine implemented backend component.
+Identity status
+Layer
+Status
+Source code
+🟢
+Motoko implementation
+🟢
+Canister definition
+🟢
+Mainnet deployment
+🟢
+Frontend integration
+🟡
+End-to-end write test
+🟡
+End-to-end read test
+🟡
+Persistence after reload
+🟡
+Production validation
+🟡
+Official documentation statement
+Identity is implemented and deployed as an ICP/Motoko component. Complete production validation of every frontend workflow and persistence path remains pending.
+This wording is deliberately conservative.
+📍 Safe Location
+Safe Location is one of the more substantial backend modules currently present in Valthoris.
+The Safe Location canister contains persistent state associated with:
+location shares;
+current locations;
+geofence zones;
+share counters;
+geofence counters.
+The implementation includes functionality for:
+location sharing;
+share expiration;
+share revocation;
+recipient restrictions;
+location updates;
+location retrieval;
+user-owned share listing;
+geofence creation;
+geofence listing;
+geofence deletion;
+coordinate validation;
+distance calculations;
+geofence checks.
+The system is designed around persistent actor state.
+Safe Location architecture
+User
+ │
+ ▼
+Valthoris Frontend
+ │
+ ▼
+Safe Location Actor
+ │
+ ├── Location Shares
+ │
+ ├── Current Locations
+ │
+ ├── Geofences
+ │
+ └── Access / Validation Logic
+Safe Location status
+Layer
+Status
+Motoko source code
+🟢
+Persistent state design
+🟢
+ICP canister
+🟢
+Frontend integration
+🟢
+Map interface
+🟢
+Location-sharing workflow
+🟡
+Persistence after reload
+🟡
+Multi-user validation
+🟡
+Full production verification
+🟡
+Official statement
+Safe Location is implemented and deployed, with complete end-to-end persistence, access-control and multi-user behaviour still requiring systematic production validation.
+🛡️ Threat Intelligence
+Valthoris contains a dedicated Threat Intelligence Motoko canister.
+The component is independently defined in the ICP deployment configuration.
+This confirms the existence of a dedicated decentralized backend component for threat-intelligence functionality.
+However, Valthoris does not currently use the existence of this canister as evidence that a globally comprehensive threat-intelligence network is already operational.
+Threat Intelligence status
+🟡 Implemented / Validation
+The distinction is important:
+Threat Intelligence canister exists
+        ↓
+Source code exists
+        ↓
+Canister deployed
+        ↓
+Frontend integration
+        ↓
+Production data flow
+        ↓
+End-to-end verification
+The first stages are established.
+The later stages require systematic verification before the module can be described as fully operational.
+👥 Community
+Community functionality exists as a dedicated Motoko canister.
+This creates a decentralized backend component specifically intended for community-related operations.
+The current architecture therefore includes:
+Valthoris Frontend
+       │
+       ▼
+Community Actor
+       │
+       ├── Write
+       ├── Read
+       └── Community Data
+The critical audit question is not whether the Community canister exists.
+It does.
+The important question is whether a complete production workflow has been demonstrated:
+User Action
+    ↓
+Frontend
+    ↓
+Community Actor
+    ↓
+Write
+    ↓
+Read
+    ↓
+Application Reload
+    ↓
+Read Again
+    ↓
+Same Data
+Community status
+🟡 Implemented / Validation
+Until this complete cycle has been verified, the README will not describe Community as fully operational.
+💾 Persistence Model
+Valthoris currently contains more than one persistence mechanism.
+This is a critical architectural characteristic.
+The two principal persistence layers currently present in the project are:
+                    VALTHORIS
+                        │
+              ┌─────────┴─────────┐
+              │                   │
+              ▼                   ▼
+             ICP              Supabase
+        Decentralized       Operational /
+          Canisters           Integration
+These layers should not be described as if they were already one completely synchronized database architecture.
+They have different roles and their synchronization must be independently verified.
+⛓️ ICP Persistence
+Several Valthoris Motoko actors use persistent state mechanisms.
+For example, the Identity and Safe Location implementations contain persistent actor state intended to survive canister upgrades.
+This is significant because it means the project does not depend exclusively on browser-local storage for its decentralized backend state.
+The architectural model is:
+Frontend
+   │
+   ▼
+ICP Actor
+   │
+   ▼
+Persistent Canister State
+However, the existence of persistent state in the canister does not automatically prove that every frontend workflow writes to that state successfully.
+Therefore:
+ICP persistence capability is implemented; individual production persistence paths remain subject to end-to-end verification.
+🗄️ Supabase Integration
+Supabase is present in the Valthoris repository as an additional operational-data integration layer.
+The frontend uses environment variables corresponding to:
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+The frontend architecture therefore uses the public anonymous Supabase credential rather than exposing a service-role credential to the browser.
+The repository also contains Supabase-related service abstractions associated with areas including:
+PostgreSQL;
+PGMQ;
+Storage;
+Realtime;
+audit-related functionality;
+notifications.
+This establishes code-level Supabase integration.
+It does not, by itself, establish that the complete Supabase synchronization pipeline is currently operating correctly in production.
+🔄 Profile Synchronization
+The current application contains a profile synchronization mechanism.
+The authentication/profile architecture includes synchronization behaviour associated with the authenticated principal.
+The profile service supports operations including:
+reading local profile information;
+storing local profile information;
+synchronizing profile information;
+updating last_seen;
+retrieving cloud profile fields;
+merging profile information.
+The architecture therefore supports the intended concept:
+Internet Identity
+       │
+       ▼
+Authenticated Principal
+       │
+       ▼
+Local Profile
+       │
+       ▼
+Supabase Profile
+However, the implementation also contains fallback behaviour.
+This is extremely important when analysing why the application may appear to work while information does not necessarily appear in Supabase.
+A fallback architecture can behave approximately like:
+             Profile Operation
+                    │
+                    ▼
+             Local Application
+                    │
+             ┌──────┴──────┐
+             │             │
+          Supabase       Fallback
+             │             │
+             ▼             ▼
+        Cloud Data      Local Data
+Therefore, the existence of a synchronization service is not sufficient evidence that production synchronization is currently complete.
+Official status
+🟡 Implemented / Validation
+with the synchronization path requiring dedicated production testing.
+⚠️ Persistence Audit Principle
+Valthoris adopts a strict persistence verification rule.
+The project will not claim that data is persisted simply because:
+a database exists;
+a canister exists;
+a service contains a write function;
+a frontend contains a save button;
+Supabase credentials are configured;
+a local-storage fallback exists.
+The required proof is:
+CREATE
+  │
+  ▼
+WRITE
+  │
+  ▼
+READ
+  │
+  ▼
+RELOAD
+  │
+  ▼
+READ AGAIN
+  │
+  ▼
+DATA STILL EXISTS
+For sensitive or multi-user functionality, additional testing is required:
+User A
+  │
+  ▼
+CREATE / WRITE
+  │
+  ▼
+Backend
+  │
+  ▼
+User B
+  │
+  ▼
+AUTHORIZED READ
+and:
+Unauthorized User
+        │
+        ▼
+       READ
+        │
+        ▼
+    ACCESS DENIED
+Only after these behaviours have been verified should the relevant functionality receive the:
+🟢 Operational
+classification.
+🧪 Verification Matrix
+Valthoris uses the following verification model when assessing implementation status:
+Verification
+Meaning
+Source exists
+Code exists in repository
+Build succeeds
+Code compiles successfully
+Canister deployed
+ICP deployment exists
+Frontend connected
+UI communicates with backend
+Write succeeds
+Data can be created
+Read succeeds
+Data can be retrieved
+Reload succeeds
+Data survives application reload
+Upgrade survives
+Data survives canister upgrade
+Multi-user succeeds
+Access control and sharing work correctly
+Production verified
+Behaviour confirmed against live deployment
+A component is not automatically Operational because the first three conditions are true.
+The complete verification chain is:
+SOURCE
+  ↓
+BUILD
+  ↓
+DEPLOY
+  ↓
+CONNECT
+  ↓
+WRITE
+  ↓
+READ
+  ↓
+RELOAD
+  ↓
+UPGRADE
+  ↓
+MULTI-USER
+  ↓
+PRODUCTION VERIFIED
+📊 Official Valthoris Status Model
+Valthoris uses the following official classification throughout its technical documentation.
+Status
+Meaning
+🟢 Operational
+Implemented, deployed and verified in production
+🟡 Implemented / Validation
+Code and deployment exist, but complete validation remains pending
+🟠 In Development
+Partial implementation is present
+🔵 Planned
+Roadmap item not yet implemented as an operational capability
+⚪ Research
+Investigation or future technical research
+Documentation rule
+A feature must never be marked 🟢 merely because:
+it appears in the UI;
+it appears in documentation;
+it appears in an architecture diagram;
+a service exists in source code;
+a canister exists;
+an API abstraction exists;
+a future implementation has been specified.
+The 🟢 classification requires production evidence.
+🧭 Current Module Classification
+Based on the repository evidence and production observations currently available:
+Module
+Current Classification
+Valthoris Web/PWA
+🟢 Operational
+ICP Frontend
+🟢 Operational
+Internet Identity
+🟢 Implemented
+Backend ICP
+🟡 Implemented / Validation
+Identity
+🟡 Implemented / Validation
+Community
+🟡 Implemented / Validation
+Safe Location
+🟡 Implemented / Validation
+Threat Intelligence
+🟡 Implemented / Validation
+Profile persistence
+🟡 Validation
+Supabase integration
+🟡 Implemented / Validation
+Supabase synchronization
+🟠 In Development / Validation
+AI architecture
+🟡 Implemented / Validation
+AI end-to-end pipeline
+🟡 Validation
+AutoShield
+🟠 In Development
+Audio Intelligence
+🔵 Planned
+Visual Intelligence
+🔵 Planned
+Malware Intelligence
+🔵 Planned
+Enterprise SIEM/SOAR
+🔵 Planned
+Banking integrations
+🔵 Planned
+Large-scale institutional integrations
+🔵 Planned
+Advanced blockchain intelligence
+🔵 Planned / Research
+This classification is intentionally conservative.
+Where production behaviour cannot currently be demonstrated, Valthoris does not call the capability Operational.
+🤖 Artificial Intelligence
+Artificial Intelligence is a central part of the Valthoris product architecture.
+The repository contains an AI/service architecture intended to support security and fraud-analysis functionality.
+However, the README distinguishes between:
+AI architecture
+Implemented / present in the repository
+and:
+Complete production AI pipeline
+Requires end-to-end validation
+The intended conceptual flow is:
+User Input
+    │
+    ▼
+Valthoris Frontend
+    │
+    ▼
+Analysis / API Layer
+    │
+    ▼
+AI Provider / Model
+    │
+    ▼
+Fraud / Risk Analysis
+    │
+    ▼
+Risk Result
+    │
+    ▼
+Valthoris Interface
+The existence of each component in source code does not automatically prove that the entire chain is functioning successfully in production.
+Therefore:
+Valthoris will not describe the complete AI analysis pipeline as Operational until a complete production request → analysis → result workflow has been successfully demonstrated.
+🔬 AI Provider Architecture
+The repository contains an abstraction intended to support external AI providers without permanently coupling Valthoris to a single model provider.
+The architectural concept is:
+                 Valthoris AI Layer
+                         │
+                ┌────────┴────────┐
+                │                 │
+                ▼                 ▼
+             Provider A        Provider B
+                │                 │
+                └────────┬────────┘
+                         ▼
+                  Analysis Result
+The exact production behaviour depends on:
+environment configuration;
+credentials;
+API availability;
+request routing;
+response handling;
+error handling;
+persistence;
+frontend integration.
+Therefore the documentation distinguishes:
+AI Layer
+Status
+Provider abstraction
+Implemented / Validation
+Provider configuration
+🟡 Environment-dependent
+Production request
+🟡 Validation
+Production AI response
+🟡 Validation
+Complete end-to-end pipeline
+🟡 Validation
+🛡️ AutoShield
+AutoShield is a core part of the Valthoris product direct.
+🗺️ Repository Map, Modules, Deployment & Production Audit
+This section documents the actual Valthoris repository structure, deployed ICP canisters, build process, production endpoints, custom-domain preparation, persistence architecture and current verification state.
+The objective is simple:
+Every statement in this document must be traceable to code, configuration, deployment output or a reproducible production test.
+Where evidence is incomplete, the status remains explicitly marked as validation, development, planned or research.
+📁 Repository Structure
+The current Valthoris repository is:
+Valthoris-llm/
+│
+├── dfx.json
 ├── README.md
-├── LICENSE
-├── requirements.txt
 │
-├── docs/
-│   ├── architecture/
-│   ├── modules/
-│   ├── specifications/
-│   ├── roadmap/
-│   └── vision/
+├── src/
+│   └── frontend/
+│       │
+│       ├── public/
+│       │   ├── .well-known/
+│       │   │   └── ic-domains
+│       │   ├── legal/
+│       │   ├── manifest.webmanifest
+│       │   ├── sitemap.xml
+│       │   ├── valthoris-logo.png
+│       │   └── valthoris-shield.png
+│       │
+│       ├── src/
+│       │   ├── components/
+│       │   ├── contexts/
+│       │   ├── services/
+│       │   └── ...
+│       │
+│       ├── dist/
+│       │   ├── .well-known/
+│       │   │   └── ic-domains
+│       │   ├── assets/
+│       │   ├── legal/
+│       │   ├── 404.html
+│       │   ├── index.html
+│       │   ├── manifest.webmanifest
+│       │   ├── sitemap.xml
+│       │   ├── valthoris-logo.png
+│       │   └── valthoris-shield.png
+│       │
+│       ├── index.html
+│       ├── 404.html
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── tsconfig.json
+│       └── vite.config.ts
 │
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   ├── datasets/
-│   └── corpus/
-│
-├── tokenizer/
-│
-├── model/
-│   ├── architecture.py
-│   ├── training.py
-│   ├── evaluation.py
-│   └── inference.py
-│
-├── backend/
-│
-├── frontend/
-│
-├── mobile/
-│
-├── canisters/
-│
-├── api/
-│
-├── storage/
-│
-├── scripts/
-│
-└── assets/
-```
+└── ...
+The exact repository may contain additional files and directories not shown in this abbreviated map. The README deliberately avoids inventing a complete tree where it has not been independently verified.
+🧱 Main Technology Stack
+Layer
+Technology
+Status
+Frontend
+React + TypeScript
+🟢 Implemented
+Build system
+Vite
+🟢 Implemented
+Type checking
+TypeScript
+🟢 Implemented
+PWA
+Web App Manifest
+🟢 Implemented
+Decentralized backend
+Internet Computer
+🟢 Implemented
+Smart-contract/backend language
+Motoko
+🟢 Implemented
+Authentication
+Internet Identity
+🟢 Implemented
+Decentralized persistence
+ICP stable state
+🟢 Implemented in relevant canisters
+Operational database integration
+Supabase
+🟡 Implemented / Validation
+AI service architecture
+Provider abstraction/services
+🟡 Implemented / Validation
+Custom domain
+ICP custom-domain mechanism
+🟡 Configuration in progress
+Mobile packaging
+Part of product direction
+🟠 Development
+🔗 ICP Canister Architecture
+The current dfx.json defines the following principal application canisters:
+Canister
+Role
+Technology
+Mainnet ID
+Status
+frontend
+Valthoris web application
+ICP Assets / React
+v63rh-lqaaa-aaaaa-qewvq-cai
+🟢
+backend
+Core backend functionality
+Motoko
+c6sjf-tqaaa-aaaap-qsiea-cai
+🟡
+community
+Community functionality
+Motoko
+7w5qg-6aaaa-aaaab-ael4a-cai
+🟡
+identity
+Identity/reputation functionality
+Motoko
+ezroe-caaaa-aaaac-bcdeq-cai
+🟡
+safe_location
+Location and geofencing functionality
+Motoko
+sodv3-uiaaa-aaaak-qxubq-cai
+🟡
+threat_intelligence
+Threat intelligence functionality
+Motoko
+e2m3q-yqaaa-aaaas-qekva-cai
+🟡
+The IDs above correspond to the mainnet deployment output obtained during the current audit.
+The distinction between deployed and operational is intentional.
+A deployed canister proves that a canister exists on the ICP network.
+It does not, by itself, prove that every frontend workflow connected to that canister is working correctly.
+🌐 Frontend Production Deployment
+The Valthoris frontend is deployed as an ICP asset canister.
+Current production canister:
+v63rh-lqaaa-aaaaa-qewvq-cai
+The ICP gateway provides the frontend at:
+https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/
+The frontend was successfully accessed during the audit.
+The application also exposes application routes beneath the ICP gateway.
+For example:
+/assistant
+is accessible through the deployed frontend.
+This confirms that the application is not merely present in the GitHub repository.
+It is deployed and serving production content through ICP.
+🧪 Production Build Verification
+The frontend was built using:
+npm --prefix src/frontend run build
+The build executes:
+tsc --noEmit && vite build
+The production build completed successfully.
+Observed output included:
+✓ 313 modules transformed.
+and:
+✓ built in 10.21s
+The resulting production assets included:
+dist/404.html
+dist/index.html
+dist/assets/main-DTolIWLZ.css
+dist/assets/main-BG2jLb2Z.js
+The build therefore passed both:
+TypeScript validation
+Vite production compilation
+Build warning
+Vite reported a JavaScript bundle larger than 500 kB after minification.
+This is currently a performance optimisation warning, not a build failure.
+The project can later consider:
+dynamic imports;
+route-based code splitting;
+Rollup manualChunks;
+bundle optimisation.
+This is not currently classified as a deployment blocker.
+🚀 ICP Deployment Verification
+The frontend was successfully deployed to the ICP mainnet.
+The deployment command used was:
+DFX_WARNING=-mainnet_plaintext_identity dfx deploy frontend --network ic
+The deployment completed successfully.
+The deployment output confirmed:
+Upgraded code for canister frontend,
+with canister ID v63rh-lqaaa-aaaaa-qewvq-cai
+followed by:
+Deployed canisters.
+Therefore:
+Verification
+Result
+Frontend source exists
+✅
+Frontend builds
+✅
+ICP frontend canister exists
+✅
+Mainnet deployment completed
+✅
+Production frontend accessible
+✅
+Important security note
+The deployment required an explicit override because the currently selected DFX identity is stored in plaintext.
+DFX reported:
+The dev identity is not stored securely.
+This did not prevent the deployment, but it is an important security issue to address before the project reaches a higher-security production posture.
+The recommended future approach is a properly secured DFX identity rather than routinely relying on:
+DFX_WARNING=-mainnet_plaintext_identity
+This should be treated as a security hardening item, not ignored.
+🔐 Internet Identity
+Internet Identity is integrated into the Valthoris application.
+The authentication architecture follows the ICP model:
+User
+ │
+ ▼
+Internet Identity
+ │
+ ▼
+Authenticated Principal
+ │
+ ▼
+Valthoris Frontend
+ │
+ ├───────────────┐
+ ▼               ▼
+ICP Actors    Application Services
+Authentication should therefore be considered separate from persistence.
+A user being successfully authenticated proves:
+Identity → Principal
+It does not automatically prove:
+Principal
+   ↓
+Profile
+   ↓
+Database
+   ↓
+Persistent record
+That second chain requires independent verification.
+👤 Identity Canister
+The identity canister is a real Motoko canister deployed to ICP.
+Its implementation includes functionality associated with identifier and reputation intelligence, including lookup and risk-related records.
+The implementation includes areas such as:
+phone lookup;
+email lookup;
+domain lookup;
+IBAN lookup;
+wallet address lookup;
+reputation records;
+trust scores;
+risk scores;
+report counts;
+known-scammer state;
+verified-business state;
+suspicious identifier registration;
+batch lookup.
+The implementation also contains persistent state mechanisms intended to survive canister upgrades.
+Current classification
+Source code                  🟢
+Canister definition          🟢
+Mainnet deployment           🟢
+Frontend integration         🟡
+End-to-end write test        🟡
+End-to-end read test         🟡
+Persistence after reload     🟡
+Upgrade persistence          🟡
+Production operational proof 🟡
+Therefore:
+Identity is implemented and deployed, but its complete production workflow remains under validation.
+📍 Safe Location Canister
+The safe_location canister is independently deployed on ICP.
+Its implementation contains persistent structures for functionality including:
+location shares;
+current locations;
+geofence zones;
+share counters;
+geofence counters.
+The implementation also includes functionality for:
+location sharing;
+expiration;
+revocation;
+recipient restrictions;
+location updates;
+location retrieval;
+user-owned share listing;
+geofence creation;
+geofence listing;
+geofence deletion;
+coordinate validation;
+geographic distance calculation;
+geofence checking.
+The presence of these functions demonstrates substantial implementation.
+However, production verification still needs to demonstrate the complete lifecycle:
+Create share
+     ↓
+Write to canister
+     ↓
+Read from canister
+     ↓
+Reload application
+     ↓
+Read again
+     ↓
+Data still present
+Current classification
+Motoko implementation       🟢
+Persistent state design      🟢
+Canister deployment          🟢
+Frontend module              🟢
+Map interface                🟢
+Create/write workflow        🟡
+Read workflow                🟡
+Reload persistence           🟡
+Multi-user verification      🟡
+Production operational proof 🟡
+👥 Community Canister
+The community canister exists as an independent Motoko canister.
+The architectural model is:
+User
+ ↓
+Valthoris Frontend
+ ↓
+Community Actor
+ ↓
+Write
+ ↓
+Read
+ ↓
+Reload
+ ↓
+Record remains available
+The existence of the actor is verified.
+The complete frontend-to-canister persistence lifecycle is not yet classified as fully verified.
+Current classification
+Source code                  🟢
+Canister definition          🟢
+Mainnet deployment           🟢
+Frontend integration         🟡
+Create/write verification    🟡
+Read verification            🟡
+Reload verification          🟡
+Multi-user verification      🟡
+Production status            🟡
+🛡️ Threat Intelligence Canister
+The threat_intelligence canister exists as an independent ICP canister.
+Its presence in the deployment configuration and mainnet deployment confirms that this is not merely a README concept.
+However, the project does not currently claim that it represents a fully operational global threat-intelligence network.
+The correct classification remains:
+🟡 Implemented / Validation
+Further validation must establish:
+Frontend
+   ↓
+Threat Intelligence actor
+   ↓
+Query / write
+   ↓
+Result
+   ↓
+Persistent state
+   ↓
+Production verification
+🗄️ Persistence Architecture
+Valthoris currently contains two distinct persistence layers.
+ICP persistence
+The decentralized layer is provided by ICP canisters using persistent actor state.
+Conceptually:
+Valthoris Application
+        │
+        ▼
+   ICP Canister
+        │
+        ▼
+ Persistent State
+Relevant canisters contain persistent data structures.
+This is a real architectural component of the project.
+Supabase persistence
+The project also contains Supabase integration.
+The frontend uses environment variables including:
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+The frontend is therefore designed to use the public Supabase anonymous key.
+The service-role key must remain server-side and must never be embedded into the browser application.
+The repository contains Supabase-related services associated with areas such as:
+PostgreSQL;
+PGMQ;
+Storage;
+Realtime;
+audit;
+notifications;
+profile synchronisation.
+However:
+The existence of Supabase code is not proof that Supabase synchronisation is currently functioning end-to-end in production.
+This remains under audit.
+🔄 Profile Persistence
+The profile architecture includes a synchronisation mechanism associated with authentication.
+The conceptual flow is:
+Internet Identity
+       │
+       ▼
+Authenticated Principal
+       │
+       ▼
+Profile Synchronisation
+       │
+       ├───────────────► Local profile
+       │
+       └───────────────► Supabase profile
+The profile service contains functionality for:
+reading profile data;
+storing profile data;
+updating profiles;
+synchronising last_seen;
+retrieving cloud profile information;
+merging profile information.
+However, fallback behaviour exists.
+That means the application can potentially continue operating with local data even when the cloud persistence layer is unavailable or incorrectly configured.
+Therefore:
+Profile UI works
+        ≠
+Profile permanently persisted
+The required test remains:
+Create profile
+      ↓
+Write
+      ↓
+Read
+      ↓
+Reload browser
+      ↓
+Authenticate again
+      ↓
+Read
+      ↓
+Data remains
+Until that test is demonstrated against the production system, the official status remains:
+🟡 Implemented / Validation
+🔬 Persistence Verification Standard
+For every important Valthoris module, the project uses the following standard:
+SOURCE
+  ↓
+BUILD
+  ↓
+DEPLOY
+  ↓
+FRONTEND CONNECTION
+  ↓
+CREATE / WRITE
+  ↓
+READ
+  ↓
+RELOAD
+  ↓
+READ AGAIN
+  ↓
+PERSISTENCE CONFIRMED
+For security-sensitive modules, an additional test is required:
+User A
+   ↓
+Create data
+   ↓
+User B
+   ↓
+Attempt access
+   ↓
+Access-control result verified
+For ICP canisters, an additional upgrade test is desirable:
+Create data
+   ↓
+Verify data
+   ↓
+Canister upgrade
+   ↓
+Read data again
+   ↓
+Data survives
+Only after the appropriate tests succeed should the module receive:
+🟢 Operational
+🌍 Custom Domain — valthoris.com
+The project is currently preparing the ICP custom-domain configuration.
+The frontend contains:
+src/frontend/public/.well-known/ic-domains
+with the content:
+valthoris.com
+After the production build, the file was confirmed in:
+src/frontend/dist/.well-known/ic-domains
+The file contents were verified as:
+valthoris.com
+✅ ICP Domain Proof Verification
+The production endpoint was tested with:
+curl -i -L "https://v63rh-lqaaa-aaaaa-qewvq-cai.icp0.io/.well-known/ic-domains"
+The response returned:
+HTTP/2 200
+and:
+content-length: 13
+The response body contained:
+valthoris.com
+The response also identified the ICP canister:
+x-ic-canister-id: v63rh-lqaaa-aaaaa-qewvq-cai
+This is important evidence.
+It demonstrates that the required domain-verification file is now being served by the deployed ICP frontend.
+Current domain status
+.ic-domains file in source       ✅
+.ic-domains included in build   ✅
+.ic-domains deployed to ICP     ✅
+.ic-domains accessible publicly  ✅
+HTTP 200 verification             ✅
+valthoris.com content             ✅
+Custom domain fully active        🟡
+DNS finalisation                   🟡
+Therefore:
+The ICP domain proof is successfully published. The custom domain itself should not yet be described as fully operational until DNS configuration and ICP domain activation are verified end-to-end.
+☁️ Cloudflare
+The domain valthoris.com is managed through Cloudflare.
+The DNS zone currently contains existing records.
+One observed record is:
+valthoris.com
+CNAME
+valthoris-code.github.io
+with proxy enabled.
+This existing configuration must not be casually replaced.
+The custom-domain migration therefore needs to be handled as a controlled DNS change.
+The current audit does not authorise modification of unrelated DNS records.
+The rule is:
+Do not change the other existing DNS records unless an independent requirement is established and explicitly approved.
+⚠️ DNS Migration Principle
+The final ICP custom-domain configuration must be performed carefully because DNS records affect:
+website availability;
+email;
+verification;
+TLS;
+third-party services;
+existing GitHub hosting;
+Cloudflare routing.
+The project therefore treats the custom-domain operation as a controlled production change rather than a casual DNS edit.
+📊 Definitive Audit Matrix — Current State
+The current evidence supports the following classification:
+Component
+Code
+Build
+Deploy
+Production
+Persistence
+Official State
+Valthoris Frontend
+✅
+✅
+✅
+✅
+—
+🟢
+ICP Frontend
+✅
+✅
+✅
+✅
+—
+🟢
+Internet Identity
+✅
+✅
+✅
+✅
+🟡
+🟡
+Backend ICP
+✅
+✅
+✅
+🟡
+🟡
+🟡
+Identity
+✅
+✅
+✅
+🟡
+🟡
+🟡
+Community
+✅
+✅
+✅
+🟡
+🟡
+🟡
+Safe Location
+✅
+✅
+✅
+🟡
+🟡
+🟡
+Threat Intelligence
+✅
+✅
+✅
+🟡
+🟡
+🟡
+Profile persistence
+✅
+✅
+🟡
+🟡
+🟡
+🟡
+Supabase integration
+✅
+✅
+—
+🟡
+🟡
+🟡
+Supabase synchronisation
+✅
+✅
+—
+🟡
+🟡
+🟠
+AI architecture
+✅
+✅
+🟡
+🟡
+🟡
+🟡
+AI end-to-end pipeline
+🟡
+🟡
+🟡
+🟡
+🟡
+🟡
+AutoShield
+🟠
+🟠
+🟡
+🟡
+🟡
+🟠
+Audio Intelligence
+—
+—
+—
+—
+—
+🔵
+Visual Intelligence
+—
+—
+—
+—
+—
+🔵
+Malware Intelligence
+—
+—
+—
+—
+—
+🔵
+Enterprise SIEM/SOAR
+—
+—
+—
+—
+—
+🔵
+Banking integrations
+—
+—
+—
+—
+—
+🔵
+Advanced blockchain intelligence
+🟡/🟠
+🟡/🟠
+—
+—
+—
+🔵/⚪
+valthoris.com ICP proof
+✅
+✅
+✅
+🟡
+—
+🟡
+🧾 What Has Actually Been Proven
+The current audit has established that Valthoris has:
+a real repository;
+a real React/TypeScript frontend;
+a successful production build;
+a deployed ICP frontend;
+multiple real Motoko canisters;
+real mainnet canister IDs;
+Internet Identity integration;
+persistent ICP canister architecture;
+a real Safe Location implementation;
+a real Identity implementation;
+a real Community canister;
+a real Threat Intelligence canister;
+Supabase integration in the codebase;
+AI/service architecture in the codebase;
+a published ICP custom-domain proof file;
+successful production retrieval of /.well-known/ic-domains.
+These facts are materially different from claiming that every planned Valthoris capability is already fully operational.
+That distinction is now part of the official documentation standard.
+❌ What Has Not Yet Been Proven
+The following must not be described as fully operational until tested:
+Every profile write persists correctly
+Every Community operation persists correctly
+Every Safe Location workflow survives reload
+Every Identity workflow works end-to-end
+Supabase synchronisation is complete
+AI analysis works end-to-end in production
+AI results are persistently stored
+AutoShield provides complete real-time protection
+All external AI providers are production-connected
+valthoris.com is fully active through ICP custom-domain routing
+Enterprise integrations exist operationally
+Banking integrations exist operationally
+Law-enforcement integrations exist operationally
+Audio Intelligence is operational
+Visual Intelligence is operational
+Malware Intelligence is operational
+SIEM/SOAR integrations are operational
+These distinctions are deliberate.
+🎯 Current Technical Priority
+The immediate priority is not adding more features.
+The priority is proving the existing ones.
+The recommended sequence is:
+1. Production frontend
+        ↓
+2. Authentication
+        ↓
+3. Profile
+        ↓
+4. Backend
+        ↓
+5. Identity
+        ↓
+6. Community
+        ↓
+7. Safe Location
+        ↓
+8. Threat Intelligence
+        ↓
+9. Persistence verification
+        ↓
+10. AI end-to-end
+        ↓
+11. Supabase synchronisation
+        ↓
+12. Custom domain finalisation
+        ↓
+13. README final status
+This prevents the project from accumulating additional functionality while fundamental persistence remains uncertain.
+🏛️ Valthoris Documentation Rule
+From this point forward, the repository follows one fundamental rule:
+If we cannot demonstrate it, we do not call it operational.
+A feature can still be:
+Implemented
+In Validation
+In Development
+Planned
+Research
+without being presented as production-ready.
+This is not a weakness.
+It is a technical integrity requirement.
+For a cybersecurity and fraud-prevention platform intended eventually to interact with institutions, financial organisations and public-sector entities, accurate technical documentation is itself part of the security posture.
+
+Operations, Security, Compliance, Roadmap, Verification & Project Status
+🧪 Verification and Quality Assurance
+Valthoris follows a verification-first approach.
+A feature is not considered operational merely because:
+source code exists;
+a UI component exists;
+a canister is deployed;
+an API client exists;
+a database service is configured;
+a feature appears in the product specification;
+or a function can be called successfully once.
+For a feature to receive the 🟢 Operational classification, its relevant production workflow must be demonstrated.
+Verification model
+SOURCE CODE
+    │
+    ▼
+BUILD
+    │
+    ▼
+DEPLOYMENT
+    │
+    ▼
+FRONTEND CONNECTION
+    │
+    ▼
+USER ACTION
+    │
+    ▼
+BACKEND OPERATION
+    │
+    ▼
+WRITE
+    │
+    ▼
+READ
+    │
+    ▼
+APPLICATION RELOAD
+    │
+    ▼
+READ AGAIN
+    │
+    ▼
+PERSISTENCE CONFIRMED
+    │
+    ▼
+PRODUCTION VERIFIED
+Where applicable, additional tests are required:
+Persistence
+    +
+Authentication
+    +
+Authorization
+    +
+Multi-user behaviour
+    +
+Upgrade resilience
+    +
+Error handling
+    +
+Security validation
+Only after the relevant checks succeed should the feature be considered operational.
+📋 Production Verification Criteria
+Each major Valthoris component should be evaluated against the following criteria.
+Verification
+Meaning
+Source Code
+Implementation exists in the repository
+Build
+Project compiles successfully
+Deployment
+Component is deployed
+Frontend Connection
+Frontend communicates with the component
+Create / Write
+User can create or submit data
+Read
+Previously submitted data can be retrieved
+Reload
+Data remains available after application reload
+Persistence
+Data survives beyond temporary browser state
+Authentication
+Correct user identity is enforced
+Authorization
+Users cannot access unauthorised data
+Multi-user
+Relevant multi-user workflows work correctly
+Upgrade Resilience
+Persistent state survives canister upgrades where applicable
+Production
+Behaviour has been verified against the live deployment
+A component may therefore have working source code and a successful deployment while still remaining in 🟡 Implemented / Validation.
+This is intentional.
+🔐 Security Model
+Security is a fundamental architectural principle of Valthoris.
+The project is designed around three primary principles:
+Security by Design
+Security controls should be considered during architecture and implementation rather than added only after functionality has been completed.
+Privacy by Design
+The system should minimise unnecessary personal information, restrict access to sensitive data and separate public application functionality from protected information.
+Zero Trust
+Authentication alone does not imply trust.
+Requests, identities, services and data access should be validated according to the permissions and context applicable to the operation.
+🔑 Identity and Access Control
+Valthoris uses Internet Identity as part of its authentication architecture.
+The authenticated user is represented by an Internet Computer principal.
+Conceptually:
+Internet Identity
+       │
+       ▼
+Authenticated Principal
+       │
+       ▼
+Valthoris Application
+       │
+       ├── Profile
+       ├── Identity
+       ├── Community
+       ├── Safe Location
+       ├── Threat Intelligence
+       └── Other protected services
+Authentication and authorisation are separate concerns.
+A successful login does not automatically prove that every protected operation has been correctly authorised.
+Consequently, access-control behaviour remains part of the verification process for each module.
+🛡️ Data Protection
+Valthoris is designed to handle security-sensitive information.
+Depending on the functionality involved, this may include identifiers, reputation information, security reports, location information and other potentially sensitive data.
+The project therefore follows a principle of:
+Collect only what is required
+          ↓
+Restrict access
+          ↓
+Protect sensitive operations
+          ↓
+Persist securely
+          ↓
+Audit behaviour
+The exact legal and regulatory status of the platform must be determined through appropriate legal and security assessments.
+The README therefore does not claim formal certification or regulatory compliance unless such certification or assessment has actually been completed.
+⚖️ GDPR and Regulatory Position
+Valthoris is designed with privacy and data-protection principles in mind.
+The architecture takes into consideration principles such as:
+data minimisation;
+access control;
+purpose limitation;
+privacy-aware architecture;
+secure processing;
+separation of services;
+controlled persistence;
+protection of sensitive information.
+However, the project does not use the README to claim:
+"GDPR Compliant"
+as a formal legal certification.
+Instead, the appropriate description is:
+Designed with GDPR and privacy principles in mind.
+Formal GDPR compliance requires an appropriate legal and technical assessment based on the final production implementation, processing activities, data flows, legal bases, retention policies, user rights and organisational controls.
+🇪🇺 NIS2 Position
+Valthoris is being designed with cybersecurity principles that are relevant to modern European cybersecurity requirements.
+However, the project does not claim:
+"NIS2 Ready"
+as a formal certification.
+The more accurate description is:
+NIS2-oriented security architecture.
+Formal applicability and compliance depend on the organisation, services provided, jurisdiction, sector, implementation and applicable regulatory requirements.
+🧾 Documentation Integrity Policy
+Valthoris adopts a strict documentation principle:
+The documentation must describe the system that exists, not the system that is planned.
+This means that the README intentionally separates:
+Operational
+Functionality verified in production.
+Implemented / Validation
+The implementation and deployment exist, but complete production validation remains outstanding.
+In Development
+The functionality is partially implemented.
+Planned
+The functionality belongs to the roadmap but is not currently operational.
+Research
+The functionality remains an investigation or future research direction.
+This policy applies to both technical and business-facing documentation.
+🗺️ Roadmap
+The Valthoris roadmap remains ambitious.
+However, roadmap features are explicitly separated from currently verified functionality.
+The following capabilities are not represented as operational unless independently verified:
+Audio Intelligence;
+Visual Intelligence;
+Malware Intelligence;
+advanced automated threat response;
+enterprise SIEM integrations;
+enterprise SOAR integrations;
+banking integrations;
+institutional integrations;
+law-enforcement integrations;
+advanced blockchain intelligence;
+advanced MEV intelligence;
+large-scale multi-chain intelligence;
+future enterprise security integrations.
+These capabilities remain part of the long-term development direction.
+They are not deleted from the Valthoris vision.
+They are simply not represented as completed functionality.
+🤖 AI Roadmap
+Artificial Intelligence is a central component of the Valthoris vision.
+The current repository contains AI-related architecture and service components.
+The intended evolution is:
+User Input
+    │
+    ▼
+Valthoris Frontend
+    │
+    ▼
+Security / Analysis Layer
+    │
+    ▼
+AI Provider
+    │
+    ▼
+Threat / Fraud Analysis
+    │
+    ▼
+Risk Evaluation
+    │
+    ▼
+Result
+    │
+    ▼
+User
+The complete production chain must be validated end-to-end before being classified as fully operational.
+Future AI capabilities may include:
+fraud detection;
+security analysis;
+behavioural analysis;
+threat interpretation;
+risk scoring;
+contextual security assistance;
+automated protection;
+multimodal security analysis;
+advanced threat intelligence correlation.
+These capabilities will be promoted from roadmap status only when they are implemented and verified.
+🛡️ AutoShield Roadmap
+AutoShield represents the intended real-time protection layer of Valthoris.
+Its long-term purpose is to move Valthoris from:
+Detection
+towards:
+Detection
+   ↓
+Risk Assessment
+   ↓
+Decision
+   ↓
+Protection
+   ↓
+User Notification
+The current project contains AutoShield-related architecture and implementation work.
+The complete real-time production protection pipeline remains under development and validation.
+Current classification
+🟠 In Development
+🌍 Future Intelligence Capabilities
+Valthoris may progressively expand into several security-intelligence domains.
+Potential future areas include:
+Identity Intelligence
+        │
+Threat Intelligence
+        │
+Fraud Intelligence
+        │
+AI Security Analysis
+        │
+Blockchain Intelligence
+        │
+Behavioural Intelligence
+        │
+Location Intelligence
+        │
+Automated Protection
+Each capability will be independently verified before being promoted to an operational status.
+🏢 Enterprise Direction
+The long-term Valthoris enterprise direction may include integration with:
+security operations centres;
+SIEM platforms;
+SOAR platforms;
+financial institutions;
+payment providers;
+telecommunications providers;
+cybersecurity organisations;
+public-sector institutions;
+law-enforcement organisations;
+other authorised institutional partners.
+These integrations are future development objectives unless an integration is explicitly implemented and verified.
+The README therefore does not represent potential partnerships or future integrations as existing integrations.
+🔬 Research Direction
+Some Valthoris capabilities require further research before they can become production features.
+Research areas may include:
+advanced fraud intelligence;
+cross-chain risk analysis;
+MEV-related security analysis;
+behavioural threat modelling;
+automated threat correlation;
+advanced AI security models;
+privacy-preserving intelligence;
+decentralised security intelligence;
+large-scale threat-data correlation.
+These areas should be considered research directions, not current product capabilities.
+📈 Product Evolution
+The development strategy follows a controlled progression:
+Existing Implementation
+        ↓
+Verification
+        ↓
+Hardening
+        ↓
+Production Validation
+        ↓
+Operational Status
+        ↓
+Expansion
+        ↓
+New Capability
+        ↓
+Verification Again
+This prevents the project from accumulating undocumented or unverified functionality.
+🧭 Development Priorities
+The current priority order is:
+1. Production stability
+Ensure that the existing application remains functional.
+2. Persistence
+Verify that important user actions actually create durable records.
+3. Backend validation
+Verify each ICP canister independently.
+4. Authentication and authorisation
+Verify identity and access-control behaviour.
+5. AI validation
+Verify the actual end-to-end AI path.
+6. Supabase
+Validate synchronization only after the primary application persistence model is understood.
+7. Domain
+Complete and verify the production custom-domain configuration.
+8. Documentation
+Keep the README aligned with the verified implementation.
+9. Roadmap development
+Only then expand the platform with additional capabilities.
+🌐 Production Domain
+The Valthoris production web application is intended to operate through:
+valthoris.com
+The ICP frontend canister currently deployed for the Valthoris application is:
+v63rh-lqaaa-aaaaa-qewvq-cai
+The ICP domain verification file has been implemented at:
+/.well-known/ic-domains
+with:
+valthoris.com
+The file has been successfully included in the production frontend build and was confirmed to be served by the ICP frontend canister.
+This establishes the required application-side domain proof.
+The remaining DNS and custom-domain configuration must be treated separately from the application deployment.
+🧱 Deployment Model
+The current Valthoris deployment uses the Internet Computer.
+The frontend is deployed as an ICP asset canister.
+The backend services are implemented through independent Motoko canisters.
+The current mainnet canisters identified during deployment are:
+Component
+Canister ID
+Frontend
+v63rh-lqaaa-aaaaa-qewvq-cai
+Backend
+c6sjf-tqaaa-aaaap-qsiea-cai
+Community
+7w5qg-6aaaa-aaaab-ael4a-cai
+Identity
+ezroe-caaaa-aaaac-bcdeq-cai
+Safe Location
+sodv3-uiaaa-aaaak-qxubq-cai
+Threat Intelligence
+e2m3q-yqaaa-aaaas-qekva-cai
+These identifiers refer to deployed ICP canisters associated with the current Valthoris deployment.
+🏗️ Build Verification
+The frontend has been successfully built using:
+npm --prefix src/frontend run build
+The build process performs:
+TypeScript validation
+        ↓
+Vite production build
+        ↓
+Production assets
+The current production build successfully completes.
+The build reports a warning concerning a JavaScript bundle larger than the recommended 500 kB threshold.
+This is a performance optimisation issue rather than a build failure.
+Potential future optimisation:
+Code splitting
+Dynamic imports
+Manual chunks
+Bundle optimisation
+The warning should therefore be tracked as a technical improvement rather than represented as a production failure.
+📦 Repository Structure
+The README must remain synchronized with the actual repository.
+The documented structure should therefore be periodically checked against:
+dfx.json
+package.json
+src/
+.github/
+README.md
+No directory, module, integration or service should be documented as existing unless it can be located in the repository or independently verified.
+🔄 Change Management
+Valthoris development should follow controlled changes.
+Before modifying production infrastructure:
+Identify problem
+      ↓
+Inspect current implementation
+      ↓
+Back up relevant configuration
+      ↓
+Make one controlled change
+      ↓
+Build
+      ↓
+Test
+      ↓
+Deploy only when necessary
+      ↓
+Verify production
+This is particularly important for:
+dfx.json;
+canister configuration;
+authentication;
+persistence;
+Supabase;
+DNS;
+custom domains;
+production deployment.
+🚫 What Valthoris Will Not Claim Without Evidence
+Valthoris will not claim that a feature is operational merely because:
+it appears in the UI;
+it exists in a README;
+it appears in a roadmap;
+source code exists;
+a database schema exists;
+an API adapter exists;
+a canister exists;
+a provider is configured;
+a test was performed only locally.
+Production claims require production evidence.
+🧑‍💻 Technical Transparency
+Valthoris is intentionally documented in a way that allows technical reviewers to distinguish:
+What exists
+     ↓
+What is deployed
+     ↓
+What is connected
+     ↓
+What persists
+     ↓
+What has been verified
+     ↓
+What remains under development
+This approach is particularly important when the project is presented to:
+cybersecurity professionals;
+public institutions;
+law-enforcement organisations;
+financial institutions;
+technology partners;
+researchers;
+auditors;
+investors;
+potential enterprise customers.
+Technical credibility is more important than the appearance of completeness.
+🏛️ Institutional and Professional Positioning
+Valthoris is being developed as a serious cybersecurity and fraud-prevention platform.
+Its objective is not simply to provide another security interface.
+The long-term goal is to combine:
+AI
++
+Fraud Prevention
++
+Cybersecurity
++
+Threat Intelligence
++
+Identity Intelligence
++
+Decentralised Infrastructure
++
+Privacy
++
+Real-Time Protection
+into a unified security platform.
+However, the current implementation status remains the authoritative reference for what is actually available.
+📊 Current Official Project Status
+Area
+Status
+Valthoris Web/PWA
+🟢 Operational
+ICP Frontend
+🟢 Operational
+Internet Identity
+🟢 Implemented
+Backend ICP
+🟡 Implemented / Validation
+Identity
+🟡 Implemented / Validation
+Community
+🟡 Implemented / Validation
+Safe Location
+🟡 Implemented / Validation
+Threat Intelligence
+🟡 Implemented / Validation
+Profile Persistence
+🟡 Validation
+Supabase Integration
+🟡 Implemented / Validation
+Supabase Synchronisation
+🟠 In Development / Validation
+AI Architecture
+🟡 Implemented / Validation
+Complete AI Pipeline
+🟡 Validation
+AutoShield
+🟠 In Development
+Audio Intelligence
+🔵 Planned
+Visual Intelligence
+🔵 Planned
+Malware Intelligence
+🔵 Planned
+Enterprise SIEM/SOAR
+🔵 Planned
+Banking Integrations
+🔵 Planned
+Institutional Integrations
+🔵 Planned
+Advanced Blockchain Intelligence
+🔵 Planned / Research
+Advanced MEV Intelligence
+🔵 Planned / Research
+Custom ICP Domain
+🟡 Configuration / Validation
+Documentation Integrity
+🟢 Active Policy
+🎯 Immediate Technical Objective
+The immediate objective is not to add more features simply to increase the feature list.
+The immediate objective is to prove the reliability of the existing platform.
+The priority is:
+Valthoris
+   │
+   ├── Authentication
+   │
+   ├── Profile
+   │
+   ├── Identity
+   │
+   ├── Community
+   │
+   ├── Safe Location
+   │
+   ├── Threat Intelligence
+   │
+   └── Assistant / AI
+          │
+          ▼
+     WRITE DATA
+          │
+          ▼
+      READ DATA
+          │
+          ▼
+       RELOAD
+          │
+          ▼
+      READ AGAIN
+Once these workflows are independently verified, the platform can confidently progress to the next development stage.
+🚀 Long-Term Vision
+Valthoris aims to evolve into a global AI-powered cybersecurity and fraud-prevention platform capable of helping individuals, organisations and institutions identify, understand and respond to digital threats.
+The long-term vision includes:
+              VALTHORIS
+                  │
+       ┌──────────┴──────────┐
+       │                     │
+   Detection             Prevention
+       │                     │
+       ▼                     ▼
+ AI + Threat Intel      AutoShield
+       │                     │
+       └──────────┬──────────┘
+                  ▼
+             Risk Engine
+                  │
+                  ▼
+          Security Decision
+                  │
+        ┌─────────┴─────────┐
+        ▼                   ▼
+      Alert             Protection
+The vision is intentionally ambitious.
+The implementation status is intentionally conservative.
+Both can coexist.
+📜 Final Documentation Principle
+Valthoris will never use documentation to make the product appear more complete than it is.
+If a capability works:
+We will show it.
+If the implementation exists but requires validation:
+We will say so.
+If development has started:
+We will classify it as in development.
+If it is planned:
+We will label it as planned.
+If it is research:
+We will identify it as research.
+This principle protects the credibility of the Valthoris project and provides a reliable technical reference for future development, audits, partnerships and institutional discussions.
+Valthoris
+AI Cybersecurity & Fraud Prevention
+Security by Design · Privacy by Design · Zero Trust
+Built on the Internet Computer
+HCenterprise — Portugal
+Status Legend
+🟢 Operational
+    Implemented, deployed and verified in production.
+
+🟡 Implemented / Validation
+    Code and deployment exist; complete validation is pending.
+
+🟠 In Development
+    Partial implementation or active development.
+
+🔵 Planned
+    Approved roadmap capability not yet operational.
+
+⚪ Research
+    Future research or investigation.
+This status model is part of the Valthoris documentation standard and should be maintained whenever the implementation changes.
 
-The repository will continue to evolve while preserving a clear separation between documentation, Artificial Intelligence, infrastructure and applications.
 
----
 
-# 🚀 Quick Start
-
-## Clone Repository
-
-```bash
-git clone https://github.com/Valthoris-code/Valthoris.git
-
-cd Valthoris
-```
-
----
-
-## Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Prepare Dataset
-
-```bash
-python prepare_data.py
-```
-
----
-
-## Train Tokenizer
-
-```bash
-python tokenizer/train_tokenizer.py
-```
-
----
-
-## Train AI Model
-
-```bash
-python train.py
-```
-
----
-
-## Evaluate Model
-
-```bash
-python evaluate.py
-```
-
----
-
-## Run Inference
-
-```bash
-python inference.py
-```
-
----
-
-Future versions will include Docker containers, automated CI/CD pipelines and one-command deployment.
-
----
-
-# 📈 Performance Targets
-
-The objective of Valthoris is not only accuracy.
-
-Performance must remain practical for real-world deployment.
-
-| Metric | Target |
-|---------|--------|
-| Accuracy | >98% |
-| Precision | >97% |
-| Recall | >97% |
-| F1 Score | >97% |
-| False Positive Rate | <1% |
-| Average Inference Time | <100 ms |
-| AI Confidence | Dynamic |
-
-Performance will continuously improve as additional datasets become available.
-
----
-
-# 💻 Example Inference
-
-Example message:
-
-```text
-Dear customer,
-
-Your bank account has been temporarily suspended.
-
-Click the link below immediately to restore access.
-
-https://secure-bank-login-example.com
-```
-
-Output:
-
-```text
-Classification
-
-PHISHING
-
-Risk Score
-
-96 / 100
-
-Confidence
-
-99.2%
-
-Detected Indicators
-
-✔ Urgency
-
-✔ Credential Request
-
-✔ Suspicious Domain
-
-✔ Brand Impersonation
-
-✔ Behaviour Pattern Match
-
-Recommendation
-
-Do NOT open the link.
-Report immediately.
-```
-
-Every prediction is accompanied by technical justification.
-
-The objective is to help users understand the decision, not simply display a warning.
-
----
-
-# 🤝 Contributing
-
-Valthoris welcomes responsible contributions from:
-
-- Developers
-- Security Researchers
-- AI Engineers
-- Universities
-- CERT Teams
-- Cybersecurity Professionals
-
-Contributions should respect the project's ethical principles.
-
-Before submitting a Pull Request:
-
-- Follow the coding guidelines.
-- Document significant changes.
-- Maintain compatibility.
-- Prioritise security.
-
-Quality is always preferred over quantity.
-
----
-
-# 📜 License
-
-This project is distributed under the **MIT License**.
-
-See the `LICENSE` file for complete details.
-
----
-
-# 👤 Founder
-
-## Hermínio Coragem
-
-Creator of the Valthoris platform.
-
-Author of:
-
-- Concept
-- Brand
-- Architecture
-- Artificial Intelligence Vision
-- Cybersecurity Strategy
-- Documentation
-
-Valthoris is an original project created to redefine how Artificial Intelligence can prevent digital fraud.
-
----
-
-# ❤️ Acknowledgements
-
-This project exists thanks to the continuous evolution of cybersecurity knowledge, open-source technologies and the global security community.
-
-Special recognition to every researcher, developer and ethical hacker working towards a safer digital world.
-
-Every contribution matters.
-
-Every report protects someone.
-
-Every improvement strengthens the ecosystem.
-
----
-<div align="center">
-
-  <!-- Banner Animado -->
-  <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,15:071B3A,35:0047AB,55:00BFFF,75:0047AB,100:020617&text=VALTHORIS&fontColor=FFFFFF&fontSize=70&fontAlignY=38&animation=twinkling"/>
-
-<br>
-  ⚠️ **Development Notice:**The
-**Valthoris platform is currently under active development and model training**.
- Modules and features are being progressively deployed.
-
-<br>
-
-<div align="center">
-
-  <h2>📫 Contact & Official Channels</h2>
-  <p>For inquiries, support, or vulnerability disclosures, please reach out via our official domain channels:</p>
-
-  <br>
-
-  <table>
-    <tr>
-      <td align="center">ℹ️ <b>General & Information</b></td>
-      <td><a href="mailto:info@valthoris.com"><code>info@valthoris.com</code></a></td>
-    </tr>
-    <tr>
-      <td align="center">🛠️ <b>Technical Support</b></td>
-      <td><a href="mailto:support@valthoris.com"><code>support@valthoris.com</code></a></td>
-    </tr>
-    <tr>
-      <td align="center">🛡️ <b>Security & Responsible Disclosure</b></td>
-      <td><a href="mailto:security@valthoris.com"><code>security@valthoris.com</code></a></td>
-    </tr>
-  </table>
-
-</div>
-
-
-<div align="center">
-
-  <img src="documentos/valthoris-shield.png" width="35" height="35" alt="Valthoris Shield Footer">
-  <h2>VALTHORIS</h2>
-  <h3>INTELIGÊNCIA • PREVENÇÃO • PROTEÇÃO</h3>
-  <h4>CIBERSEGURANÇA • IA • BLOCKCHAIN • ICP</h4>
-
-  <br>
-
----
-
-<div align="center">
-
-### Partilhe o Valthoris
-*Ajude a proteger mais pessoas contra fraudes.*
-
-<br>
-
-<!-- Botões de Partilha e Redes -->
-<a href="https://api.whatsapp.com/send?text=Conhe%C3%A7a%20o%20Valthoris%20-%20Plataforma%20de%20Ciberseguran%C3%A7a%20e%20IA:%20https://valthoris.com" target="_blank">
-  <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp">
-</a>
-<a href="https://twitter.com/intent/tweet?text=Conhe%C3%A7a%20o%20Valthoris&url=https://valthoris.com" target="_blank">
-  <img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white" alt="X">
-</a>
-<a href="https://t.me/share/url?url=https://valthoris.com&text=Conhe%C3%A7a%20o%20Valthoris" target="_blank">
-  <img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram">
-</a>
-<a href="https://www.facebook.com/sharer/sharer.php?u=https://valthoris.com" target="_blank">
-  <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook">
-</a>
-<a href="https://www.linkedin.com/sharing/share-offsite/?url=https://valthoris.com" target="_blank">
-  <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
-</a>
-<a href="mailto:?subject=Valthoris%20-%20Prote%C3%A7%C3%A3o%20Digital&body=Descobre%20o%20projeto%20Valthoris%20em%20https://valthoris.com">
-  <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email">
-</a>
-<a href="https://www.youtube.com" target="_blank">
-  <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube">
-</a>
-
-<br><br>
-
-<!-- Link Direto GitHub -->
-<a href="https://github.com/Valthoris-code/Valthoris-llm" target="_blank">
-  <img src="https://img.shields.io/badge/GitHub_Oficial_do_Projeto-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
-</a>
-
-</div>
-
-
-
-  <p><i>"A melhor fraude é aquela que nunca acontece."</i></p>
-
-  <br>
-
-  <hr width="30%">
-
-  <p>© 2026 <b>Valthoris</b>. Todos os direitos reservados.</p>
-
-</div>
