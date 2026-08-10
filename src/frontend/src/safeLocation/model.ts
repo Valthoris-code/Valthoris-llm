@@ -1,10 +1,10 @@
 /**
  * Safe Location domain model.
  *
- * Only the share lifecycle is backed by the existing `safe_location` canister.
- * Trusted contacts, geofences, emergency mode and history are frontend-only
- * placeholders persisted in localStorage so the module is fully usable during
- * the beta and trivially portable to Android later.
+ * The share lifecycle and geofences are backed by the existing `safe_location`
+ * canister. Trusted contacts, emergency mode and history remain frontend-only
+ * placeholders persisted in localStorage until the corresponding canister
+ * endpoints exist.
  */
 
 export type ShareDurationId = '15m' | '1h' | '8h' | '24h' | 'until';
@@ -61,6 +61,9 @@ export interface Geofence {
   notifyOnExit: boolean;
 }
 
+/** A geofence about to be created — the canister assigns the id. */
+export type GeofenceDraft = Omit<Geofence, 'id'>;
+
 export interface LocationHistoryEntry {
   id: string;
   at: string;
@@ -71,7 +74,6 @@ export interface LocationHistoryEntry {
 
 export interface SafeLocationSettings {
   contacts: TrustedContact[];
-  geofences: Geofence[];
   emergencyMode: boolean;
   defaultDuration: ShareDurationId;
   highAccuracy: boolean;
@@ -80,7 +82,6 @@ export interface SafeLocationSettings {
 
 export const DEFAULT_SETTINGS: SafeLocationSettings = {
   contacts: [],
-  geofences: [],
   emergencyMode: false,
   defaultDuration: '1h',
   highAccuracy: true,
@@ -98,7 +99,6 @@ export function loadSettings(): SafeLocationSettings {
       ...DEFAULT_SETTINGS,
       ...parsed,
       contacts: Array.isArray(parsed.contacts) ? parsed.contacts : [],
-      geofences: Array.isArray(parsed.geofences) ? parsed.geofences : [],
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -111,8 +111,9 @@ export function saveSettings(settings: SafeLocationSettings): void {
   } catch {
     // Storage unavailable — settings apply to the current session only.
   }
-  // TODO(backend): persist trusted contacts, geofences and emergency state in
-  // the safe_location canister once the corresponding endpoints exist.
+  // TODO(backend): persist trusted contacts and emergency state in the
+  // safe_location canister once the corresponding endpoints exist.
+  // Geofences are already persisted in the canister, not here.
 }
 
 /** Distance in metres between two coordinates (haversine). */

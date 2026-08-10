@@ -25,6 +25,7 @@ import React, {
   useState,
 } from 'react';
 import type { ReactNode } from 'react';
+import type { Identity } from '@dfinity/agent';
 import { getAuthClient, login as doLogin, logout as doLogout } from '../services/auth';
 import type { User } from '../models/User';
 import { ensureUser } from '../services/roleService';
@@ -39,6 +40,12 @@ export interface AuthContextValue {
   principal: string | null;
   /** Resolved user object (principal + role), or null when anonymous. */
   user: User | null;
+  /**
+   * The Internet Identity delegation identity, or null when anonymous.
+   * Exposed so that canister actors can be bound to the identity in the same
+   * render in which `isAuthenticated` becomes true (no async re-binding race).
+   */
+  identity: Identity | null;
   /** True while the auth state is being resolved (e.g. on first load). */
   loading: boolean;
   /** Opens the Internet Identity login popup. */
@@ -66,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [principal, setPrincipal]             = useState<string | null>(null);
   const [user, setUser]                       = useState<User | null>(null);
+  const [identity, setIdentity]               = useState<Identity | null>(null);
   const [loading, setLoading]                 = useState(true);
 
   /**
@@ -79,7 +87,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const client = await getAuthClient();
     const authed = await client.isAuthenticated();
     if (authed) {
-      const p = client.getIdentity().getPrincipal().toText();
+      const id = client.getIdentity();
+      const p = id.getPrincipal().toText();
       try {
         const managed = await ensureUser();
   try {
@@ -87,16 +96,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   } catch (supabaseErr) {
     console.warn("[AuthContext] Supabase profile sync failed:", supabaseErr);
   }
+        setIdentity(id);
         setPrincipal(p);
         setUser({ principal: p, role: managed.role });
         setIsAuthenticated(true);
       } catch (err) {
         console.error('[AuthContext] Failed to resolve backend role:', err);
+        setIdentity(null);
         setPrincipal(null);
         setUser(null);
         setIsAuthenticated(false);
       }
     } else {
+      setIdentity(null);
       setPrincipal(null);
       setUser(null);
       setIsAuthenticated(false);
@@ -119,6 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLoading(true);
     await doLogout();
     setIsAuthenticated(false);
+    setIdentity(null);
     setPrincipal(null);
     setUser(null);
     setLoading(false);
@@ -128,6 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated,
     principal,
     user,
+    identity,
     loading,
     login,
     logout,

@@ -10,6 +10,7 @@ import Dashboard       from './pages/Dashboard';
 import Scanner         from './pages/Scanner';
 import Reports         from './pages/Reports';
 import SafeLocation    from './pages/SafeLocation';
+import SharedLocation  from './pages/SharedLocation';
 import Profile         from './pages/Profile';
 import AdminDashboard  from './pages/AdminDashboard';
 import UserManagement  from './pages/UserManagement';
@@ -79,6 +80,9 @@ export default function App() {
           <Route path="contact"    element={<Contact />} />
           <Route path="coming-soon" element={<ComingSoon />} />
           <Route path="help"       element={<Help />} />
+
+          {/* Public share-link resolution */}
+          <Route path="share/:token" element={<SharedLocation />} />
 
           {/* Lookup sub-routes */}
           <Route path="lookup/*"   element={<Lookup />} />

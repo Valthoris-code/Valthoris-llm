@@ -38,6 +38,10 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          # Without these the production bundle has no Supabase configuration
+          # and every Supabase-backed feature silently no-ops.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Add CNAME and .nojekyll to dist
         run: |

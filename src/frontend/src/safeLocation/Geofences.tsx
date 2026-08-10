@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
 import EmptyState from '../components/ui/EmptyState';
-import { createId, distanceMeters } from './model';
-import type { Geofence } from './model';
+import { distanceMeters } from './model';
+import type { Geofence, GeofenceDraft } from './model';
 import type { DevicePosition } from './useDeviceLocation';
 
 interface Props {
   geofences: Geofence[];
-  onChange: (geofences: Geofence[]) => void;
+  /** Persists a new zone in the safe_location canister. */
+  onAdd: (draft: GeofenceDraft) => Promise<void>;
+  /** Soft-deletes a zone in the safe_location canister. */
+  onDelete: (id: string) => Promise<void>;
   position: DevicePosition | null;
+  loading?: boolean;
+  busy?: boolean;
 }
 
 const EMPTY = { name: '', lat: '', lng: '', radius: '250', kind: 'safe' as Geofence['kind'] };
 
 /** Geofence editor with a live "inside / outside" indicator. */
-export default function Geofences({ geofences, onChange, position }: Props) {
+export default function Geofences({ geofences, onAdd, onDelete, position, loading = false, busy = false }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
 
-  const addGeofence = (event: React.FormEvent) => {
+  const addGeofence = async (event: React.FormEvent) => {
     event.preventDefault();
     const lat = Number.parseFloat(form.lat);
     const lng = Number.parseFloat(form.lng);
@@ -31,20 +36,28 @@ export default function Geofences({ geofences, onChange, position }: Props) {
       return;
     }
     setError('');
-    onChange([
-      ...geofences,
-      {
-        id: createId('fence'),
+    try {
+      await onAdd({
         name: form.name.trim(),
         lat,
         lng,
         radiusMeters: radius,
         kind: form.kind,
-        notifyOnEnter: true,
-        notifyOnExit: true,
-      },
-    ]);
-    setForm(EMPTY);
+        notifyOnEnter: form.kind === 'alert',
+        notifyOnExit: form.kind === 'safe',
+      });
+      setForm(EMPTY);
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const removeGeofence = async (id: string) => {
+    try {
+      await onDelete(id);
+    } catch (e) {
+      setError(String(e));
+    }
   };
 
   const useCurrent = () => {
@@ -56,10 +69,11 @@ export default function Geofences({ geofences, onChange, position }: Props) {
     <section className="card safe-panel">
       <h2 className="section-title">🧭 Geofences</h2>
       <p className="text-muted safe-panel-desc">
-        Define safe zones and alert zones. Entering or leaving a zone will trigger a notification.
+        Define safe zones and alert zones. Zones are stored in the safe_location canister,
+        so they follow your Internet Identity across devices.
       </p>
 
-      <form className="safe-inline-form" onSubmit={addGeofence}>
+      <form className="safe-inline-form" onSubmit={event => void addGeofence(event)}>
         <label className="field">
           <span className="field-label">Zone name</span>
           <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
@@ -87,7 +101,7 @@ export default function Geofences({ geofences, onChange, position }: Props) {
           <button type="button" className="btn-secondary safe-mini-btn" onClick={useCurrent} disabled={!position}>
             📡 Use current
           </button>
-          <button type="submit" className="btn-primary safe-mini-btn">
+          <button type="submit" className="btn-primary safe-mini-btn" disabled={busy}>
             ➕ Add zone
           </button>
         </div>
@@ -95,7 +109,9 @@ export default function Geofences({ geofences, onChange, position }: Props) {
 
       {error && <div className="alert-error mt-2">{error}</div>}
 
-      {geofences.length === 0 ? (
+      {loading ? (
+        <div className="spinner" role="status" aria-label="Loading" />
+      ) : geofences.length === 0 ? (
         <EmptyState icon="🧭" title="No geofences configured" body="Create a safe zone to be notified on entry and exit." />
       ) : (
         <ul className="safe-list">
@@ -122,7 +138,8 @@ export default function Geofences({ geofences, onChange, position }: Props) {
                   <button
                     type="button"
                     className="btn-danger safe-mini-btn"
-                    onClick={() => onChange(geofences.filter(f => f.id !== fence.id))}
+                    onClick={() => void removeGeofence(fence.id)}
+                    disabled={busy}
                     aria-label={`Remove ${fence.name}`}
                   >
                     🗑
