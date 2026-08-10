@@ -3,19 +3,27 @@ import { useParams } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
 import MapPlaceholder from '../components/ui/MapPlaceholder';
-import { useActors } from '../hooks/useActors';
+import { useActorsReady } from '../hooks/useActors';
+import { useAuth } from '../hooks/useAuth';
 import type { LocationData } from '../../../declarations/safe_location/index.d.ts';
 
 /**
  * Public resolver for a safe-location share link (`/share/:token`).
  *
- * Anonymous visitors can resolve tokens that were created without a named
- * recipient; tokens bound to a recipient principal require that principal to
- * be signed in, and the canister enforces that.
+ * The token is extracted from the URL and resolved by the `safe_location`
+ * canister, which is the sole authority on validity: it checks revocation,
+ * expiry and — for shares bound to a named recipient — that the caller's
+ * principal matches. Anonymous visitors can therefore only resolve tokens
+ * created without a recipient.
+ *
+ * The call is deliberately deferred until `useActorsReady` reports that the
+ * session has been restored; issuing it earlier would use the anonymous agent
+ * and a legitimate recipient would be told "Access denied" after a reload.
  */
 export default function SharedLocation() {
   const { token = '' } = useParams<{ token: string }>();
-  const actors = useActors();
+  const { actors, ready } = useActorsReady();
+  const { isAuthenticated, login } = useAuth();
 
   const [location, setLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,8 +54,9 @@ export default function SharedLocation() {
   }, [actors, token]);
 
   useEffect(() => {
+    if (!ready) return;
     void load();
-  }, [load]);
+  }, [ready, load]);
 
   const label = location?.locationLabel?.[0];
   const accuracy = location?.accuracy?.[0];
@@ -60,6 +69,13 @@ export default function SharedLocation() {
         subtitle={`Token: ${token || '—'}`}
       />
 
+      {!isAuthenticated && (
+        <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+          Se esta partilha estiver associada a um destinatário específico, tem de iniciar
+          sessão com esse Internet Identity para a consultar.
+        </p>
+      )}
+
       {loading ? (
         <div className="spinner" role="status" aria-label="A carregar" />
       ) : error ? (
@@ -68,9 +84,16 @@ export default function SharedLocation() {
           title="Ligação indisponível"
           body={error}
           action={
-            <button type="button" className="btn-secondary" onClick={() => void load()}>
-              🔄 Tentar novamente
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button type="button" className="btn-secondary" onClick={() => void load()}>
+                🔄 Tentar novamente
+              </button>
+              {!isAuthenticated && (
+                <button type="button" className="btn-primary" onClick={() => void login()}>
+                  🔐 Iniciar sessão com Internet Identity
+                </button>
+              )}
+            </div>
           }
         />
       ) : location ? (
