@@ -33,9 +33,26 @@ export const idlFactory = ({ IDL }) => {
     alertType : GeofenceAlertType,
     timestamp : IDL.Int,
   });
+  const TrustedContact = IDL.Record({
+    id          : IDL.Text,
+    name        : IDL.Text,
+    handle      : IDL.Text,
+    relation    : IDL.Text,
+    permissions : IDL.Vec(IDL.Text),
+  });
+  const SafeSettings = IDL.Record({
+    owner           : IDL.Text,
+    contacts        : IDL.Vec(TrustedContact),
+    emergencyMode   : IDL.Bool,
+    defaultDuration : IDL.Text,
+    highAccuracy    : IDL.Bool,
+    shareBattery    : IDL.Bool,
+    updatedAt       : IDL.Int,
+  });
   const ShareResult = IDL.Variant({ ok: IDL.Text,         err: IDL.Text });
   const LocResult   = IDL.Variant({ ok: LocationData,     err: IDL.Text });
   const VoidResult  = IDL.Variant({ ok: IDL.Null,         err: IDL.Text });
+  const SettingsResult = IDL.Variant({ ok: SafeSettings,  err: IDL.Text });
 
   return IDL.Service({
     shareLocation        : IDL.Func(
@@ -55,6 +72,11 @@ export const idlFactory = ({ IDL }) => {
     listMyGeofences      : IDL.Func([], [IDL.Vec(GeofenceZone)], ['query']),
     deleteGeofence       : IDL.Func([IDL.Text], [VoidResult], []),
     checkGeofences       : IDL.Func([IDL.Float64, IDL.Float64], [IDL.Vec(GeofenceAlert)], ['query']),
+    getMySettings        : IDL.Func([], [SettingsResult], ['query']),
+    setMySettings        : IDL.Func(
+      [IDL.Vec(TrustedContact), IDL.Bool, IDL.Text, IDL.Bool, IDL.Bool],
+      [SettingsResult], []
+    ),
   });
 };
 

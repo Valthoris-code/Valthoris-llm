@@ -21,7 +21,18 @@ export const idlFactory = ({ IDL }) => {
     isActive     : IDL.Bool,
     registeredAt : IDL.Int,
   });
-  const ProfileResult      = IDL.Variant({ ok: UserProfile, err: IDL.Text });
+  const ProfileDetails = IDL.Record({
+    principal     : IDL.Text,
+    displayName   : IDL.Opt(IDL.Text),
+    avatarUrl     : IDL.Opt(IDL.Text),
+    bio           : IDL.Opt(IDL.Text),
+    country       : IDL.Opt(IDL.Text),
+    publicProfile : IDL.Bool,
+    twoFactor     : IDL.Bool,
+    updatedAt     : IDL.Int,
+  });
+  const ProfileResult        = IDL.Variant({ ok: UserProfile, err: IDL.Text });
+  const ProfileDetailsResult = IDL.Variant({ ok: ProfileDetails, err: IDL.Text });
   const ManagedUserResult  = IDL.Variant({ ok: ManagedUser, err: IDL.Text });
   const ManagedUsersResult = IDL.Variant({ ok: IDL.Vec(ManagedUser), err: IDL.Text });
   const VoidResult         = IDL.Variant({ ok: IDL.Null, err: IDL.Text });
@@ -38,6 +49,11 @@ export const idlFactory = ({ IDL }) => {
     registerUser           : IDL.Func([IDL.Text], [ProfileResult], []),
     getUserProfile         : IDL.Func([], [ProfileResult], ['query']),
     getProfile             : IDL.Func([IDL.Text], [IDL.Opt(UserProfile)], ['query']),
+    getProfileDetails      : IDL.Func([], [ProfileDetailsResult], ['query']),
+    setProfileDetails      : IDL.Func(
+      [IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Bool, IDL.Bool],
+      [ProfileDetailsResult], []
+    ),
     isRegistered           : IDL.Func([], [IDL.Bool], ['query']),
     recordScan             : IDL.Func([], [VoidResult], []),
     recordReport           : IDL.Func([], [VoidResult], []),

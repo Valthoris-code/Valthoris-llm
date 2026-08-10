@@ -55,6 +55,29 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     registeredAt : Int;
   };
 
+  /// Extended profile fields owned by the user.
+  ///
+  /// These live in the canister — not in Supabase — because the Internet
+  /// Identity principal is the only identity the browser actually holds.
+  /// The browser has no Supabase auth session, so `auth.uid()` /
+  /// `request.jwt.claims->>'sub'` can never equal the ICP principal and any
+  /// browser write to `public.profiles` is rejected by RLS. Keeping the
+  /// extended profile here makes reads and writes use the *same* identity,
+  /// which is what makes the data survive a reload on any device.
+  ///
+  /// Stored in its own stable variable so the existing `UserProfile` record
+  /// type stays binary-compatible across canister upgrades.
+  public type ProfileDetails = {
+    principal     : Text;
+    displayName   : ?Text;
+    avatarUrl     : ?Text;
+    bio           : ?Text;
+    country       : ?Text;
+    publicProfile : Bool;
+    twoFactor     : Bool;
+    updatedAt     : Int;
+  };
+
   public type SystemStats = {
     totalUsers : Nat;
     version    : Text;
@@ -62,6 +85,7 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
   };
 
   public type ProfileResult = Result.Result<UserProfile, Text>;
+  public type ProfileDetailsResult = Result.Result<ProfileDetails, Text>;
   public type ManagedUserResult = Result.Result<ManagedUser, Text>;
   public type ManagedUsersResult = Result.Result<[ManagedUser], Text>;
   public type VoidResult    = Result.Result<(), Text>;
@@ -72,6 +96,7 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
 
   stable var usersEntries : [(Text, UserProfile)] = [];
   stable var managedUserEntries : [(Text, ManagedUser)] = [];
+  stable var profileDetailsEntries : [(Text, ProfileDetails)] = [];
   stable let startTime    : Int  = Time.now();
   stable let version      : Text = "1.0.0";
 
@@ -85,9 +110,15 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
       managedUserEntries.vals(), managedUserEntries.size(), Text.equal, Text.hash
     );
 
+  transient var profileDetails : HashMap.HashMap<Text, ProfileDetails> =
+    HashMap.fromIter<Text, ProfileDetails>(
+      profileDetailsEntries.vals(), profileDetailsEntries.size(), Text.equal, Text.hash
+    );
+
   system func preupgrade() {
     usersEntries := Iter.toArray(users.entries());
     managedUserEntries := Iter.toArray(managedUsers.entries());
+    profileDetailsEntries := Iter.toArray(profileDetails.entries());
   };
 
   system func postupgrade() {
@@ -97,8 +128,12 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     managedUsers := HashMap.fromIter<Text, ManagedUser>(
       managedUserEntries.vals(), managedUserEntries.size(), Text.equal, Text.hash
     );
+    profileDetails := HashMap.fromIter<Text, ProfileDetails>(
+      profileDetailsEntries.vals(), profileDetailsEntries.size(), Text.equal, Text.hash
+    );
     usersEntries := [];
     managedUserEntries := [];
+    profileDetailsEntries := [];
   };
 
   // ──────────────────────────────────────────────────────────────────────
@@ -183,14 +218,38 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
     }
   };
 
-  func wouldRemoveLastActiveAdministrator(principal : Text) : Bool {
-    var otherActiveAdmins = 0;
+  func wouldRemoveLastActiveAdministrator(principal : Text) : Bool {    var otherActiveAdmins = 0;
     for ((key, user) in managedUsers.entries()) {
       if (key != principal and user.role == #administrator and user.isActive) {
         otherActiveAdmins += 1;
       };
     };
     otherActiveAdmins == 0
+  };
+
+  /// Trim surrounding whitespace and collapse an empty result to `null`, so a
+  /// cleared form field erases the stored value instead of storing "".
+  func trimmedOpt(value : ?Text) : ?Text {
+    switch (value) {
+      case null null;
+      case (?raw) {
+        let trimmed = Text.trim(raw, #char ' ');
+        if (Text.size(trimmed) == 0) null else ?trimmed
+      };
+    }
+  };
+
+  func emptyDetails(principal : Text) : ProfileDetails {
+    {
+      principal     = principal;
+      displayName   = null;
+      avatarUrl     = null;
+      bio           = null;
+      country       = null;
+      publicProfile = false;
+      twoFactor     = false;
+      updatedAt     = 0;
+    }
   };
 
   // ──────────────────────────────────────────────────────────────────────
@@ -331,6 +390,85 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
       case (?p) #ok(p);
       case null #err("User not registered");
     }
+  };
+
+  /// Return the caller's extended profile (avatar, bio, preferences).
+  /// Returns an empty, unsaved record when the caller never saved one, so the
+  /// UI can distinguish "nothing stored yet" from a read failure.
+  public shared query(msg) func getProfileDetails() : async ProfileDetailsResult {
+    if (isAnonymousCaller(msg.caller)) {
+      return #err("Authentication required");
+    };
+    let key = pt(msg.caller);
+    switch (profileDetails.get(key)) {
+      case (?d) #ok(d);
+      case null #ok(emptyDetails(key));
+    }
+  };
+
+  /// Create or replace the caller's extended profile.
+  /// Every field is validated here: the canister — not the browser — is the
+  /// authority for what ends up persisted.
+  public shared(msg) func setProfileDetails(
+    displayName   : ?Text,
+    avatarUrl     : ?Text,
+    bio           : ?Text,
+    country       : ?Text,
+    publicProfile : Bool,
+    twoFactor     : Bool,
+  ) : async ProfileDetailsResult {
+    if (isAnonymousCaller(msg.caller)) {
+      return #err("Authentication required");
+    };
+    if (not callerIsActive(msg.caller)) {
+      return #err("User account is inactive");
+    };
+    let key = pt(msg.caller);
+    if (users.get(key) == null) {
+      return #err("User not registered");
+    };
+
+    let cleanName = trimmedOpt(displayName);
+    switch (cleanName) {
+      case (?n) { if (Text.size(n) > 64) return #err("displayName must be at most 64 characters") };
+      case null ();
+    };
+
+    let cleanAvatar = trimmedOpt(avatarUrl);
+    switch (cleanAvatar) {
+      case (?u) {
+        if (Text.size(u) > 512) return #err("avatarUrl must be at most 512 characters");
+        if (not (Text.startsWith(u, #text "https://") or Text.startsWith(u, #text "http://"))) {
+          return #err("avatarUrl must be an http(s) URL");
+        };
+      };
+      case null ();
+    };
+
+    let cleanBio = trimmedOpt(bio);
+    switch (cleanBio) {
+      case (?b) { if (Text.size(b) > 500) return #err("bio must be at most 500 characters") };
+      case null ();
+    };
+
+    let cleanCountry = trimmedOpt(country);
+    switch (cleanCountry) {
+      case (?c) { if (Text.size(c) > 64) return #err("country must be at most 64 characters") };
+      case null ();
+    };
+
+    let details : ProfileDetails = {
+      principal     = key;
+      displayName   = cleanName;
+      avatarUrl     = cleanAvatar;
+      bio           = cleanBio;
+      country       = cleanCountry;
+      publicProfile = publicProfile;
+      twoFactor     = twoFactor;
+      updatedAt     = Time.now();
+    };
+    profileDetails.put(key, details);
+    #ok(details)
   };
 
   /// Return any user's public profile by their principal string.

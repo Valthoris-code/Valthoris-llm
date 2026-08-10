@@ -57,9 +57,32 @@ persistent actor SafeLocation {
     timestamp : Int;
   };
 
+  /// A person the owner trusts with their location. `permissions` holds the
+  /// permission ids used by the UI ("view-live", "receive-sos", …).
+  public type TrustedContact = {
+    id          : Text;
+    name        : Text;
+    handle      : Text;
+    relation    : Text;
+    permissions : [Text];
+  };
+
+  /// Per-owner Safe Location configuration. Authoritative copy of what the UI
+  /// previously kept in browser storage only.
+  public type SafeSettings = {
+    owner           : Text;
+    contacts        : [TrustedContact];
+    emergencyMode   : Bool;
+    defaultDuration : Text;
+    highAccuracy    : Bool;
+    shareBattery    : Bool;
+    updatedAt       : Int;
+  };
+
   public type ShareResult  = Result.Result<Text, Text>;
   public type LocResult    = Result.Result<LocationData, Text>;
   public type VoidResult   = Result.Result<(), Text>;
+  public type SettingsResult = Result.Result<SafeSettings, Text>;
 
   // ──────────────────────────────────────────────────────────────────────
   // Stable storage
@@ -68,6 +91,7 @@ persistent actor SafeLocation {
   stable var sharesEntries    : [(Text, ShareInfo)]    = [];
   stable var locationsEntries : [(Text, LocationData)] = [];
   stable var geofencesEntries : [(Text, GeofenceZone)] = [];
+  stable var settingsEntries  : [(Text, SafeSettings)] = [];
   stable var shareCounter     : Nat                    = 0;
   stable var geofenceCounter  : Nat                    = 0;
 
@@ -77,20 +101,25 @@ persistent actor SafeLocation {
     HashMap.fromIter<Text, LocationData>(locationsEntries.vals(), locationsEntries.size(), Text.equal, Text.hash);
   transient var geofences : HashMap.HashMap<Text, GeofenceZone> =
     HashMap.fromIter<Text, GeofenceZone>(geofencesEntries.vals(), geofencesEntries.size(), Text.equal, Text.hash);
+  transient var settings  : HashMap.HashMap<Text, SafeSettings> =
+    HashMap.fromIter<Text, SafeSettings>(settingsEntries.vals(), settingsEntries.size(), Text.equal, Text.hash);
 
   system func preupgrade() {
     sharesEntries    := Iter.toArray(shares.entries());
     locationsEntries := Iter.toArray(locations.entries());
     geofencesEntries := Iter.toArray(geofences.entries());
+    settingsEntries  := Iter.toArray(settings.entries());
   };
 
   system func postupgrade() {
     shares    := HashMap.fromIter<Text, ShareInfo>(sharesEntries.vals(), sharesEntries.size(), Text.equal, Text.hash);
     locations := HashMap.fromIter<Text, LocationData>(locationsEntries.vals(), locationsEntries.size(), Text.equal, Text.hash);
     geofences := HashMap.fromIter<Text, GeofenceZone>(geofencesEntries.vals(), geofencesEntries.size(), Text.equal, Text.hash);
+    settings  := HashMap.fromIter<Text, SafeSettings>(settingsEntries.vals(), settingsEntries.size(), Text.equal, Text.hash);
     sharesEntries    := [];
     locationsEntries := [];
     geofencesEntries := [];
+    settingsEntries  := [];
   };
 
   // ──────────────────────────────────────────────────────────────────────
@@ -321,5 +350,77 @@ persistent actor SafeLocation {
       };
     };
     Buffer.toArray(buf)
+  };
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Public API — Owner settings & trusted contacts
+  // ──────────────────────────────────────────────────────────────────────
+
+  let MAX_CONTACTS  = 50;
+  let MAX_TEXT_LEN  = 256;
+  let MAX_PERMS     = 16;
+
+  func defaultSettings(owner : Text) : SafeSettings {
+    {
+      owner           = owner;
+      contacts        = [];
+      emergencyMode   = false;
+      defaultDuration = "1h";
+      highAccuracy    = true;
+      shareBattery    = false;
+      updatedAt       = 0;
+    }
+  };
+
+  func validContact(c : TrustedContact) : Bool {
+    Text.size(c.id) > 0
+      and Text.size(c.id)       <= MAX_TEXT_LEN
+      and Text.size(c.name)     <= MAX_TEXT_LEN
+      and Text.size(c.handle)   <= MAX_TEXT_LEN
+      and Text.size(c.relation) <= MAX_TEXT_LEN
+      and c.permissions.size()  <= MAX_PERMS
+  };
+
+  /// Read the caller's Safe Location configuration.
+  /// Returns the defaults when nothing has been saved yet, so the UI always
+  /// hydrates from the canister instead of from browser storage.
+  public shared query(msg) func getMySettings() : async SettingsResult {
+    if (isAnonymous(msg.caller)) return #err("Authentication required");
+    let caller = pt(msg.caller);
+    switch (settings.get(caller)) {
+      case (?s) #ok(s);
+      case null #ok(defaultSettings(caller));
+    }
+  };
+
+  /// Persist the caller's Safe Location configuration (trusted contacts,
+  /// emergency mode and device preferences). Owner-scoped: a caller can only
+  /// ever read or write their own record.
+  public shared(msg) func setMySettings(
+    contacts        : [TrustedContact],
+    emergencyMode   : Bool,
+    defaultDuration : Text,
+    highAccuracy    : Bool,
+    shareBattery    : Bool,
+  ) : async SettingsResult {
+    if (isAnonymous(msg.caller))                return #err("Authentication required");
+    if (contacts.size() > MAX_CONTACTS)         return #err("Too many trusted contacts");
+    if (Text.size(defaultDuration) > 16)        return #err("Invalid default duration");
+    for (c in contacts.vals()) {
+      if (not validContact(c)) return #err("Invalid trusted contact");
+    };
+
+    let caller  = pt(msg.caller);
+    let updated : SafeSettings = {
+      owner           = caller;
+      contacts        = contacts;
+      emergencyMode   = emergencyMode;
+      defaultDuration = defaultDuration;
+      highAccuracy    = highAccuracy;
+      shareBattery    = shareBattery;
+      updatedAt       = Time.now();
+    };
+    settings.put(caller, updated);
+    #ok(updated)
   };
 }

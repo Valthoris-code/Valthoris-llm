@@ -39,9 +39,28 @@ export interface GeofenceAlert {
   timestamp : bigint;
 }
 
+export interface TrustedContact {
+  id          : string;
+  name        : string;
+  handle      : string;
+  relation    : string;
+  permissions : string[];
+}
+
+export interface SafeSettings {
+  owner           : string;
+  contacts        : TrustedContact[];
+  emergencyMode   : boolean;
+  defaultDuration : string;
+  highAccuracy    : boolean;
+  shareBattery    : boolean;
+  updatedAt       : bigint;
+}
+
 export type ShareResult = { ok: string }       | { err: string };
 export type LocResult   = { ok: LocationData } | { err: string };
 export type VoidResult  = { ok: null }         | { err: string };
+export type SettingsResult = { ok: SafeSettings } | { err: string };
 
 export interface _SERVICE {
   shareLocation        : ActorMethod<[number, number, [] | [number], bigint, [] | [string], [] | [string]], ShareResult>;
@@ -53,6 +72,8 @@ export interface _SERVICE {
   listMyGeofences      : ActorMethod<[], GeofenceZone[]>;
   deleteGeofence       : ActorMethod<[string], VoidResult>;
   checkGeofences       : ActorMethod<[number, number], GeofenceAlert[]>;
+  getMySettings        : ActorMethod<[], SettingsResult>;
+  setMySettings        : ActorMethod<[TrustedContact[], boolean, string, boolean, boolean], SettingsResult>;
 }
 
 export declare const idlFactory: ({ IDL }: { IDL: any }) => any;

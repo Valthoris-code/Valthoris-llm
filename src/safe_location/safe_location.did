@@ -37,9 +37,28 @@ type GeofenceAlert = record {
   timestamp : int;
 };
 
+type TrustedContact = record {
+  id          : text;
+  name        : text;
+  handle      : text;
+  relation    : text;
+  permissions : vec text;
+};
+
+type SafeSettings = record {
+  owner           : text;
+  contacts        : vec TrustedContact;
+  emergencyMode   : bool;
+  defaultDuration : text;
+  highAccuracy    : bool;
+  shareBattery    : bool;
+  updatedAt       : int;
+};
+
 type ShareResult = variant { ok : text;         err : text };
 type LocResult   = variant { ok : LocationData; err : text };
 type VoidResult  = variant { ok;                err : text };
+type SettingsResult = variant { ok : SafeSettings; err : text };
 
 service : {
   shareLocation         : (float64, float64, opt float64, nat, opt text, opt text) -> (ShareResult);
@@ -51,4 +70,6 @@ service : {
   listMyGeofences       : ()                                                       -> (vec GeofenceZone) query;
   deleteGeofence        : (text)                                                   -> (VoidResult);
   checkGeofences        : (float64, float64)                                       -> (vec GeofenceAlert) query;
+  getMySettings         : ()                                                       -> (SettingsResult) query;
+  setMySettings         : (vec TrustedContact, bool, text, bool, bool)             -> (SettingsResult);
 };

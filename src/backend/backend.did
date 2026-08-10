@@ -23,13 +23,25 @@ type ManagedUser = record {
   registeredAt : int;
 };
 
+type ProfileDetails = record {
+  principal     : text;
+  displayName   : opt text;
+  avatarUrl     : opt text;
+  bio           : opt text;
+  country       : opt text;
+  publicProfile : bool;
+  twoFactor     : bool;
+  updatedAt     : int;
+};
+
 type SystemStats = record {
   totalUsers : nat;
   version    : text;
   startTime  : int;
 };
 
-type ProfileResult      = variant { ok : UserProfile; err : text };
+type ProfileResult        = variant { ok : UserProfile; err : text };
+type ProfileDetailsResult = variant { ok : ProfileDetails; err : text };
 type ManagedUserResult  = variant { ok : ManagedUser; err : text };
 type ManagedUsersResult = variant { ok : vec ManagedUser; err : text };
 type VoidResult         = variant { ok; err : text };
@@ -42,6 +54,8 @@ service : (principal) -> {
   registerUser           : (text)  -> (ProfileResult);
   getUserProfile         : ()      -> (ProfileResult) query;
   getProfile             : (text)  -> (opt UserProfile) query;
+  getProfileDetails      : ()      -> (ProfileDetailsResult) query;
+  setProfileDetails      : (opt text, opt text, opt text, opt text, bool, bool) -> (ProfileDetailsResult);
   isRegistered           : ()      -> (bool) query;
   recordScan             : ()      -> (VoidResult);
   recordReport           : ()      -> (VoidResult);

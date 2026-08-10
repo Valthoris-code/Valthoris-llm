@@ -12,10 +12,12 @@ import TrustedContacts from '../safeLocation/TrustedContacts';
 import Geofences from '../safeLocation/Geofences';
 import { useDeviceLocation } from '../safeLocation/useDeviceLocation';
 import {
+  DEFAULT_SETTINGS,
   SHARE_DURATIONS,
   UNTIL_DISABLED_TTL_SECONDS,
-  loadSettings,
-  saveSettings,
+  fetchSettings,
+  getCachedSettings,
+  persistSettings,
 } from '../safeLocation/model';
 import type { Geofence, GeofenceDraft, SafeLocationSettings, ShareDurationId } from '../safeLocation/model';
 import { buildShareUrl, copyToClipboard } from '../safeLocation/shareLink';
@@ -46,13 +48,14 @@ const TABS: Array<{ id: TabId; icon: string; label: string }> = [
 ];
 
 export default function SafeLocation() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, principal } = useAuth();
   const { actors, ready } = useActorsReady();
   const navigate = useNavigate();
   const { t } = useI18n();
   const { toast } = useToast();
 
-  const [settings, setSettings] = useState<SafeLocationSettings>(() => loadSettings());
+  const [settings, setSettings] = useState<SafeLocationSettings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [tab, setTab] = useState<TabId>('map');
   const [shares, setShares] = useState<ShareInfo[]>([]);
   const [geofences, setGeofences] = useState<Geofence[]>([]);
@@ -61,17 +64,46 @@ export default function SafeLocation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [duration, setDuration] = useState<ShareDurationId>(settings.defaultDuration);
+  const [duration, setDuration] = useState<ShareDurationId>(DEFAULT_SETTINGS.defaultDuration);
   const [label, setLabel] = useState('');
   const [recipient, setRecipient] = useState('');
   const [lastShareUrl, setLastShareUrl] = useState('');
 
   const device = useDeviceLocation(settings.highAccuracy);
 
-  const persist = useCallback((next: SafeLocationSettings) => {
+  /**
+   * Optimistically applies the change, then writes it to the canister.
+   * A rejected write is rolled back and surfaced — never shown as a success.
+   */
+  const persist = useCallback(async (next: SafeLocationSettings) => {
+    if (!principal) {
+      setError('Sign in with Internet Identity before changing Safe Location settings.');
+      return;
+    }
+    const previous = settings;
     setSettings(next);
-    saveSettings(next);
-  }, []);
+    try {
+      setSettings(await persistSettings(actors.safeLocation, principal, next));
+    } catch (e) {
+      setSettings(previous);
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [actors, principal, settings]);
+
+  const loadSafeSettings = useCallback(async () => {
+    if (!principal) return;
+    // Paint the cached copy immediately, then replace it with the canister truth.
+    setSettings(getCachedSettings(principal));
+    try {
+      const stored = await fetchSettings(actors.safeLocation, principal);
+      setSettings(stored);
+      setDuration(stored.defaultDuration);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSettingsLoaded(true);
+    }
+  }, [actors, principal]);
 
   const loadShares = useCallback(async () => {
     setLoading(true);
@@ -105,9 +137,10 @@ export default function SafeLocation() {
     // The canister rejects anonymous callers, so wait for the identity-bound
     // actors before issuing the first call.
     if (!ready) return;
+    void loadSafeSettings();
     void loadShares();
     void loadGeofences();
-  }, [authLoading, isAuthenticated, navigate, ready, loadShares, loadGeofences]);
+  }, [authLoading, isAuthenticated, navigate, ready, loadSafeSettings, loadShares, loadGeofences]);
 
   const handleAddGeofence = useCallback(async (draft: GeofenceDraft) => {
     setGeofenceBusy(true);
@@ -224,7 +257,7 @@ export default function SafeLocation() {
   };
 
   const triggerSos = () => {
-    persist({ ...settings, emergencyMode: true });
+    void persist({ ...settings, emergencyMode: true });
     device.startWatching();
     // TODO(backend): notify every trusted contact with `receive-sos` permission
     // and open an emergency incident in the safe_location canister.
@@ -261,7 +294,7 @@ export default function SafeLocation() {
                 type="button"
                 className="btn-secondary"
                 onClick={() => {
-                  persist({ ...settings, emergencyMode: false });
+                  void persist({ ...settings, emergencyMode: false });
                   device.stopWatching();
                 }}
               >
@@ -354,13 +387,13 @@ export default function SafeLocation() {
                 label="High accuracy"
                 description="Uses GNSS when available. Higher battery consumption."
                 checked={settings.highAccuracy}
-                onChange={value => persist({ ...settings, highAccuracy: value })}
+                onChange={value => void persist({ ...settings, highAccuracy: value })}
               />
               <Toggle
                 label="Share battery level"
                 description="Include the device battery level with each update."
                 checked={settings.shareBattery}
-                onChange={value => persist({ ...settings, shareBattery: value })}
+                onChange={value => void persist({ ...settings, shareBattery: value })}
               />
             </section>
 
@@ -378,7 +411,7 @@ export default function SafeLocation() {
                       checked={duration === option.id}
                       onChange={() => {
                         setDuration(option.id);
-                        persist({ ...settings, defaultDuration: option.id });
+                        void persist({ ...settings, defaultDuration: option.id });
                       }}
                     />
                     {t(option.labelKey)}
@@ -456,8 +489,9 @@ export default function SafeLocation() {
 
       {tab === 'contacts' && (
         <TrustedContacts
+          loading={!settingsLoaded}
           contacts={settings.contacts}
-          onChange={contacts => persist({ ...settings, contacts })}
+          onChange={contacts => void persist({ ...settings, contacts })}
         />
       )}
 

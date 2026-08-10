@@ -22,13 +22,25 @@ export interface ManagedUser {
   registeredAt : bigint;
 }
 
+export interface ProfileDetails {
+  principal     : string;
+  displayName   : [] | [string];
+  avatarUrl     : [] | [string];
+  bio           : [] | [string];
+  country       : [] | [string];
+  publicProfile : boolean;
+  twoFactor     : boolean;
+  updatedAt     : bigint;
+}
+
 export interface SystemStats {
   totalUsers : bigint;
   version    : string;
   startTime  : bigint;
 }
 
-export type ProfileResult      = { ok: UserProfile } | { err: string };
+export type ProfileResult        = { ok: UserProfile }    | { err: string };
+export type ProfileDetailsResult = { ok: ProfileDetails } | { err: string };
 export type ManagedUserResult  = { ok: ManagedUser } | { err: string };
 export type ManagedUsersResult = { ok: ManagedUser[] } | { err: string };
 export type VoidResult         = { ok: null } | { err: string };
@@ -41,6 +53,11 @@ export interface _SERVICE {
   registerUser           : ActorMethod<[string], ProfileResult>;
   getUserProfile         : ActorMethod<[], ProfileResult>;
   getProfile             : ActorMethod<[string], [] | [UserProfile]>;
+  getProfileDetails      : ActorMethod<[], ProfileDetailsResult>;
+  setProfileDetails      : ActorMethod<
+    [[] | [string], [] | [string], [] | [string], [] | [string], boolean, boolean],
+    ProfileDetailsResult
+  >;
   isRegistered           : ActorMethod<[], boolean>;
   recordScan             : ActorMethod<[], VoidResult>;
   recordReport           : ActorMethod<[], VoidResult>;

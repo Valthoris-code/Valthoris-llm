@@ -2,24 +2,24 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-type AuthView = 'login' | 'register' | 'forgot' | 'reset';
+type AuthView = 'login' | 'register' | 'recovery';
 
 export default function AuthPage() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<AuthView>('login');
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleIICLogin = async () => {
-    await login();
-    navigate('/dashboard');
-  };
-
-  const handleForgot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Connect to password reset service
-    setSubmitted(true);
+    setError('');
+    try {
+      await login();
+      navigate('/dashboard');
+    } catch (e) {
+      // A cancelled or failed Internet Identity flow must never look like a
+      // successful sign-in.
+      setError(e instanceof Error ? e.message : String(e));
+    }
   };
 
   return (
@@ -43,6 +43,7 @@ export default function AuthPage() {
           {view === 'login' && (
             <>
               <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Sign In</h2>
+              {error && <div className="alert-error mb-2" role="alert">⚠ {error}</div>}
               <button
                 className="btn-primary"
                 style={{ width: '100%', padding: '0.65rem', marginBottom: '1.25rem' }}
@@ -58,10 +59,10 @@ export default function AuthPage() {
               </div>
               <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 <p style={{ margin: '0 0 0.5rem' }}>
-                  Email/password authentication — <span style={{ color: 'var(--accent-amber)' }}>coming soon</span>
+                  VALTHORIS has no password: Internet Identity is the only authentication authority.
                 </p>
-                <button onClick={() => setView('forgot')} style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', fontSize: '0.82rem' }}>
-                  Forgot password?
+                <button onClick={() => setView('recovery')} style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', fontSize: '0.82rem' }}>
+                  Lost access to your identity?
                 </button>
               </div>
               <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
@@ -95,25 +96,24 @@ export default function AuthPage() {
             </>
           )}
 
-          {view === 'forgot' && (
+          {view === 'recovery' && (
             <>
-              <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Reset Password</h2>
-              {submitted ? (
-                <div className="alert-success">✅ If an account exists, you'll receive reset instructions.</div>
-              ) : (
-                <form onSubmit={handleForgot}>
-                  <div className="mb-2">
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Email Address</label>
-                    <input type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
-                  </div>
-                  <button type="submit" className="btn-primary" style={{ width: '100%', padding: '0.55rem' }}>
-                    Send Reset Link
-                  </button>
-                  <p style={{ margin: '0.75rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    TODO: Connect to password reset service
-                  </p>
-                </form>
-              )}
+              <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Identity recovery</h2>
+              <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                VALTHORIS never stores a password and cannot reset your account. Your
+                account is your Internet Identity anchor, and recovery is handled entirely
+                by Internet Identity using the recovery phrase or recovery device you
+                configured there.
+              </p>
+              <a
+                className="btn-primary"
+                href="https://identity.ic0.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'block', textAlign: 'center', padding: '0.55rem', textDecoration: 'none' }}
+              >
+                🔐 Open Internet Identity recovery
+              </a>
               <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.82rem' }}>
                 <button onClick={() => setView('login')} style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', fontSize: '0.82rem' }}>
                   ← Back to Sign In

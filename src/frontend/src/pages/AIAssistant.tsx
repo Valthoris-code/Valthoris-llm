@@ -1,4 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  AI_BACKEND_CONFIG_ERROR,
+  isAiBackendConfigured,
+  sendChat,
+} from '../services/aiChatService';
+import type { AiChatMessage } from '../services/aiChatService';
 
 interface Message {
   id: string;
@@ -6,6 +12,8 @@ interface Message {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  /** Set when the backend call failed — rendered as an error, never as an answer. */
+  isError?: boolean;
 }
 
 interface Conversation {
@@ -73,8 +81,16 @@ function MessageBubble({ msg }: { msg: Message }) {
         {isUser ? '👤' : '🛡'}
       </div>
       <div style={{
-        background: isUser ? 'var(--accent-blue)' : 'rgba(10,37,64,0.9)',
-        border: isUser ? 'none' : '1px solid rgba(0,212,255,0.15)',
+        background: isUser
+          ? 'var(--accent-blue)'
+          : msg.isError
+            ? 'rgba(255,71,87,0.12)'
+            : 'rgba(10,37,64,0.9)',
+        border: isUser
+          ? 'none'
+          : msg.isError
+            ? '1px solid var(--accent-red, #ff4757)'
+            : '1px solid rgba(0,212,255,0.15)',
         borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
         padding: '0.65rem 1rem',
         maxWidth: '100%',
@@ -84,7 +100,12 @@ function MessageBubble({ msg }: { msg: Message }) {
         {msg.isStreaming ? (
           <TypingIndicator />
         ) : (
-          <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</span>
+          <span
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+            role={msg.isError ? 'alert' : undefined}
+          >
+            {msg.isError ? `⚠ ${msg.content}` : msg.content}
+          </span>
         )}
         <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', textAlign: 'right' }}>
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -98,6 +119,7 @@ export default function AIAssistant() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
   const [dragging, setDragging] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -129,62 +151,79 @@ export default function AIAssistant() {
   }, []);
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim()) return;
+    const content = text.trim();
+    if (!content || sending) return;
 
     let convId = activeId;
     if (!convId) {
       convId = createConversation();
     }
+    const targetId = convId;
 
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-user`,
       role: 'user',
-      content: text.trim(),
+      content,
       timestamp: new Date(),
     };
 
-    // Update title from first message
-    setConversations(prev => prev.map(c => c.id === convId
-      ? { ...c, title: text.slice(0, 40), messages: [...c.messages, userMsg] }
-      : c
-    ));
-    setInput('');
-
-    // Simulate streaming assistant response
-    // TODO: Replace with real backend/AI integration
+    const thinkingId = `${Date.now()}-assistant`;
     const thinkingMsg: Message = {
-      id: (Date.now() + 1).toString(),
+      id: thinkingId,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
       isStreaming: true,
     };
 
-    setConversations(prev => prev.map(c => c.id === convId
-      ? { ...c, messages: [...c.messages, thinkingMsg] }
-      : c
-    ));
+    // Request payload = the conversation as it stands *before* this turn plus
+    // the new user message. Failed turns are never replayed to the model as if
+    // they had been real assistant answers.
+    let history: AiChatMessage[] = [];
+    setConversations(prev => prev.map(c => {
+      if (c.id !== targetId) return c;
+      history = c.messages
+        .filter(m => !m.isStreaming && !m.isError && m.content.length > 0)
+        .map(m => ({ role: m.role, content: m.content }));
+      return {
+        ...c,
+        title: c.messages.length === 0 ? content.slice(0, 40) : c.title,
+        messages: [...c.messages, userMsg, thinkingMsg],
+      };
+    }));
+    setInput('');
+    setSending(true);
 
-    await new Promise(r => setTimeout(r, 1200));
+    const replaceThinking = (patch: Partial<Message>) => {
+      setConversations(prev => prev.map(c => c.id === targetId
+        ? {
+            ...c,
+            messages: c.messages.map(m => m.id === thinkingId
+              ? { ...m, isStreaming: false, ...patch }
+              : m
+            ),
+          }
+        : c
+      ));
+    };
 
-    const responseText = `I'm the VALTHORIS AI Security Assistant. You asked: "${text}"\n\n⚠ Backend integration pending. This is a UI placeholder prepared for AI engine connection.\n\nOnce connected, I will analyze threats, scan URLs, check wallets, and provide real-time cybersecurity intelligence.`;
-
-    setConversations(prev => prev.map(c => c.id === convId
-      ? {
-          ...c,
-          messages: c.messages.map(m => m.id === thinkingMsg.id
-            ? { ...m, content: responseText, isStreaming: false }
-            : m
-          ),
-        }
-      : c
-    ));
-  }, [activeId, createConversation]);
+    try {
+      const reply = await sendChat([...history, { role: 'user', content }]);
+      replaceThinking({ content: reply.content });
+    } catch (err) {
+      replaceThinking({
+        content: err instanceof Error ? err.message : String(err),
+        isError: true,
+      });
+    } finally {
+      setSending(false);
+    }
+  }, [activeId, createConversation, sending]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(input);
+      void sendMessage(input);
     }
   };
 
@@ -267,7 +306,12 @@ export default function AIAssistant() {
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>VALTHORIS AI Assistant</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Cybersecurity Intelligence • <span style={{ color: 'var(--accent-amber)' }}>Backend integration pending</span>
+              Cybersecurity Intelligence •{' '}
+              {isAiBackendConfigured ? (
+                <span style={{ color: 'var(--accent-green)' }}>Backend connected</span>
+              ) : (
+                <span style={{ color: 'var(--accent-red, #ff4757)' }}>Backend not configured</span>
+              )}
             </div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
@@ -305,6 +349,12 @@ export default function AIAssistant() {
               color: 'var(--accent-cyan)',
             }}>
               Drop files to attach
+            </div>
+          )}
+
+          {!isAiBackendConfigured && (
+            <div className="alert-error" role="alert" style={{ fontSize: '0.82rem' }}>
+              {AI_BACKEND_CONFIG_ERROR}
             </div>
           )}
 
@@ -418,25 +468,26 @@ export default function AIAssistant() {
             />
 
             <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim()}
+              onClick={() => void sendMessage(input)}
+              disabled={!input.trim() || sending}
+              aria-label="Send message"
               style={{
-                background: input.trim() ? 'var(--accent-cyan)' : 'var(--border)',
+                background: input.trim() && !sending ? 'var(--accent-cyan)' : 'var(--border)',
                 border: 'none',
                 borderRadius: 8,
-                color: input.trim() ? 'var(--bg-primary)' : 'var(--text-muted)',
-                cursor: input.trim() ? 'pointer' : 'default',
+                color: input.trim() && !sending ? 'var(--bg-primary)' : 'var(--text-muted)',
+                cursor: input.trim() && !sending ? 'pointer' : 'default',
                 padding: '0.4rem 0.7rem',
                 fontSize: '1rem',
                 flexShrink: 0,
                 transition: 'background 0.15s',
               }}
             >
-              ➤
+              {sending ? '⏳' : '➤'}
             </button>
           </div>
           <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.4rem 0 0' }}>
-            VALTHORIS AI may produce errors. Verify critical information. Backend integration pending.
+            VALTHORIS AI may produce errors. Verify critical information.
           </p>
         </div>
       </div>
