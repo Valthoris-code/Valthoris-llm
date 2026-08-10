@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MapPlaceholder from '../components/ui/MapPlaceholder';
 import EmptyState from '../components/ui/EmptyState';
 import { useI18n } from '../i18n/useI18n';
+import { useActorsReady } from '../hooks/useActors';
 
 const REGIONS = ['All', 'Europe', 'Americas', 'Asia', 'Africa', 'Oceania'];
 const SEVERITIES = ['All', 'Low', 'Medium', 'High', 'Critical'] as const;
@@ -20,14 +21,15 @@ const LAYERS: Array<{ id: LayerId; labelKey: string }> = [
  * Radar Global — global threat map.
  *
  * The filters, layers and timeline are fully wired in the UI. The map surface
- * is the shared OpenStreetMap placeholder; swapping it for Leaflet will not
- * require changes here.
+ * is the shared OpenStreetMap view.
  *
- * TODO(backend): load geo-tagged threat events from the threat_intelligence
- * canister and feed them into the layers below.
+ * The counters below are read from the `threat_intelligence` and `community`
+ * canisters. Valthoris does not store coordinates for threat indicators, so no
+ * markers are plotted: fabricating positions would be worse than showing none.
  */
 export default function RadarGlobal() {
   const { t } = useI18n();
+  const { actors, ready } = useActorsReady();
 
   const [region, setRegion] = useState('All');
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>('All');
@@ -37,6 +39,39 @@ export default function RadarGlobal() {
   const [date, setDate] = useState('');
   const [layers, setLayers] = useState<LayerId[]>(['heatmap', 'markers']);
   const [timelineHour, setTimelineHour] = useState(23);
+
+  const [activeThreats, setActiveThreats] = useState<string>('—');
+  const [criticalThreats, setCriticalThreats] = useState<string>('—');
+  const [communityReports, setCommunityReports] = useState<string>('—');
+  const [lastUpdate, setLastUpdate] = useState<string>('Status unavailable');
+  const [statsError, setStatsError] = useState('');
+
+  const loadStats = useCallback(async () => {
+    const failures: string[] = [];
+    try {
+      const stats = await actors.threatIntelligence.getStats();
+      setActiveThreats(String(stats.activeThreats));
+      setCriticalThreats(String(stats.criticalThreats));
+    } catch (err) {
+      setActiveThreats('—');
+      setCriticalThreats('—');
+      failures.push(`threat_intelligence: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    try {
+      const stats = await actors.community.getStats();
+      setCommunityReports(String(stats.totalReports));
+    } catch (err) {
+      setCommunityReports('—');
+      failures.push(`community: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    setStatsError(failures.join(' | '));
+    setLastUpdate(failures.length > 0 ? 'Status unavailable' : new Date().toLocaleTimeString());
+  }, [actors]);
+
+  useEffect(() => {
+    if (!ready) return;
+    void loadStats();
+  }, [ready, loadStats]);
 
   const toggleLayer = (id: LayerId) =>
     setLayers(prev => (prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]));
@@ -163,8 +198,8 @@ export default function RadarGlobal() {
         <div className="radar-overlay">
           <EmptyState
             icon="🛰"
-            title="No threat events loaded"
-            body="Leaflet + OpenStreetMap layers are prepared. Events will appear once the threat intelligence feed is connected."
+            title="No geo-located threat events"
+            body="The threat feed stores indicators without coordinates, so nothing is plotted on the map. The counters below are live canister data."
           />
         </div>
       </MapPlaceholder>
@@ -187,12 +222,14 @@ export default function RadarGlobal() {
         </div>
       )}
 
+      {statsError && <div className="alert-error mt-2">{statsError}</div>}
+
       <div className="radar-stats">
         {[
-          { label: 'Active threats', value: '—' },
-          { label: 'Reports today', value: '—' },
-          { label: 'Countries', value: '—' },
-          { label: 'Last update', value: 'Pending' },
+          { label: 'Active threats (threat_intelligence)', value: activeThreats },
+          { label: 'Critical threats', value: criticalThreats },
+          { label: 'Community reports', value: communityReports },
+          { label: 'Last update', value: lastUpdate },
         ].map(stat => (
           <div key={stat.label} className="radar-stat">
             <strong>{stat.value}</strong>
