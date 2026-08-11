@@ -1,0 +1,121 @@
+name: Upgrade ICP canisters
+
+# Upgrades the EXISTING production canisters listed in canister_ids.json.
+#
+#   frontend            v63rh-lqaaa-aaaaa-qewvq-cai
+#   backend             c6sjf-tqaaa-aaaap-qsiea-cai
+#   community           7w5qg-6aaaa-aaaab-ael4a-cai
+#   identity            ezroe-caaaa-aaaac-bcdeq-cai
+#   threat_intelligence e2m3q-yqaaa-aaaas-qekva-cai
+#   safe_location       sodv3-uiaaa-aaaak-qxubq-cai
+#
+# Safety rules enforced below:
+#   • Motoko canisters are deployed with an explicit `--mode upgrade`, so a
+#     reinstall (which would destroy all stored profiles) cannot happen, not
+#     even accidentally.
+#   • Canister ids come from canister_ids.json — no canister is ever created.
+#   • The workflow is manual (workflow_dispatch) and takes the canister to
+#     upgrade as an input.
+#
+# Required repository secrets:
+#   DFX_IDENTITY_PEM  — PEM of an identity that controls the canisters
+#   ADMIN_PRINCIPAL   — principal passed as the backend install argument. It is
+#                       only used to satisfy the Candid signature of the actor
+#                       class; on `--mode upgrade` the constructor is not
+#                       re-executed and existing state is preserved.
+
+on:
+  workflow_dispatch:
+    inputs:
+      canister:
+        description: 'Canister to upgrade'
+        required: true
+        default: 'backend'
+        type: choice
+        options:
+          - backend
+          - community
+          - identity
+          - threat_intelligence
+          - safe_location
+          - frontend
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dfx
+        run: |
+          set -euo pipefail
+          DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> "$GITHUB_PATH"
+
+      - name: Import the deployment identity
+        env:
+          DFX_IDENTITY_PEM: ${{ secrets.DFX_IDENTITY_PEM }}
+        run: |
+          set -euo pipefail
+          test -n "$DFX_IDENTITY_PEM" || { echo "DFX_IDENTITY_PEM is not set"; exit 1; }
+          printf '%s' "$DFX_IDENTITY_PEM" > /tmp/identity.pem
+          dfx identity import ci /tmp/identity.pem --storage-mode plaintext
+          rm -f /tmp/identity.pem
+          dfx identity use ci
+          dfx identity get-principal
+
+      - name: Build the frontend bundle
+        if: ${{ inputs.canister == 'frontend' }}
+        working-directory: src/frontend
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Record the pre-upgrade module hash
+        run: |
+          set -euo pipefail
+          dfx canister --network ic info "${{ inputs.canister }}" || true
+
+      - name: Upgrade the canister
+        env:
+          ADMIN_PRINCIPAL: ${{ secrets.ADMIN_PRINCIPAL }}
+        run: |
+          set -euo pipefail
+          target='${{ inputs.canister }}'
+
+          if [ "$target" = 'frontend' ]; then
+            # Asset canisters are updated by syncing assets; state is the asset
+            # set itself and no Wasm state is discarded.
+            dfx deploy frontend --network ic --yes
+          elif [ "$target" = 'backend' ]; then
+            test -n "$ADMIN_PRINCIPAL" || { echo "ADMIN_PRINCIPAL is not set"; exit 1; }
+            dfx deploy backend --network ic --mode upgrade --yes \
+              --argument "(principal \"$ADMIN_PRINCIPAL\")"
+          else
+            dfx deploy "$target" --network ic --mode upgrade --yes
+          fi
+
+      - name: Verify the upgraded canister answers
+        run: |
+          set -euo pipefail
+          target='${{ inputs.canister }}'
+          dfx canister --network ic info "$target"
+          # A real call against the upgraded canister — a successful build is
+          # not evidence that the canister works.
+          case "$target" in
+            backend)             dfx canister --network ic call backend healthCheck ;;
+            community)           dfx canister --network ic call community getStats ;;
+            threat_intelligence) dfx canister --network ic call threat_intelligence getStats ;;
+            identity)            dfx canister --network ic call identity lookupPhone '("+10000000000")' ;;
+            safe_location)       dfx canister --network ic call safe_location listMyShares ;;
+            frontend)            curl -fsS -o /dev/null "https://$(dfx canister --network ic id frontend).icp0.io/" ;;
+          esac
