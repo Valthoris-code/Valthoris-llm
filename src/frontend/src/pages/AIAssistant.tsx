@@ -4,7 +4,8 @@ import {
   isAiBackendConfigured,
   sendChat,
 } from '../services/aiChatService';
-import type { AiChatMessage } from '../services/aiChatService';
+import type { AiChatAnalysis, AiChatMessage } from '../services/aiChatService';
+import { useAuth } from '../hooks/useAuth';
 
 interface Message {
   id: string;
@@ -14,6 +15,12 @@ interface Message {
   isStreaming?: boolean;
   /** Set when the backend call failed — rendered as an error, never as an answer. */
   isError?: boolean;
+  /**
+   * Structured verdict produced by the backend security analysis, when the
+   * turn contained an analysable artefact. Rendered exactly as received —
+   * the UI never derives or invents a verdict of its own.
+   */
+  analysis?: AiChatAnalysis;
 }
 
 interface Conversation {
@@ -48,6 +55,32 @@ function TypingIndicator() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+const VERDICT_STYLE: Record<string, { label: string; color: string }> = {
+  fraud:      { label: 'FRAUD',      color: 'var(--accent-red, #ff4757)' },
+  suspicious: { label: 'SUSPICIOUS', color: 'var(--accent-amber, #ffa502)' },
+  legitimate: { label: 'LEGITIMATE', color: 'var(--accent-green, #2ed573)' },
+  unknown:    { label: 'UNKNOWN',    color: 'var(--text-muted)' },
+};
+
+/** Renders the backend verdict, or the real reason it could not be produced. */
+function AnalysisBadge({ analysis }: { analysis: AiChatAnalysis }) {
+  if (!analysis.recorded || !analysis.verdict) {
+    if (!analysis.error) return null;
+    return (
+      <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: 'var(--accent-red, #ff4757)' }}>
+        ⚠ Security analysis not recorded: {analysis.error}
+      </div>
+    );
+  }
+  const style = VERDICT_STYLE[analysis.verdict] ?? VERDICT_STYLE.unknown;
+  return (
+    <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: style.color }}>
+      🛡 Verdict: <strong>{style.label}</strong>
+      {typeof analysis.confidenceScore === 'number' && ` • confidence ${analysis.confidenceScore}/100`}
     </div>
   );
 }
@@ -107,6 +140,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             {msg.isError ? `⚠ ${msg.content}` : msg.content}
           </span>
         )}
+        {msg.analysis && !msg.isStreaming && <AnalysisBadge analysis={msg.analysis} />}
         <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', textAlign: 'right' }}>
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
@@ -116,6 +150,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 }
 
 export default function AIAssistant() {
+  const { principal } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -208,8 +243,8 @@ export default function AIAssistant() {
     };
 
     try {
-      const reply = await sendChat([...history, { role: 'user', content }]);
-      replaceThinking({ content: reply.content });
+      const reply = await sendChat([...history, { role: 'user', content }], principal);
+      replaceThinking({ content: reply.content, analysis: reply.analysis });
     } catch (err) {
       replaceThinking({
         content: err instanceof Error ? err.message : String(err),
@@ -218,7 +253,7 @@ export default function AIAssistant() {
     } finally {
       setSending(false);
     }
-  }, [activeId, createConversation, sending]);
+  }, [activeId, createConversation, sending, principal]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

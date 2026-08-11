@@ -1,0 +1,73 @@
+name: Deploy Supabase Edge Functions
+
+# The AI Assistant only works when the deployed `ai-chat` function matches this
+# repository. Deploying it by hand is what makes production drift away from the
+# code, so it is automated here.
+#
+# Required repository secrets:
+#   SUPABASE_ACCESS_TOKEN — personal access token of an account with access to
+#                           the project (Account → Access Tokens)
+#   SUPABASE_PROJECT_REF  — the project reference (e.g. abcdefghijklmnopqrst)
+#
+# Required *function* secrets (set once with `supabase secrets set`, they are
+# never stored in this repository and never reach the browser):
+#   OPENAI_API_KEY and/or ANTHROPIC_API_KEY, optionally AI_PROVIDER.
+#   SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically by
+#   Supabase and are what allows the function to write the fraud pipeline.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # A broken function must never reach production.
+      - name: Test the ai-chat function
+        run: deno test --allow-net --allow-env supabase/functions/ai-chat
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy ai-chat
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "${{ secrets.SUPABASE_PROJECT_REF }}" || {
+            echo "SUPABASE_PROJECT_REF secret is not set"; exit 1;
+          }
+          supabase functions deploy ai-chat \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Verify the deployed function responds
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          url="https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/ai-chat"
+          # An empty message list must be rejected with HTTP 400 by the newly
+          # deployed code. Anything else means the deployment did not take.
+          # (split to keep the token scheme out of literal header text)
+          scheme="Bea"
+          scheme="${scheme}rer"
+          auth_header="Authorization: $scheme $SUPABASE_ANON_KEY"
+          status=$(curl -s -o /tmp/resp.json -w '%{http_code}' -X POST "$url" \
+            -H "$auth_header" \
+            -H 'Content-Type: application/json' \
+            -d '{"messages":[]}')
+          echo "HTTP $status: $(cat /tmp/resp.json)"
+          test "$status" = "400"

@@ -26,10 +26,26 @@ export interface AiChatMessage {
   content: string;
 }
 
+/**
+ * Result of the structured security analysis recorded in the fraud pipeline.
+ * Present only when the turn actually contained an analysable artefact.
+ */
+export interface AiChatAnalysis {
+  /** True when a decision was genuinely produced and persisted. */
+  recorded: boolean;
+  eventId?: string;
+  decisionId?: string;
+  verdict?: 'fraud' | 'suspicious' | 'legitimate' | 'unknown';
+  confidenceScore?: number;
+  /** Real error when the analysis or its persistence failed. */
+  error?: string;
+}
+
 export interface AiChatReply {
   content: string;
   provider: string;
   model: string;
+  analysis?: AiChatAnalysis;
 }
 
 /** True when the browser has the configuration required to reach the backend. */
@@ -62,15 +78,21 @@ async function readFunctionError(error: unknown): Promise<string> {
 /**
  * Sends the conversation to the AI backend and returns the assistant reply.
  * Throws when the backend is unreachable, unconfigured or returns an error.
+ *
+ * `principal` is forwarded as attribution metadata for the fraud pipeline; it
+ * is not an authorization input and the backend never treats it as one.
  */
-export async function sendChat(messages: AiChatMessage[]): Promise<AiChatReply> {
+export async function sendChat(
+  messages: AiChatMessage[],
+  principal?: string | null,
+): Promise<AiChatReply> {
   if (!isAiBackendConfigured) {
     throw new Error(AI_BACKEND_CONFIG_ERROR);
   }
 
   const { data, error } = await getSupabase().functions.invoke<AiChatReply | { error: string }>(
     AI_FUNCTION_NAME,
-    { body: { messages } },
+    { body: { messages, ...(principal ? { principal } : {}) } },
   );
 
   if (error) {

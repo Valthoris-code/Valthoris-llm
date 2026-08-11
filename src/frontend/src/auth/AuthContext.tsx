@@ -50,6 +50,12 @@ export interface AuthContextValue {
   identity: Identity | null;
   /** True while the auth state is being resolved (e.g. on first load). */
   loading: boolean;
+  /**
+   * Real error raised while resolving the session against the backend
+   * canister, or null. Surfaced so a backend failure is visible instead of
+   * looking like "the sign-in simply did not work".
+   */
+  error: string | null;
   /** Opens the Internet Identity login popup. */
   login: () => Promise<void>;
   /** Clears the current session. */
@@ -77,6 +83,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser]                       = useState<User | null>(null);
   const [identity, setIdentity]               = useState<Identity | null>(null);
   const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState<string | null>(null);
 
   /**
    * Reads the current auth state from the AuthClient singleton and
@@ -94,18 +101,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setPrincipal(p);
         setUser({ principal: p, role: managed.role });
         setIsAuthenticated(true);
+        setError(null);
       } catch (err) {
+        // The delegation is valid but the backend canister did not answer.
+        // That is a genuine backend failure and must be reported as such —
+        // silently dropping the session makes it look like Internet Identity
+        // is broken and hides the real cause.
+        const message = err instanceof Error ? err.message : String(err);
         console.error('[AuthContext] Failed to resolve backend role:', err);
         setIdentity(null);
         setPrincipal(null);
         setUser(null);
         setIsAuthenticated(false);
+        setError(`Backend canister did not answer: ${message}`);
       }
     } else {
       setIdentity(null);
       setPrincipal(null);
       setUser(null);
       setIsAuthenticated(false);
+      setError(null);
     }
     setLoading(false);
   }, []);
@@ -117,13 +132,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async () => {
     setLoading(true);
-    await doLogin();
+    setError(null);
+    try {
+      await doLogin();
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
     await refresh();
   }, [refresh]);
 
   const logout = useCallback(async () => {
     setLoading(true);
     await doLogout();
+    setError(null);
     setIsAuthenticated(false);
     setIdentity(null);
     setPrincipal(null);
@@ -137,6 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     identity,
     loading,
+    error,
     login,
     logout,
   };
