@@ -38,3 +38,26 @@ export const INTERNET_IDENTITY_URL =
   network === 'ic'
     ? 'https://identity.ic0.app'
     : `http://127.0.0.1:4943/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai`;
+
+/**
+ * Canonical Internet Identity derivation origin.
+ *
+ * Internet Identity derives a *different* principal for every frontend origin
+ * it is called from. The very same bundle is reachable from more than one
+ * origin (the custom domain, the GitHub Pages project URL and the asset
+ * canister), so without pinning a derivation origin the same human gets a
+ * different principal depending on where they signed in — and their canister
+ * profile, which is keyed by that principal, appears to have been lost after a
+ * logout/login cycle.
+ *
+ * Pinning the canonical origin makes the principal stable across every origin
+ * the app is served from. Users who signed in on https://valthoris.com keep
+ * exactly the principal they already have, because for them the derivation
+ * origin is the origin they are already using.
+ *
+ * Internet Identity only accepts an alternative derivation origin when the
+ * derivation origin serves `/.well-known/ii-alternative-origins` listing the
+ * requesting origin — see src/frontend/public/.well-known/ii-alternative-origins.
+ */
+export const II_DERIVATION_ORIGIN =
+  network === 'ic' ? 'https://valthoris.com' : undefined;

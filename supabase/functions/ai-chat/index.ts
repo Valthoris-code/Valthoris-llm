@@ -23,6 +23,14 @@
 
 // deno-lint-ignore-file no-explicit-any
 
+import { detectArtifact } from './artifacts.ts';
+import {
+  isPipelineConfigured,
+  parseStructuredAnalysis,
+  recordSecurityAnalysis,
+} from './pipeline.ts';
+import type { PipelineOutcome, StructuredAnalysis } from './pipeline.ts';
+
 type Role = 'system' | 'user' | 'assistant';
 
 interface ChatMessage {
@@ -32,6 +40,12 @@ interface ChatMessage {
 
 interface ChatRequest {
   messages?: ChatMessage[];
+  /**
+   * Internet Identity principal of the caller, used only to attribute the
+   * resulting fraud event. It is metadata: it grants no privilege whatsoever
+   * and is never used for authorization.
+   */
+  principal?: string;
 }
 
 const SYSTEM_PROMPT = [
@@ -40,6 +54,25 @@ const SYSTEM_PROMPT = [
   'Answer concisely and practically. When you are not certain, say so explicitly',
   'and recommend verification steps. Never invent breach data, wallet balances',
   'or scan results you have not been given.',
+].join(' ');
+
+/**
+ * Prompt used for the structured security analysis that feeds the fraud
+ * pipeline. It mirrors the fraud-worker analyser (src/services/src/fraud-worker)
+ * so both paths produce the same verdict vocabulary.
+ */
+const ANALYSIS_PROMPT = [
+  'You are an expert fraud analyst at Valthoris, a digital safety platform.',
+  'Analyse the artefact supplied by the user and produce a structured verdict.',
+  'Respond ONLY with a JSON object matching this schema:',
+  '{"verdict":"fraud"|"suspicious"|"legitimate"|"unknown",',
+  '"confidenceScore":<integer 0-100>,',
+  '"justification":"<one concise paragraph explaining your reasoning>",',
+  '"riskSignals":["<signal>", ...],',
+  '"recommendedAction":"<what the user should do, or null>"}',
+  'Use "unknown" whenever the available information is insufficient.',
+  'Never invent breach data, registration dates, balances or scan results.',
+  'Do not include any prose outside the JSON object.',
 ].join(' ');
 
 const MAX_MESSAGES = 30;
@@ -91,7 +124,11 @@ interface Completion {
  */
 class AiChatError extends Error {}
 
-async function callOpenAi(messages: ChatMessage[], apiKey: string): Promise<Completion> {
+async function callOpenAi(
+  messages: ChatMessage[],
+  apiKey: string,
+  systemPrompt: string = SYSTEM_PROMPT,
+): Promise<Completion> {
   const model = env('OPENAI_MODEL') ?? 'gpt-4o-mini';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   headers['Authorization'] = 'Bearer ' + apiKey;
@@ -101,7 +138,7 @@ async function callOpenAi(messages: ChatMessage[], apiKey: string): Promise<Comp
     headers,
     body: JSON.stringify({
       model,
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
       max_tokens: 800,
       temperature: 0.2,
     }),
@@ -120,7 +157,11 @@ async function callOpenAi(messages: ChatMessage[], apiKey: string): Promise<Comp
   return { content, provider: 'openai', model: data?.model ?? model };
 }
 
-async function callAnthropic(messages: ChatMessage[], apiKey: string): Promise<Completion> {
+async function callAnthropic(
+  messages: ChatMessage[],
+  apiKey: string,
+  systemPrompt: string = SYSTEM_PROMPT,
+): Promise<Completion> {
   const model = env('ANTHROPIC_MODEL') ?? 'claude-3-5-haiku-20241022';
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -133,7 +174,7 @@ async function callAnthropic(messages: ChatMessage[], apiKey: string): Promise<C
     headers,
     body: JSON.stringify({
       model,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       max_tokens: 800,
       temperature: 0.2,
       messages: messages
@@ -155,18 +196,21 @@ async function callAnthropic(messages: ChatMessage[], apiKey: string): Promise<C
   return { content, provider: 'anthropic', model: data?.model ?? model };
 }
 
-async function complete(messages: ChatMessage[]): Promise<Completion> {
+async function complete(
+  messages: ChatMessage[],
+  systemPrompt: string = SYSTEM_PROMPT,
+): Promise<Completion> {
   const provider = (env('AI_PROVIDER') ?? 'openai').toLowerCase();
   const openaiKey = env('OPENAI_API_KEY');
   const anthropicKey = env('ANTHROPIC_API_KEY');
 
   const attempts: Array<() => Promise<Completion>> = [];
   if (provider === 'anthropic') {
-    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey));
-    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey));
+    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey, systemPrompt));
+    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey, systemPrompt));
   } else {
-    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey));
-    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey));
+    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey, systemPrompt));
+    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey, systemPrompt));
   }
 
   if (attempts.length === 0) {
@@ -212,8 +256,9 @@ async function complete(messages: ChatMessage[]): Promise<Completion> {
     return json({ error: 'At least one message is required' }, 400);
   }
 
+  let completion: Completion;
   try {
-    return json(await complete(messages), 200);
+    completion = await complete(messages);
   } catch (err) {
     console.error('[ai-chat]', err);
     // Only curated messages reach the browser; unexpected faults are generic.
@@ -222,4 +267,66 @@ async function complete(messages: ChatMessage[]): Promise<Completion> {
       : 'The AI backend is unavailable. Please try again later.';
     return json({ error: message }, 502);
   }
+
+  // The assistant answered. When the turn was a real security analysis, run the
+  // structured analysis as well and record it in the fraud pipeline. This is an
+  // observability side-effect: it must never turn a successful answer into an
+  // error, and it never invents a verdict.
+  const analysis = await runFraudPipeline(messages, payload.principal);
+
+  return json(analysis ? { ...completion, analysis } : completion, 200);
 });
+
+/**
+ * Records a genuine security analysis for the last user turn.
+ *
+ * Returns `undefined` when the turn was not an artefact analysis (a general
+ * question is answered but is not a fraud event) or when the pipeline is not
+ * configured on this deployment.
+ */
+async function runFraudPipeline(
+  messages: ChatMessage[],
+  principal?: string,
+): Promise<PipelineOutcome | undefined> {
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  if (!lastUser) return undefined;
+
+  const artifact = detectArtifact(lastUser.content);
+  if (!artifact) return undefined;
+
+  if (!isPipelineConfigured()) {
+    console.warn('[ai-chat] fraud pipeline not configured — analysis not recorded');
+    return undefined;
+  }
+
+  const userId =
+    typeof principal === 'string' && principal.trim().length > 0 && principal.length <= 128
+      ? principal.trim()
+      : null;
+
+  try {
+    return await recordSecurityAnalysis(
+      userId,
+      artifact,
+      lastUser.content,
+      async (): Promise<StructuredAnalysis> => {
+        const result = await complete(
+          [
+            {
+              role: 'user',
+              content: `Artefact type: ${artifact.kind}\nArtefact: ${artifact.value}\n\nUser request:\n${lastUser.content}`,
+            },
+          ],
+          ANALYSIS_PROMPT,
+        );
+        return parseStructuredAnalysis(result.content, result.provider, result.model);
+      },
+    );
+  } catch (err) {
+    // A pipeline fault is reported, not hidden — but it does not discard the
+    // answer the user already received.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[ai-chat] fraud pipeline error', message);
+    return { recorded: false, error: message };
+  }
+}

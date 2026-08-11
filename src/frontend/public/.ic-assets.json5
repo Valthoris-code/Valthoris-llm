@@ -1,0 +1,21 @@
+[
+  {
+    // Files under `.well-known` are hidden by default in asset canisters.
+    // Both files here must be publicly reachable:
+    //   ic-domains              → custom-domain registration for valthoris.com
+    //   ii-alternative-origins  → lets Internet Identity accept
+    //                             https://valthoris.com as the derivation
+    //                             origin when the app is opened from the asset
+    //                             canister URL, so the principal (and hence
+    //                             the stored profile) is the same everywhere.
+    "match": ".well-known/*",
+    "ignore": false
+  },
+  {
+    "match": ".well-known/ii-alternative-origins",
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
+  }
+]

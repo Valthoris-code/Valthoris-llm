@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 type AuthView = 'login' | 'register' | 'recovery';
 
 export default function AuthPage() {
-  const { login, loading } = useAuth();
+  const { login, loading, error: authError } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<AuthView>('login');
   const [error, setError] = useState('');
@@ -43,7 +43,9 @@ export default function AuthPage() {
           {view === 'login' && (
             <>
               <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Sign In</h2>
-              {error && <div className="alert-error mb-2" role="alert">⚠ {error}</div>}
+              {(error || authError) && (
+                <div className="alert-error mb-2" role="alert">⚠ {error || authError}</div>
+              )}
               <button
                 className="btn-primary"
                 style={{ width: '100%', padding: '0.65rem', marginBottom: '1.25rem' }}
