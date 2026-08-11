@@ -45,20 +45,22 @@ jobs:
       - name: Deploy ai-chat
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          test -n "${{ secrets.SUPABASE_PROJECT_REF }}" || {
+          test -n "$SUPABASE_PROJECT_REF" || {
             echo "SUPABASE_PROJECT_REF secret is not set"; exit 1;
           }
           supabase functions deploy ai-chat \
-            --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+            --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Verify the deployed function responds
         env:
           SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          url="https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/ai-chat"
+          url="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/ai-chat"
           # An empty message list must be rejected with HTTP 400 by the newly
           # deployed code. Anything else means the deployment did not take.
           # (split to keep the token scheme out of literal header text)
