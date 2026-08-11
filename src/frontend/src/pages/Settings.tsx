@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Toggle from '../components/ui/Toggle';
 import LanguageSelector from '../components/LanguageSelector';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
+import { useActorsReady } from '../hooks/useActors';
 import { useI18n } from '../i18n/useI18n';
+import {
+  EMPTY_PROFILE_DETAILS,
+  fetchProfileDetails,
+  saveProfileDetails,
+} from '../services/profileService';
+import type { ProfileDetailsData } from '../services/profileService';
 
 type ThemeId = 'dark' | 'darker' | 'contrast';
 
@@ -19,7 +26,6 @@ interface Preferences {
   notifyThreats: boolean;
   notifyCommunity: boolean;
   telemetry: boolean;
-  publicProfile: boolean;
   locationEnabled: boolean;
   locationPrecise: boolean;
 }
@@ -34,7 +40,6 @@ const DEFAULTS: Preferences = {
   notifyThreats: true,
   notifyCommunity: false,
   telemetry: false,
-  publicProfile: false,
   locationEnabled: false,
   locationPrecise: true,
 };
@@ -62,10 +67,61 @@ const SECTIONS = [
 ] as const;
 
 export default function Settings() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, principal } = useAuth();
+  const { actors, ready } = useActorsReady();
   const { t, autoTranslate, setAutoTranslate } = useI18n();
   const { toast } = useToast();
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
+
+  /**
+   * The "public profile" flag is account data, not a device preference, so it
+   * lives in the backend canister alongside the rest of the extended profile.
+   * It is read on mount and written straight through — a failed write is
+   * reported and the toggle reverts.
+   */
+  const [details, setDetails] = useState<ProfileDetailsData>(EMPTY_PROFILE_DETAILS);
+  const [detailsError, setDetailsError] = useState('');
+  const [savingDetails, setSavingDetails] = useState(false);
+
+  useEffect(() => {
+    if (!ready || !isAuthenticated || !principal) return;
+    let active = true;
+    void (async () => {
+      try {
+        const loaded = await fetchProfileDetails(actors.backend, principal);
+        if (active) {
+          setDetails(loaded);
+          setDetailsError('');
+        }
+      } catch (err) {
+        if (active) setDetailsError(err instanceof Error ? err.message : String(err));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [ready, isAuthenticated, principal, actors]);
+
+  const updatePublicProfile = useCallback(async (value: boolean) => {
+    if (!principal) return;
+    const previous = details;
+    setDetails({ ...details, publicProfile: value });
+    setSavingDetails(true);
+    try {
+      const saved = await saveProfileDetails(actors.backend, principal, {
+        ...details,
+        publicProfile: value,
+      });
+      setDetails(saved);
+      setDetailsError('');
+      toast('Profile visibility saved in the backend canister.', 'success');
+    } catch (err) {
+      setDetails(previous);
+      setDetailsError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingDetails(false);
+    }
+  }, [actors, details, principal, toast]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -188,7 +244,22 @@ export default function Settings() {
       <section id="privacy" className="card mt-2 settings-card">
         <h2 className="section-title">🕵 Privacy</h2>
         <Toggle label="Share anonymous telemetry" description="Helps us diagnose errors. No personal identifiers." checked={prefs.telemetry} onChange={v => update('telemetry', v)} />
-        <Toggle label="Public profile" description="Show your display name on community reports." checked={prefs.publicProfile} onChange={v => update('publicProfile', v)} />
+        {isAuthenticated ? (
+          <>
+            <Toggle
+              label="Public profile"
+              description="Show your display name on community reports. Stored in the backend canister."
+              checked={details.publicProfile}
+              onChange={v => void updatePublicProfile(v)}
+              disabled={savingDetails}
+            />
+            {detailsError && <div className="alert-error mt-2">{detailsError}</div>}
+          </>
+        ) : (
+          <p className="text-muted settings-note">
+            Sign in with Internet Identity to change your profile visibility.
+          </p>
+        )}
         <div className="settings-actions">
           <Link className="btn-secondary settings-btn" to="/legal/gdpr">
             {t('legal.gdpr')}

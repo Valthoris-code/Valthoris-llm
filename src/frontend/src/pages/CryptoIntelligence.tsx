@@ -1,22 +1,86 @@
 import React, { useState } from 'react';
+import { useActors } from '../hooks/useActors';
+import type { LookupResult } from '../../../declarations/identity/index.d.ts';
+import type { ThreatResult } from '../../../declarations/threat_intelligence/index.d.ts';
+import type { Report } from '../../../declarations/community/index.d.ts';
 
-const CHAINS = ['All', 'Bitcoin', 'Ethereum', 'BNB Chain', 'Solana', 'Polygon'];
+/**
+ * Crypto Intelligence.
+ *
+ * A wallet address is resolved against the three canisters that actually hold
+ * data about identifiers:
+ *   • identity            — reputation / known-scammer record for the address
+ *   • threat_intelligence — indicator match (all `check*` entry points resolve
+ *                           the same indicator index, so the raw address is
+ *                           looked up directly)
+ *   • community           — reports filed against this exact address
+ *
+ * Nothing is inferred or invented: when a source has no record the UI says so,
+ * and when a source fails its error is shown without discarding the results of
+ * the sources that answered.
+ */
+
+/** Variant → the single key it carries (e.g. `{ high: null }` → "high"). */
+function variantKey(value: object): string {
+  return Object.keys(value)[0] ?? 'unknown';
+}
+
+function optionalVariant(value: [] | [object]): string | null {
+  const [first] = value;
+  return first ? variantKey(first) : null;
+}
+
+interface Outcome {
+  address: string;
+  reputation?: LookupResult;
+  threat?: ThreatResult;
+  reports: Report[];
+  errors: string[];
+}
 
 export default function CryptoIntelligence() {
+  const actors = useActors();
+
   const [query, setQuery] = useState('');
-  const [chain, setChain] = useState('All');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const handleScan = async () => {
-    if (!query.trim()) return;
+    const address = query.trim();
+    if (!address || loading) return;
+
     setLoading(true);
-    setResult(null);
-    // TODO: Connect to threat_intelligence canister or Supabase crypto service
-    await new Promise(r => setTimeout(r, 900));
-    setResult(`Wallet analysis for "${query}" on ${chain} chain.\n\nBackend integration pending. This page is prepared for:\n- On-chain transaction analysis\n- Blacklist / sanctions check\n- DeFi exposure score\n- Exchange exposure\n- Risk classification`);
+    setOutcome(null);
+
+    const errors: string[] = [];
+    let reputation: LookupResult | undefined;
+    let threat: ThreatResult | undefined;
+    let reports: Report[] = [];
+
+    try {
+      reputation = await actors.identity.lookupWallet(address);
+    } catch (e) {
+      errors.push(`identity: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    try {
+      threat = await actors.threatIntelligence.checkHash(address);
+    } catch (e) {
+      errors.push(`threat_intelligence: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    try {
+      reports = await actors.community.getReportsByTarget(address);
+    } catch (e) {
+      errors.push(`community: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    setOutcome({ address, reputation, threat, reports, errors });
     setLoading(false);
   };
+
+  const threatSeverity = outcome?.threat ? optionalVariant(outcome.threat.severity) : null;
+  const threatCategory = outcome?.threat ? optionalVariant(outcome.threat.category) : null;
 
   return (
     <div className="page">
@@ -24,89 +88,110 @@ export default function CryptoIntelligence() {
         <h1 style={{ margin: 0 }}>₿ Crypto Intelligence</h1>
         <span className="badge-beta">BETA</span>
       </div>
-      <p className="text-muted">Analyze crypto wallets, detect suspicious activity, and check sanctions lists.</p>
+      <p className="text-muted">
+        Check a wallet address against the Valthoris reputation, threat-indicator and community
+        report canisters.
+      </p>
 
       <div className="card mt-2" style={{ maxWidth: 620 }}>
         <div className="mb-2">
-          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Blockchain</label>
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            {CHAINS.map(c => (
-              <button
-                key={c}
-                onClick={() => setChain(c)}
-                style={{
-                  background: chain === c ? 'rgba(0,212,255,0.15)' : 'none',
-                  border: `1px solid ${chain === c ? 'var(--accent-cyan)' : 'var(--border)'}`,
-                  color: chain === c ? 'var(--accent-cyan)' : 'var(--text-muted)',
-                  borderRadius: 6, padding: '0.25rem 0.65rem', cursor: 'pointer', fontSize: '0.8rem',
-                }}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-2">
-          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Wallet Address or Transaction Hash</label>
+          <label
+            style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}
+          >
+            Wallet address
+          </label>
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="0x... or 1A1zP1..."
-            onKeyDown={e => e.key === 'Enter' && handleScan()}
+            placeholder="0x… or 1A1zP1…"
+            onKeyDown={e => e.key === 'Enter' && void handleScan()}
           />
         </div>
 
         <button
           className="btn-primary"
           style={{ width: '100%' }}
-          onClick={handleScan}
+          onClick={() => void handleScan()}
           disabled={loading || !query.trim()}
         >
-          {loading ? '⏳ Analyzing…' : '₿ Analyze Wallet'}
+          {loading ? '⏳ Querying canisters…' : '₿ Analyze wallet'}
         </button>
       </div>
 
-      {result && (
+      {outcome && (
         <div className="card mt-2" style={{ maxWidth: 620 }}>
-          <h3 style={{ marginTop: 0 }}>Analysis Result</h3>
-          <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.88rem', color: 'var(--text-muted)' }}>{result}</p>
-        </div>
-      )}
+          <h3 style={{ marginTop: 0 }}>Result for {outcome.address}</h3>
 
-      <div className="card mt-2" style={{ maxWidth: 620 }}>
-        <h3 style={{ marginTop: 0, fontSize: '1rem' }}>Intelligence Features</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          {[
-            { icon: '🔗', label: 'On-Chain Analysis',       todo: true },
-            { icon: '⛔', label: 'Sanctions Check (OFAC)',  todo: true },
-            { icon: '📊', label: 'Risk Score',              todo: true },
-            { icon: '🔄', label: 'Transaction Graph',       todo: true },
-            { icon: '🏦', label: 'Exchange Exposure',       todo: true },
-            { icon: '🧩', label: 'DeFi Protocol Check',     todo: true },
-          ].map(f => (
-            <div
-              key={f.label}
-              style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                padding: '0.6rem 0.8rem',
-                display: 'flex',
-                gap: '0.5rem',
-                alignItems: 'center',
-                fontSize: '0.85rem',
-                color: 'var(--text-muted)',
-              }}
-            >
-              <span>{f.icon}</span>
-              <span style={{ flex: 1 }}>{f.label}</span>
-              {f.todo && <span className="badge-coming-soon">TODO</span>}
+          {outcome.errors.map(err => (
+            <div className="alert-error" key={err} style={{ marginBottom: '0.5rem' }}>
+              {err}
             </div>
           ))}
+
+          <h4 style={{ marginBottom: '0.25rem' }}>Reputation (identity canister)</h4>
+          {!outcome.reputation ? (
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              Source unavailable — see the error above.
+            </p>
+          ) : !outcome.reputation.found ? (
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              No record found for this address.
+            </p>
+          ) : (
+            <ul style={{ margin: '0 0 0 1rem', fontSize: '0.85rem' }}>
+              <li>Risk score: <strong>{String(outcome.reputation.riskScore)}</strong></li>
+              <li>Trust score: <strong>{String(outcome.reputation.trustScore)}</strong></li>
+              <li>Reports recorded: <strong>{String(outcome.reputation.reportCount)}</strong></li>
+              <li>Known scammer: <strong>{outcome.reputation.isKnownScammer ? 'yes' : 'no'}</strong></li>
+              <li>
+                Verified business:{' '}
+                <strong>{outcome.reputation.isVerifiedBusiness ? 'yes' : 'no'}</strong>
+              </li>
+              {outcome.reputation.notes.map(note => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          )}
+
+          <h4 style={{ marginBottom: '0.25rem' }}>Threat indicators (threat_intelligence canister)</h4>
+          {!outcome.threat ? (
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              Source unavailable — see the error above.
+            </p>
+          ) : !outcome.threat.isThreat ? (
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              No active indicator matches this address.
+            </p>
+          ) : (
+            <ul style={{ margin: '0 0 0 1rem', fontSize: '0.85rem' }}>
+              <li>Severity: <strong>{threatSeverity ?? 'unknown'}</strong></li>
+              <li>Category: <strong>{threatCategory ?? 'unknown'}</strong></li>
+              <li>Confidence: <strong>{String(outcome.threat.confidence)}</strong></li>
+              <li>Matching indicators: <strong>{String(outcome.threat.matchedIndicators)}</strong></li>
+              {outcome.threat.details.map(detail => (
+                <li key={detail}>{detail}</li>
+              ))}
+            </ul>
+          )}
+
+          <h4 style={{ marginBottom: '0.25rem' }}>Community reports (community canister)</h4>
+          {outcome.reports.length === 0 ? (
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              No community report filed against this address.
+            </p>
+          ) : (
+            <ul style={{ margin: '0 0 0 1rem', fontSize: '0.85rem' }}>
+              {outcome.reports.map(report => (
+                <li key={report.id}>
+                  <strong>{variantKey(report.category)}</strong> — {report.description} (
+                  {variantKey(report.status)}, risk {String(report.riskScore)})
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

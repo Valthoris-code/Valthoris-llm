@@ -14,21 +14,30 @@ const CATEGORIES = [
 
 type CategoryId = (typeof CATEGORIES)[number]['id'];
 
+/** Published support address — the only real delivery channel today. */
+const CONTACT_ADDRESS = 'contact@valthoris.com';
+
 export default function Contact() {
   const t = useT();
   const { toast } = useToast();
   const [category, setCategory] = useState<CategoryId>('support');
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [sending, setSending] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  /**
+   * Valthoris has no support-intake backend, so the form does not pretend to
+   * deliver anything: it hands the message to the operator's own mail client,
+   * addressed to the published contact address. Nothing is reported as sent
+   * that was not actually handed over.
+   */
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    setSending(true);
-    // TODO(backend): submit to the VALTHORIS support intake service.
-    await new Promise(resolve => setTimeout(resolve, 700));
-    setSending(false);
-    setForm({ name: '', email: '', subject: '', message: '' });
-    toast('Message queued — backend delivery is not connected yet.', 'info');
+    const label = CATEGORIES.find(c => c.id === category)!.labelKey;
+    const subject = `[${t(label)}] ${form.subject}`;
+    const body = `${form.message}\n\n—\n${form.name} <${form.email}>`;
+    window.location.href =
+      `mailto:${CONTACT_ADDRESS}?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(body)}`;
+    toast(`Opening your mail client to send this message to ${CONTACT_ADDRESS}.`, 'info');
   };
 
   return (
@@ -100,14 +109,14 @@ export default function Contact() {
           />
         </label>
 
-        <button type="submit" className="btn-primary" disabled={sending}>
-          {sending ? t('common.loading') : t('contact.send')}
+        <button type="submit" className="btn-primary">
+          {t('contact.send')}
         </button>
 
         <p className="text-muted contact-note">
-          You can also email us directly at{' '}
-          <a href="mailto:contact@valthoris.com">contact@valthoris.com</a>. Security incidents
-          follow the Responsible Disclosure policy.
+          There is no automated intake service yet, so this form opens your mail client with the
+          message addressed to <a href={`mailto:${CONTACT_ADDRESS}`}>{CONTACT_ADDRESS}</a>. Security
+          incidents follow the Responsible Disclosure policy.
         </p>
       </form>
     </div>

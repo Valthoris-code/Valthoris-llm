@@ -34,6 +34,7 @@ const en: Catalogue = {
   'nav.legal': 'Legal Framework',
   'nav.settings': 'Settings',
   'nav.help': 'Help',
+  'nav.admin': 'Administration',
   'nav.contact': 'Contact',
   'nav.profile': 'Profile',
   'nav.comingSoon': 'Coming Soon',

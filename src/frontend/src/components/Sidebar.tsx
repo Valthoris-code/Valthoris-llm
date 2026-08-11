@@ -43,6 +43,10 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/contact',             label: 'Contact',              labelKey: 'nav.contact',       icon: '✉️', public: true  },
   { to: '/settings',            label: 'Settings',             labelKey: 'nav.settings',      icon: '⚙️' },
   { to: '/help',                label: 'Help',                 labelKey: 'nav.help',          icon: '❓', public: true  },
+  // Administration is rendered only for principals the backend canister
+  // resolved as administrators. Visibility is convenience, not security:
+  // the canister re-checks every privileged call.
+  { to: '/admin',               label: 'Administration',       labelKey: 'nav.admin',         icon: '🛡', minRole: 'administrator' },
 ];
 
 const COMING_SOON: NavItem[] = [

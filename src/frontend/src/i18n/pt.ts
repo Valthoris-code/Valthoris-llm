@@ -34,6 +34,7 @@ const pt: Catalogue = {
   'nav.legal': 'Enquadramento Jurídico',
   'nav.settings': 'Definições',
   'nav.help': 'Ajuda',
+  'nav.admin': 'Administração',
   'nav.contact': 'Contacto',
   'nav.profile': 'Perfil',
   'nav.comingSoon': 'Em Breve',
