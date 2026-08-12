@@ -30,8 +30,8 @@ persistent actor Identity {
     identifier         : Text;
     identifierType     : IdentifierType;
     reportCount        : Nat;
-    trustScore         : Nat;   // 0–100, higher = more trusted
-    riskScore          : Nat;   // 0–100, higher = more risky
+    trustScore         : Nat;
+    riskScore          : Nat;
     isKnownScammer     : Bool;
     isVerifiedBusiness : Bool;
     firstSeen          : Int;
@@ -59,84 +59,165 @@ persistent actor Identity {
   public type VoidResult = Result.Result<(), Text>;
 
   // ──────────────────────────────────────────────────────────────────────
-  // Stable storage
+  // Persistent storage
   // ──────────────────────────────────────────────────────────────────────
 
   stable var dbEntries : [(Text, ReputationEntry)] = [];
 
+<<<<<<< Updated upstream
+=======
+  // HashMap is runtime/transient state.
+  // The persistent data is stored in dbEntries.
+>>>>>>> Stashed changes
   transient var db : HashMap.HashMap<Text, ReputationEntry> =
     HashMap.fromIter<Text, ReputationEntry>(
-      dbEntries.vals(), dbEntries.size(), Text.equal, Text.hash
+      dbEntries.vals(),
+      dbEntries.size(),
+      Text.equal,
+      Text.hash
     );
 
-  system func preupgrade() { dbEntries := Iter.toArray(db.entries()) };
+  system func preupgrade() {
+    dbEntries := Iter.toArray(db.entries());
+  };
 
   system func postupgrade() {
-    db       := HashMap.fromIter<Text, ReputationEntry>(
-      dbEntries.vals(), dbEntries.size(), Text.equal, Text.hash
+    db := HashMap.fromIter<Text, ReputationEntry>(
+      dbEntries.vals(),
+      dbEntries.size(),
+      Text.equal,
+      Text.hash
     );
-    dbEntries := [];
   };
 
   // ──────────────────────────────────────────────────────────────────────
-  // Private helpers
+  // Helpers
   // ──────────────────────────────────────────────────────────────────────
 
   func toLower(t : Text) : Text {
-    Text.map(t, func(c : Char) : Char {
-      if (c >= 'A' and c <= 'Z') {
-        Char.fromNat32(Char.toNat32(c) + 32)
-      } else c
-    })
+    Text.map(
+      t,
+      func(c : Char) : Char {
+        if (c >= 'A' and c <= 'Z') {
+          Char.fromNat32(Char.toNat32(c) + 32)
+        } else {
+          c
+        }
+      }
+    )
   };
 
-  func normalise(s : Text) : Text { toLower(s) };
+  func normalise(s : Text) : Text {
+    toLower(s)
+  };
 
   func notFound() : LookupResult {
-    { found = false; trustScore = 50; riskScore = 0; reportCount = 0;
-      isKnownScammer = false; isVerifiedBusiness = false; notes = []; lastSeen = 0 }
+    {
+      found = false;
+      trustScore = 50;
+      riskScore = 0;
+      reportCount = 0;
+      isKnownScammer = false;
+      isVerifiedBusiness = false;
+      notes = [];
+      lastSeen = 0;
+    }
   };
 
   func toResult(e : ReputationEntry) : LookupResult {
-    { found = true; trustScore = e.trustScore; riskScore = e.riskScore;
-      reportCount = e.reportCount; isKnownScammer = e.isKnownScammer;
-      isVerifiedBusiness = e.isVerifiedBusiness; notes = e.notes;
-      lastSeen = e.lastUpdated }
+    {
+      found = true;
+      trustScore = e.trustScore;
+      riskScore = e.riskScore;
+      reportCount = e.reportCount;
+      isKnownScammer = e.isKnownScammer;
+      isVerifiedBusiness = e.isVerifiedBusiness;
+      notes = e.notes;
+      lastSeen = e.lastUpdated;
+    }
   };
 
-  func upsertSuspicious(key : Text, idType : IdentifierType, reason : Text) {
+  func appendNote(notes : [Text], reason : Text) : [Text] {
+    let b = Buffer.Buffer<Text>(notes.size() + 1);
+
+    for (note in notes.vals()) {
+      b.add(note);
+    };
+
+    b.add(reason);
+
+    Buffer.toArray(b)
+  };
+
+  func upsertSuspicious(
+    key : Text,
+    idType : IdentifierType,
+    reason : Text
+  ) {
     let now = Time.now();
+
     switch (db.get(key)) {
+
       case (?e) {
-        let nc      = e.reportCount + 1;
-        let newRisk = Nat.min(100, e.riskScore + 5);
-        let newTrust = if (e.trustScore > 5) e.trustScore - 5 else 0;
-        db.put(key, {
-          identifier         = e.identifier;
-          identifierType     = e.identifierType;
-          reportCount        = nc;
-          trustScore         = newTrust;
-          riskScore          = newRisk;
-          isKnownScammer     = nc >= 5 or newRisk >= 90;
+        let nc = e.reportCount + 1;
+
+        let newRisk : Nat =
+          Nat.min(
+            100,
+            e.riskScore + 5
+          );
+
+        let newTrust : Nat =
+          if (e.trustScore > 5) {
+            e.trustScore - 5
+          } else {
+            0
+          };
+
+        let newScammerStatus : Bool =
+          nc >= 5 or newRisk >= 90;
+
+        let newNotes : [Text] =
+          appendNote(e.notes, reason);
+
+        let updated : ReputationEntry = {
+          identifier = e.identifier;
+          identifierType = e.identifierType;
+          reportCount = nc;
+          trustScore = newTrust;
+          riskScore = newRisk;
+          isKnownScammer = newScammerStatus;
           isVerifiedBusiness = e.isVerifiedBusiness;
+<<<<<<< Updated upstream
           firstSeen          = e.firstSeen;
           lastUpdated        = now;
           notes              = do { let b = Buffer.fromArray<Text>(e.notes); b.add(reason); Buffer.toArray(b) };
         });
+=======
+          firstSeen = e.firstSeen;
+          lastUpdated = now;
+          notes = newNotes;
+        };
+
+        db.put(key, updated);
+>>>>>>> Stashed changes
       };
+
       case null {
-        db.put(key, {
-          identifier         = key;
-          identifierType     = idType;
-          reportCount        = 1;
-          trustScore         = 45;
-          riskScore          = 10;
-          isKnownScammer     = false;
+        let entry : ReputationEntry = {
+          identifier = key;
+          identifierType = idType;
+          reportCount = 1;
+          trustScore = 45;
+          riskScore = 10;
+          isKnownScammer = false;
           isVerifiedBusiness = false;
-          firstSeen          = now;
-          lastUpdated        = now;
-          notes              = [reason];
-        });
+          firstSeen = now;
+          lastUpdated = now;
+          notes = [reason];
+        };
+
+        db.put(key, entry);
       };
     }
   };
@@ -145,47 +226,137 @@ persistent actor Identity {
   // Public API
   // ──────────────────────────────────────────────────────────────────────
 
-  public query func lookupPhone(phone : Text) : async LookupResult {
-    switch (db.get(normalise(phone))) { case (?e) toResult(e); case null notFound() }
+  public query func lookupPhone(
+    phone : Text
+  ) : async LookupResult {
+    switch (db.get(normalise(phone))) {
+      case (?e) {
+        toResult(e)
+      };
+      case null {
+        notFound()
+      };
+    }
   };
 
-  public query func lookupEmail(email : Text) : async LookupResult {
-    switch (db.get(normalise(email))) { case (?e) toResult(e); case null notFound() }
+  public query func lookupEmail(
+    email : Text
+  ) : async LookupResult {
+    switch (db.get(normalise(email))) {
+      case (?e) {
+        toResult(e)
+      };
+      case null {
+        notFound()
+      };
+    }
   };
 
-  public query func lookupDomain(domain : Text) : async LookupResult {
-    switch (db.get(normalise(domain))) { case (?e) toResult(e); case null notFound() }
+  public query func lookupDomain(
+    domain : Text
+  ) : async LookupResult {
+    switch (db.get(normalise(domain))) {
+      case (?e) {
+        toResult(e)
+      };
+      case null {
+        notFound()
+      };
+    }
   };
 
-  public query func lookupIBAN(iban : Text) : async LookupResult {
-    // Canonical form: lower-case with spaces removed
-    let key = normalise(Text.replace(iban, #char ' ', ""));
-    switch (db.get(key)) { case (?e) toResult(e); case null notFound() }
+  public query func lookupIBAN(
+    iban : Text
+  ) : async LookupResult {
+
+    let key =
+      normalise(
+        Text.replace(
+          iban,
+          #char ' ',
+          ""
+        )
+      );
+
+    switch (db.get(key)) {
+      case (?e) {
+        toResult(e)
+      };
+      case null {
+        notFound()
+      };
+    }
   };
 
-  public query func lookupWallet(address : Text) : async LookupResult {
-    switch (db.get(normalise(address))) { case (?e) toResult(e); case null notFound() }
+  public query func lookupWallet(
+    address : Text
+  ) : async LookupResult {
+    switch (db.get(normalise(address))) {
+      case (?e) {
+        toResult(e)
+      };
+      case null {
+        notFound()
+      };
+    }
   };
 
-  /// Report an identifier as suspicious. Anyone can call this.
-  public shared(msg) func registerSuspicious(input : SuspiciousContactInput) : async VoidResult {
-    if (Text.size(input.identifier) < 3) return #err("Identifier too short");
-    if (Text.size(input.reason)     < 5) return #err("Reason too short");
-    upsertSuspicious(normalise(input.identifier), input.identifierType, input.reason);
+  /// Report an identifier as suspicious.
+  public shared(msg) func registerSuspicious(
+    input : SuspiciousContactInput
+  ) : async VoidResult {
+
+    if (Text.size(input.identifier) < 3) {
+      return #err("Identifier too short");
+    };
+
+    if (Text.size(input.reason) < 5) {
+      return #err("Reason too short");
+    };
+
+    let key = normalise(input.identifier);
+
+    upsertSuspicious(
+      key,
+      input.identifierType,
+      input.reason
+    );
+
     #ok(())
   };
 
-  /// Raw reputation entry (null when never seen).
-  public query func getReputationEntry(identifier : Text) : async ?ReputationEntry {
-    db.get(normalise(identifier))
+  /// Return the raw reputation entry.
+  public query func getReputationEntry(
+    identifier : Text
+  ) : async ?ReputationEntry {
+
+    db.get(
+      normalise(identifier)
+    )
   };
 
-  /// Batch lookup — returns one LookupResult per identifier in the same order.
-  public query func lookupBatch(identifiers : [Text]) : async [LookupResult] {
-    Array.map<Text, LookupResult>(identifiers, func(id) {
-      switch (db.get(normalise(id))) { case (?e) toResult(e); case null notFound() }
-    })
+  /// Batch lookup.
+  public query func lookupBatch(
+    identifiers : [Text]
+  ) : async [LookupResult] {
+
+    Array.map<Text, LookupResult>(
+      identifiers,
+      func(id : Text) : LookupResult {
+        switch (db.get(normalise(id))) {
+          case (?e) {
+            toResult(e)
+          };
+          case null {
+            notFound()
+          };
+        }
+      }
+    )
   };
 
-  public query func getDatabaseSize() : async Nat { db.size() };
+  /// Number of reputation entries currently stored.
+  public query func getDatabaseSize() : async Nat {
+    db.size()
+  };
 }

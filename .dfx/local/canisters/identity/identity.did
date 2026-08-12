@@ -1,0 +1,60 @@
+type VoidResult = 
+ variant {
+   err: text;
+   ok;
+ };
+type SuspiciousContactInput = 
+ record {
+   identifier: text;
+   identifierType: IdentifierType;
+   reason: text;
+ };
+type ReputationEntry = 
+ record {
+   firstSeen: int;
+   identifier: text;
+   identifierType: IdentifierType;
+   isKnownScammer: bool;
+   isVerifiedBusiness: bool;
+   lastUpdated: int;
+   notes: vec text;
+   reportCount: nat;
+   riskScore: nat;
+   trustScore: nat;
+ };
+type LookupResult = 
+ record {
+   found: bool;
+   isKnownScammer: bool;
+   isVerifiedBusiness: bool;
+   lastSeen: int;
+   notes: vec text;
+   reportCount: nat;
+   riskScore: nat;
+   trustScore: nat;
+ };
+type IdentifierType = 
+ variant {
+   company;
+   domain;
+   email;
+   iban;
+   nif;
+   phone;
+   walletAddress;
+ };
+service : {
+  /// Number of reputation entries currently stored.
+  getDatabaseSize: () -> (nat) query;
+  /// Return the raw reputation entry.
+  getReputationEntry: (identifier: text) -> (opt ReputationEntry) query;
+  /// Batch lookup.
+  lookupBatch: (identifiers: vec text) -> (vec LookupResult) query;
+  lookupDomain: (domain: text) -> (LookupResult) query;
+  lookupEmail: (email: text) -> (LookupResult) query;
+  lookupIBAN: (iban: text) -> (LookupResult) query;
+  lookupPhone: (phone: text) -> (LookupResult) query;
+  lookupWallet: (address: text) -> (LookupResult) query;
+  /// Report an identifier as suspicious.
+  registerSuspicious: (input: SuspiciousContactInput) -> (VoidResult);
+}

@@ -1,0 +1,38 @@
+// Version: 1.0.0
+type IndicatorType__861513430 =
+  {#domain; #email; #fileHash; #ip; #url; #walletAddress};
+type ThreatCategory__821440721 =
+  {
+    #botnet;
+    #bruteForce;
+    #commandAndControl;
+    #cryptoMining;
+    #exploit;
+    #malware;
+    #other;
+    #phishing;
+    #ransomware;
+    #scam;
+    #spam
+  };
+type ThreatEntry__700492121 =
+  {
+    category : ThreatCategory__821440721;
+    confidence : Nat;
+    description : Text;
+    id : Text;
+    indicator : Text;
+    indicatorType : IndicatorType__861513430;
+    isActive : Bool;
+    lastSeen : Int;
+    reportedAt : Int;
+    reportedBy : Text;
+    severity : ThreatSeverity__322772215;
+    tags : [Text]
+  };
+type ThreatSeverity__322772215 = {#critical; #high; #low; #medium};
+actor {
+  stable var indicatorIdxEntries : [(Text, [Text])];
+  stable var threatCounter : Nat;
+  stable var threatEntries : [(Text, ThreatEntry__700492121)]
+};

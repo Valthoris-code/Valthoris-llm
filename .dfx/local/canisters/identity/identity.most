@@ -1,0 +1,19 @@
+// Version: 1.0.0
+type IdentifierType__793484133 =
+  {#company; #domain; #email; #iban; #nif; #phone; #walletAddress};
+type ReputationEntry__636640631 =
+  {
+    firstSeen : Int;
+    identifier : Text;
+    identifierType : IdentifierType__793484133;
+    isKnownScammer : Bool;
+    isVerifiedBusiness : Bool;
+    lastUpdated : Int;
+    notes : [Text];
+    reportCount : Nat;
+    riskScore : Nat;
+    trustScore : Nat
+  };
+actor {
+  stable var dbEntries : [(Text, ReputationEntry__636640631)]
+};

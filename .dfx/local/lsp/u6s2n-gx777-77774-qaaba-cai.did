@@ -1,0 +1,94 @@
+type VoidResult = 
+ variant {
+   err: text;
+   ok;
+ };
+type ThreatStats = 
+ record {
+   activeThreats: nat;
+   criticalThreats: nat;
+   highThreats: nat;
+   totalEntries: nat;
+ };
+type ThreatSeverity = 
+ variant {
+   critical;
+   high;
+   low;
+   medium;
+ };
+type ThreatResult = 
+ record {
+   category: opt ThreatCategory;
+   confidence: nat;
+   details: vec text;
+   isThreat: bool;
+   lastUpdated: int;
+   matchedIndicators: nat;
+   severity: opt ThreatSeverity;
+ };
+type ThreatEntry = 
+ record {
+   category: ThreatCategory;
+   confidence: nat;
+   description: text;
+   id: text;
+   indicator: text;
+   indicatorType: IndicatorType;
+   isActive: bool;
+   lastSeen: int;
+   reportedAt: int;
+   reportedBy: text;
+   severity: ThreatSeverity;
+   tags: vec text;
+ };
+type ThreatCategory = 
+ variant {
+   botnet;
+   bruteForce;
+   commandAndControl;
+   cryptoMining;
+   exploit;
+   malware;
+   other;
+   phishing;
+   ransomware;
+   scam;
+   spam;
+ };
+type SubmitResult = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type NewThreatInput = 
+ record {
+   category: ThreatCategory;
+   confidence: nat;
+   description: text;
+   indicator: text;
+   indicatorType: IndicatorType;
+   severity: ThreatSeverity;
+   tags: vec text;
+ };
+type IndicatorType = 
+ variant {
+   domain;
+   email;
+   fileHash;
+   ip;
+   url;
+   walletAddress;
+ };
+service : {
+  checkDomain: (domain: text) -> (ThreatResult) query;
+  checkEmail: (email: text) -> (ThreatResult) query;
+  checkHash: (hash: text) -> (ThreatResult) query;
+  checkIp: (ip: text) -> (ThreatResult) query;
+  checkUrl: (url: text) -> (ThreatResult) query;
+  deactivateThreat: (id: text) -> (VoidResult);
+  getStats: () -> (ThreatStats) query;
+  getThreat: (id: text) -> (opt ThreatEntry) query;
+  listActiveThreats: (limit: nat) -> (vec ThreatEntry) query;
+  submitThreat: (input: NewThreatInput) -> (SubmitResult);
+}
