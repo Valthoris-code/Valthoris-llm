@@ -4,6 +4,7 @@ import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
 import SafeRoomPanel from '../safeLocation/SafeRoomPanel';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../i18n/useI18n';
 import {
   SAFE_ROOM_CONFIG_ERROR,
   SAFE_ROOM_MAX_PARTICIPANTS,
@@ -18,12 +19,7 @@ import {
 } from '../services/safeRoomService';
 import type { SafeRoomSession, SafeRoomState } from '../services/safeRoomService';
 
-const DURATIONS: Array<{ minutes: number; label: string }> = [
-  { minutes: 60, label: '1 hora' },
-  { minutes: 180, label: '3 horas' },
-  { minutes: 480, label: '8 horas' },
-  { minutes: 1440, label: '24 horas (máximo)' },
-];
+const DURATIONS = [60, 180, 480, 1440] as const;
 
 /**
  * Safe Rooms — create a room, or enter one through its share link.
@@ -40,6 +36,7 @@ export default function SafeRoomPage() {
   const { token = '' } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { principal } = useAuth();
+  const { t } = useI18n();
 
   const [session, setSession] = useState<SafeRoomSession | null>(null);
   const [state, setState] = useState<SafeRoomState | null>(null);
@@ -131,7 +128,11 @@ export default function SafeRoomPage() {
   if (!isSafeRoomBackendConfigured) {
     return (
       <div className="page">
-        <PageHeader icon="🛰" title="Safe Rooms" subtitle="Salas seguras multiutilizador" />
+        <PageHeader
+          icon="🛰"
+          title={t('room.title')}
+          subtitle={t('room.subtitle', { max: SAFE_ROOM_MAX_PARTICIPANTS })}
+        />
         <div className="alert-error" role="alert">{SAFE_ROOM_CONFIG_ERROR}</div>
       </div>
     );
@@ -142,8 +143,8 @@ export default function SafeRoomPage() {
       <div className="page">
         <PageHeader
           icon="🛰"
-          title="Safe Room"
-          subtitle="Localização e chat partilhados com os participantes desta sala"
+          title={t('room.liveTitle')}
+          subtitle={t('room.liveSubtitle')}
         />
         <SafeRoomPanel session={session} initialState={state} onExit={handleExit} />
       </div>
@@ -153,7 +154,7 @@ export default function SafeRoomPage() {
   if (restoring) {
     return (
       <div className="page">
-        <div className="spinner" role="status" aria-label="A carregar" />
+        <div className="spinner" role="status" aria-label={t('room.loading')} />
       </div>
     );
   }
@@ -162,11 +163,11 @@ export default function SafeRoomPage() {
     <div className="page">
       <PageHeader
         icon="🛰"
-        title={token ? 'Entrar na Safe Room' : 'Safe Rooms'}
+        title={token ? t('room.joinTitle') : t('room.title')}
         subtitle={
           token
-            ? 'Foi convidado para uma sala segura. A sua localização será visível apenas para os participantes desta sala.'
-            : `Salas seguras multiutilizador — até ${SAFE_ROOM_MAX_PARTICIPANTS} participantes, máximo 24 horas.`
+            ? t('room.joinSubtitle')
+            : t('room.subtitle', { max: SAFE_ROOM_MAX_PARTICIPANTS })
         }
       />
 
@@ -174,11 +175,11 @@ export default function SafeRoomPage() {
 
       <section className="card mt-2">
         <label className="field">
-          <span className="field-label">O seu nome na sala</span>
+          <span className="field-label">{t('room.yourName')}</span>
           <input
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            placeholder="Como quer aparecer aos outros participantes"
+            placeholder={t('room.yourNamePlaceholder')}
             maxLength={60}
           />
         </label>
@@ -192,9 +193,10 @@ export default function SafeRoomPage() {
                 onChange={e => setAcceptTerms(e.target.checked)}
               />
               <span>
-                Aceito os <a href="/legal/terms">Termos</a> e a{' '}
-                <a href="/legal/privacy">Política de Privacidade</a>, e autorizo a partilha da minha
-                localização com os participantes desta sala enquanto nela permanecer.
+                {t('room.terms')}{' '}
+                <a href="/legal/terms">{t('room.termsLink')}</a>
+                {' · '}
+                <a href="/legal/privacy">{t('room.privacyLink')}</a>
               </span>
             </label>
             <button
@@ -203,31 +205,31 @@ export default function SafeRoomPage() {
               onClick={() => void handleJoin()}
               disabled={busy || !acceptTerms || displayName.trim().length === 0}
             >
-              {busy ? 'A entrar…' : '🚪 Entrar na sala'}
+              {busy ? t('room.joining') : t('room.join')}
             </button>
           </>
         ) : (
           <>
             <label className="field">
-              <span className="field-label">Nome da sala</span>
+              <span className="field-label">{t('room.name')}</span>
               <input value={roomName} onChange={e => setRoomName(e.target.value)} maxLength={60} />
             </label>
 
             <label className="field">
-              <span className="field-label">Duração</span>
+              <span className="field-label">{t('room.duration')}</span>
               <select
                 value={durationMinutes}
                 onChange={e => setDurationMinutes(Number(e.target.value))}
               >
-                {DURATIONS.map(d => (
-                  <option key={d.minutes} value={d.minutes}>{d.label}</option>
+                {DURATIONS.map(minutes => (
+                  <option key={minutes} value={minutes}>{t(`room.duration${minutes}`)}</option>
                 ))}
               </select>
             </label>
 
             <label className="field">
               <span className="field-label">
-                Raio de segurança: {radiusMeters} m (máx. {SAFE_ROOM_MAX_RADIUS_METERS} m)
+                {t('room.radius', { radius: radiusMeters, max: SAFE_ROOM_MAX_RADIUS_METERS })}
               </span>
               <input
                 type="range"
@@ -245,12 +247,12 @@ export default function SafeRoomPage() {
               onClick={() => void handleCreate()}
               disabled={busy || displayName.trim().length === 0}
             >
-              {busy ? 'A criar…' : '🛰 Criar Safe Room'}
+              {busy ? t('room.creating') : t('room.create')}
             </button>
 
             {lastShareUrl && (
               <p className="text-muted safe-list-sub mt-2">
-                Link da sala: <a href={lastShareUrl}>{lastShareUrl}</a>
+                {t('room.shareLink')}: <a href={lastShareUrl}>{lastShareUrl}</a>
               </p>
             )}
           </>
@@ -260,8 +262,8 @@ export default function SafeRoomPage() {
       {!token && (
         <EmptyState
           icon="🔗"
-          title="Entrar através de um link"
-          body="Abra o link que recebeu para entrar numa sala existente. Cada participante tem o seu próprio marcador no mapa da sala."
+          title={t('room.linkTitle')}
+          body={t('room.linkBody')}
         />
       )}
     </div>

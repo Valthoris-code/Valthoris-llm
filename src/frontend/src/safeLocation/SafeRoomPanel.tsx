@@ -17,6 +17,7 @@ import type {
   SafeRoomState,
 } from '../services/safeRoomService';
 import { copyToClipboard } from './shareLink';
+import { useI18n } from '../i18n/useI18n';
 
 /** How often the room state is refreshed while the room is open. */
 const REFRESH_MS = 5_000;
@@ -40,13 +41,13 @@ function countdown(expiresAt: string, now: number): string {
   return `${h}:${m}:${s}`;
 }
 
-function participantMarker(p: SafeRoomParticipant): MapMarker | null {
+function participantMarker(p: SafeRoomParticipant, selfSuffix: string): MapMarker | null {
   if (typeof p.latitude !== 'number' || typeof p.longitude !== 'number') return null;
   return {
     id: p.id,
     lat: p.latitude,
     lng: p.longitude,
-    label: p.isSelf ? `${p.displayName} (você)` : p.displayName,
+    label: p.isSelf ? `${p.displayName} (${selfSuffix})` : p.displayName,
     severity: p.isSelf ? 'low' : 'medium',
   };
 }
@@ -67,6 +68,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
   const [leaving, setLeaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [copied, setCopied] = useState(false);
+  const { t } = useI18n();
 
   const device = useDeviceLocation(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -150,9 +152,13 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
     chatEndRef.current?.scrollIntoView({ block: 'nearest' });
   }, [state.messages.length]);
 
+  const selfSuffix = t('room.you');
   const markers = useMemo(
-    () => state.participants.map(participantMarker).filter((m): m is MapMarker => m !== null),
-    [state.participants],
+    () =>
+      state.participants
+        .map(p => participantMarker(p, selfSuffix))
+        .filter((m): m is MapMarker => m !== null),
+    [state.participants, selfSuffix],
   );
 
   const self = state.participants.find(p => p.isSelf) ?? null;
@@ -199,9 +205,15 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
         <div className="safe-room-title">
           <h2 className="section-title" style={{ margin: 0 }}>🛰 {state.room.name}</h2>
           <span className="badge badge-cyan">
-            {state.room.participantCount}/{state.room.maxParticipants} participantes
+            {t('room.participants', {
+              count: state.room.participantCount,
+              max: state.room.maxParticipants,
+            })}
           </span>
-          <span className="badge badge-amber" aria-label="Tempo restante da sala">
+          <span
+            className="badge badge-amber"
+            aria-label={t('room.expiresIn', { time: countdown(state.room.expiresAt, now) })}
+          >
             ⏳ {countdown(state.room.expiresAt, now)}
           </span>
         </div>
@@ -212,10 +224,10 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
             onClick={async () => {
               const ok = await copyToClipboard(shareUrl);
               setCopied(ok);
-              if (!ok) setError(`Copie o link manualmente: ${shareUrl}`);
+              if (!ok) setError(`${t('room.shareLink')}: ${shareUrl}`);
             }}
           >
-            🔗 {copied ? 'Link copiado' : 'Copiar link'}
+            {copied ? t('room.copied') : t('room.copyLink')}
           </button>
           <button
             type="button"
@@ -223,7 +235,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
             onClick={() => void handleLeave()}
             disabled={leaving}
           >
-            🚪 {leaving ? 'A sair…' : 'SAIR'}
+            {leaving ? t('room.leaving') : t('room.exit')}
           </button>
         </div>
       </section>
@@ -231,9 +243,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
       {error && <div className="alert-error mt-2" role="alert">{error}</div>}
       {device.error && <div className="alert-error mt-2" role="alert">{device.error}</div>}
       {!device.position && !device.error && (
-        <p className="text-muted safe-list-sub">
-          A obter a sua localização — os restantes participantes só o veem depois disso.
-        </p>
+        <p className="text-muted safe-list-sub">{t('room.locationDenied')}</p>
       )}
 
       <div className="safe-room-grid">
@@ -244,35 +254,40 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
             circle={center ? { ...center, radiusMeters: state.room.radiusMeters } : undefined}
             markers={markers}
             height={340}
-            caption={`Safe Room — ${markers.length} participante(s) localizado(s)`}
+            caption={t('room.participants', {
+              count: markers.length,
+              max: state.room.maxParticipants,
+            })}
           />
           <ul className="safe-room-participants">
             {state.participants.map(p => (
               <li key={p.id} className={`safe-room-participant${p.isSelf ? ' is-self' : ''}`}>
                 <span className="safe-room-dot" aria-hidden="true">{p.isSelf ? '🟢' : '🔵'}</span>
                 <span className="safe-room-name">
-                  {p.displayName}{p.isSelf ? ' (você)' : ''}{p.isCreator ? ' · criador' : ''}
+                  {p.displayName}
+                  {p.isSelf ? ` (${t('room.you')})` : ''}
+                  {p.isCreator ? ` · ${t('room.creator')}` : ''}
                 </span>
                 <span className="text-muted safe-list-sub">
                   {p.latitude !== null
                     ? `📍 ${p.latitude.toFixed(5)}, ${p.longitude?.toFixed(5)}`
-                    : p.present ? 'sem localização' : 'offline'}
+                    : p.present ? t('room.noLocation') : 'offline'}
                 </span>
               </li>
             ))}
           </ul>
         </div>
 
-        <section className="card safe-room-chat" aria-label="Chat da sala">
-          <h3 className="section-title">💬 Chat da sala</h3>
+        <section className="card safe-room-chat" aria-label={t('room.chat')}>
+          <h3 className="section-title">💬 {t('room.chat')}</h3>
           <div className="safe-room-messages">
             {state.messages.length === 0 ? (
-              <p className="text-muted safe-list-sub">Ainda não há mensagens nesta sala.</p>
+              <p className="text-muted safe-list-sub">{t('room.noMessages')}</p>
             ) : (
               state.messages.map(m => (
                 <div key={m.id} className={`safe-room-message${m.isSelf ? ' is-self' : ''}`}>
                   <div className="safe-room-message-meta">
-                    <strong>{m.isSelf ? 'Você' : m.authorName}</strong>
+                    <strong>{m.isSelf ? t('room.you') : m.authorName}</strong>
                     <time dateTime={m.createdAt}>
                       {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </time>
@@ -293,8 +308,8 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
                   void handleSend();
                 }
               }}
-              placeholder="Mensagem para a sala…"
-              aria-label="Mensagem para a sala"
+              placeholder={t('room.messagePlaceholder')}
+              aria-label={t('room.messagePlaceholder')}
               maxLength={2000}
             />
             <button
@@ -302,6 +317,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
               className="btn-primary safe-mini-btn"
               onClick={() => void handleSend()}
               disabled={sending || draft.trim().length === 0}
+              aria-label={t('room.send')}
             >
               {sending ? '⏳' : '➤'}
             </button>

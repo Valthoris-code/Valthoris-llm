@@ -298,8 +298,20 @@
   .sidebar {
     display: none !important;
   }
-  /* bottom padding accounts for nav bar height + safe area */
+  /*
+   * Space for the fixed bottom navigation.
+   *
+   * The padding is applied to the page inside the scroll container, not to the
+   * container itself: bottom padding on an overflow container is not added to
+   * its scrollable length in every engine, so the last elements of a long page
+   * (a chat composer, a submit button) ended up underneath the nav bar and
+   * could not be scrolled into view. Padding on the in-flow child always
+   * counts.
+   */
   .content {
+    padding-bottom: 0;
+  }
+  .content > * {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
   /*
@@ -325,6 +337,7 @@
     display: none !important;
   }
   html[data-keyboard='open'] .content,
+  html[data-keyboard='open'] .content > *,
   html[data-keyboard='open'] .content-full-height > * {
     padding-bottom: 0;
   }

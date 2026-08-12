@@ -432,6 +432,10 @@ async function sendMessage(payload: any) {
       participant_id: participant.id,
       author_name: participant.display_name,
       body,
+      // Written explicitly rather than relying on the column default, so the
+      // message carries the instant the backend accepted it and the ordering
+      // is deterministic even across a clock skew between statements.
+      created_at: new Date().toISOString(),
     },
   });
   await touch(participant.id);

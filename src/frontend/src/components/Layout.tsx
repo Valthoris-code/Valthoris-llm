@@ -111,7 +111,21 @@ export default function Layout() {
             minHeight: 0,
           }}
         >
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {/*
+            * On a full-height route the page owns the viewport and must be
+            * allowed to shrink (flex: 1 with min-height: 0). On a normal,
+            * scrolling route the wrapper must instead be free to grow with its
+            * content: `flex: 1` would cap it at the height of the scroll
+            * container and let long pages overflow behind the fixed bottom
+            * navigation, where they could not be scrolled into view.
+            */}
+          <div
+            style={
+              fullHeight
+                ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+                : { flex: '1 0 auto', display: 'flex', flexDirection: 'column' }
+            }
+          >
             <ErrorBoundary fallback={<PageFallback />}>
               <Outlet />
             </ErrorBoundary>
