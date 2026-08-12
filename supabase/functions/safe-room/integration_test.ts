@@ -291,3 +291,17 @@ Deno.test('an unknown action is rejected', async () => {
   const res = await call({ action: 'drop-everything' });
   assertEquals(res.status, 400);
 });
+
+Deno.test('the health probe reports configuration without leaking room data', async () => {
+  await call({ action: 'create', name: 'Health', displayName: 'Ana' });
+  const res = await call({ action: 'health' });
+  assertEquals(res.status, 200);
+  assertEquals(res.body.status, 'configured');
+  assertEquals(res.body.storage, 'connected');
+  assertEquals(res.body.limits.maxParticipants, 30);
+  assertEquals(res.body.limits.maxRadiusMeters, 1000);
+  // No room, participant or message payload may appear in an operator probe.
+  const serialised = JSON.stringify(res.body);
+  assert(!serialised.includes('Health'), 'health must not expose room names');
+  assert(!serialised.includes('Ana'), 'health must not expose participant names');
+});

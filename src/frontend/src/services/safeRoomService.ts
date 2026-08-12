@@ -217,3 +217,22 @@ export async function leaveRoom(session: SafeRoomSession): Promise<void> {
 export function buildRoomUrl(token: string): string {
   return `${window.location.origin}${BASE_PATH}room/${encodeURIComponent(token)}`;
 }
+
+export interface SafeRoomHealth {
+  status: 'configured' | 'not_configured';
+  storage: 'connected' | 'disconnected';
+  limits: {
+    maxParticipants: number;
+    maxDurationMinutes: number;
+    maxRadiusMeters: number;
+  };
+}
+
+/**
+ * Read-only probe used by the Administration page. It creates nothing and
+ * returns no room data — only whether the backend is configured and can reach
+ * its storage.
+ */
+export async function probeSafeRoomBackend(): Promise<SafeRoomHealth> {
+  return invoke<SafeRoomHealth>({ action: 'health' });
+}

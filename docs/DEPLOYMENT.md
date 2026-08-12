@@ -35,20 +35,68 @@ Canister IDs are read from `canister_ids.json` / the dfx-generated `.env`
 
 ## 2. Supabase Edge Function secrets — `ai-chat`
 
-The AI Assistant calls `supabase/functions/ai-chat`. The LLM credentials live
-only in the function's secret store:
+The AI Assistant calls `supabase/functions/ai-chat`. **Gemini is the provider of
+record for Valthoris.** The LLM credentials live only in the function's secret
+store and never reach the browser — there is deliberately no `VITE_GEMINI_*`
+variable, and the built bundle contains no provider endpoint or key.
 
 | Secret | Required | Default |
 | --- | --- | --- |
-| `AI_PROVIDER` | no | `openai` |
-| `OPENAI_API_KEY` | when the provider resolves to OpenAI | — |
+| `GEMINI_API_KEY` | yes — this is the provider Valthoris uses | — |
+| `GEMINI_MODEL` | no | `gemini-2.0-flash` |
+| `AI_PROVIDER` | no | `gemini` |
+| `OPENAI_API_KEY` | only if you deliberately fall back to OpenAI | — |
 | `OPENAI_MODEL` | no | `gpt-4o-mini` |
-| `ANTHROPIC_API_KEY` | when the provider resolves to Anthropic | — |
+| `ANTHROPIC_API_KEY` | only if you deliberately fall back to Anthropic | — |
 | `ANTHROPIC_MODEL` | no | `claude-3-5-haiku-20241022` |
 
-At least one of `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` must be set, otherwise
-the function returns HTTP 502 with a real error message and the assistant
-displays it instead of an answer.
+If no provider key is configured the function returns HTTP 502 with a real
+error message naming `GEMINI_API_KEY`, and the assistant displays it instead of
+an answer. It never returns a simulated answer.
+
+### JWT verification
+
+`supabase/config.toml` sets `verify_jwt = false` for `ai-chat` and `safe-room`.
+Valthoris authenticates with Internet Identity, so the browser never holds a
+Supabase JWT; with the platform default the API gateway rejects the call with
+**HTTP 401 before the function runs** — this was the cause of the
+"AI backend returned HTTP 401" error. Both functions perform their own
+validation (payload limits, room token plus per-participant secret).
+
+## 2b. Supabase Edge Function secrets — `safe-room`
+
+`supabase/functions/safe-room` is the only reader/writer of the Safe Room
+tables. It needs no additional secret: `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` are injected by Supabase. Deploy it with:
+
+```bash
+supabase functions deploy safe-room
+```
+
+Check it from the Administration page (Service status → *Safe Rooms backend*) or
+directly:
+
+```bash
+curl -s -X POST "https://<project-ref>.supabase.co/functions/v1/safe-room" \
+  -H "apikey: <anon key>" -H 'Content-Type: application/json' \
+  -d '{"action":"health"}'
+```
+
+## 2c. Other platform secrets
+
+These belong to the backend/Edge Function secret store only. The Administration
+page reports them as CONFIGURED / NOT CONFIGURED and never shows a value.
+
+| Secret | Used by | Status |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | `ai-chat` | in use |
+| `ABUSEIPDB_API_KEY` | IP reputation enrichment (`src/services`) | in use |
+| `COINGECKO_API_KEY` | crypto market/intelligence enrichment | in use |
+
+CryptoScamDB, Etherscan, EtherscamDB, OpenCNAM, Nomorobo and WhoCallsMe are
+prepared in the threat-intelligence architecture but have **no credentials
+configured**; no key is invented for them, and any feature that depends on one
+reports the missing configuration instead of fabricating data.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into every Edge
 Function by Supabase itself. They are what allows `ai-chat` to record real
@@ -59,7 +107,7 @@ answers but the analysis is not recorded — and the reason is logged and
 returned to the browser instead of being hidden.
 
 ```bash
-supabase secrets set AI_PROVIDER=openai OPENAI_API_KEY=<key>
+supabase secrets set GEMINI_API_KEY=<key>       # AI_PROVIDER defaults to gemini
 supabase functions deploy ai-chat
 ```
 
@@ -73,6 +121,7 @@ Run the tests locally with:
 
 ```bash
 deno test --allow-net --allow-env supabase/functions/ai-chat
+deno test --allow-net --allow-env supabase/functions/safe-room
 ```
 
 ## 3. Backend services (`src/services`)
@@ -89,6 +138,12 @@ with:
 ```bash
 supabase db push
 ```
+
+`20260812000000_create_safe_rooms.sql` adds `safe_rooms`,
+`safe_room_participants` and `safe_room_messages`. RLS is enabled with no
+public policy: only the service role (i.e. the `safe-room` Edge Function) can
+read or write them, and the ≤30 participants / ≤24 h / ≤1000 m rules are also
+enforced by CHECK constraints.
 
 No migration in this change set drops or truncates anything.
 
@@ -167,6 +222,15 @@ origin the derivation origin is the origin itself.
    A completed run must carry a verdict; a failed run must carry the real
    error message and no decision. Asking the same question twice must not
    create a second `fraud_events` row.
-8. Sign out, sign in again from the same URL, and confirm the profile is still
+8. Open **Safe Rooms** (`/rooms`), create a room, copy the link and open it in a
+   second browser (or a phone). Both participants must accept the terms, appear
+   as separate markers on the same map, see each other move, and exchange
+   messages in the room chat. Pressing **EXIT** must remove that participant's
+   marker for everybody else.
+9. On an Android phone, open the AI Assistant and focus the composer: the input
+   and the send button must stay visible above the keyboard, the conversation
+   must stay scrollable, no footer may cover the chat and there must be no
+   horizontal scrolling.
+10. Sign out, sign in again from the same URL, and confirm the profile is still
    there — it is read back from `c6sjf-tqaaa-aaaap-qsiea-cai`, not from
    localStorage (clearing site data and reloading must still show it).

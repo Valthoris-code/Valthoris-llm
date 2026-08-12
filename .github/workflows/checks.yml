@@ -35,3 +35,5 @@ jobs:
           deno-version: v2.x
       - name: Test the ai-chat function
         run: deno test --allow-net --allow-env supabase/functions/ai-chat
+      - name: Test the safe-room function
+        run: deno test --allow-net --allow-env supabase/functions/safe-room

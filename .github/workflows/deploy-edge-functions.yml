@@ -1,8 +1,8 @@
 name: Deploy Supabase Edge Functions
 
-# The AI Assistant only works when the deployed `ai-chat` function matches this
-# repository. Deploying it by hand is what makes production drift away from the
-# code, so it is automated here.
+# The AI Assistant and the Safe Rooms only work when the deployed `ai-chat` and
+# `safe-room` functions match this repository. Deploying them by hand is what
+# makes production drift away from the code, so it is automated here.
 #
 # Required repository secrets:
 #   SUPABASE_ACCESS_TOKEN — personal access token of an account with access to
@@ -17,9 +17,16 @@ name: Deploy Supabase Edge Functions
 #
 # Required *function* secrets (set once with `supabase secrets set`, they are
 # never stored in this repository and never reach the browser):
-#   OPENAI_API_KEY and/or ANTHROPIC_API_KEY, optionally AI_PROVIDER.
+#   GEMINI_API_KEY — the provider of record for the Valthoris AI Assistant.
+#   OPENAI_API_KEY / ANTHROPIC_API_KEY are optional fallbacks only; AI_PROVIDER
+#   selects the preferred provider and defaults to `gemini`.
 #   SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically by
-#   Supabase and are what allows the function to write the fraud pipeline.
+#   Supabase and are what allows the functions to write the fraud pipeline and
+#   the Safe Room tables.
+#
+# `supabase/config.toml` disables JWT verification for both functions: Valthoris
+# authenticates with Internet Identity, so the browser has no Supabase JWT and
+# the gateway would answer HTTP 401 before the function ran.
 
 on:
   push:
@@ -41,8 +48,10 @@ jobs:
           deno-version: v2.x
 
       # A broken function must never reach production.
-      - name: Test the ai-chat function
-        run: deno test --allow-net --allow-env supabase/functions/ai-chat
+      - name: Test the Edge Functions
+        run: |
+          deno test --allow-net --allow-env supabase/functions/ai-chat
+          deno test --allow-net --allow-env supabase/functions/safe-room
 
       - uses: supabase/setup-cli@v1
         with:
@@ -58,6 +67,15 @@ jobs:
             echo "SUPABASE_PROJECT_REF secret is not set"; exit 1;
           }
           supabase functions deploy ai-chat \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy safe-room
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          supabase functions deploy safe-room \
             --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Verify the deployed function responds
@@ -84,3 +102,13 @@ jobs:
             -d '{"messages":[]}')
           echo "HTTP $status: $(cat /tmp/resp.json)"
           test "$status" = "400"
+
+          # The Safe Rooms health probe must answer 200 through the same
+          # gateway; an HTTP 401 here means verify_jwt was re-enabled.
+          room_url="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/safe-room"
+          status=$(curl -s -o /tmp/room.json -w '%{http_code}' -X POST "$room_url" \
+            -H "$auth_header" \
+            -H 'Content-Type: application/json' \
+            -d '{"action":"health"}')
+          echo "HTTP $status: $(cat /tmp/room.json)"
+          test "$status" = "200"

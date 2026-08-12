@@ -34,6 +34,13 @@ const MAX_NAME_CHARS = 60;
 /** A participant that has not called the API for this long is treated as gone. */
 const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000;
 
+/** Platform rules published to operators by the `health` action. */
+const LIMITS = {
+  maxParticipants: MAX_PARTICIPANTS,
+  maxDurationMinutes: MAX_DURATION_MINUTES,
+  maxRadiusMeters: MAX_RADIUS_METERS,
+};
+
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -454,9 +461,30 @@ async function leaveRoom(payload: any) {
   return { left: true, roomClosed: participant.is_creator };
 }
 
+/**
+ * Read-only configuration probe for the Administration page.
+ *
+ * It reports whether the function can reach its storage, never the values of
+ * the secrets themselves, and never any room or participant data.
+ */
+async function health(): Promise<unknown> {
+  const configured = Boolean(env('SUPABASE_URL')) && Boolean(env('SUPABASE_SERVICE_ROLE_KEY'));
+  if (!configured) {
+    return {
+      status: 'not_configured',
+      storage: 'disconnected',
+      limits: LIMITS,
+    };
+  }
+  // `head`-style count keeps the probe cheap and returns no row content.
+  await rest('safe_rooms?select=id&limit=1', { method: 'GET' });
+  return { status: 'configured', storage: 'connected', limits: LIMITS };
+}
+
 // ─── HTTP entry point ────────────────────────────────────────────────────────
 
 const ACTIONS: Record<string, (payload: any) => Promise<unknown>> = {
+  health,
   create: createRoom,
   join: joinRoom,
   location: publishLocation,
