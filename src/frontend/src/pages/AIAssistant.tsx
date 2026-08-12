@@ -177,6 +177,22 @@ export default function AIAssistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeConv?.messages]);
 
+  /**
+   * The Android keyboard shrinks the visual viewport instead of the layout
+   * viewport, so the newest message can end up behind it. Re-anchoring the
+   * conversation whenever the visual viewport resizes keeps the last message
+   * and the composer in view while the user types.
+   */
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const onResize = () => {
+      messagesEndRef.current?.scrollIntoView({ block: 'end' });
+    };
+    viewport.addEventListener('resize', onResize);
+    return () => viewport.removeEventListener('resize', onResize);
+  }, []);
+
   const createConversation = useCallback(() => {
     const id = Date.now().toString();
     const conv: Conversation = { id, title: 'New conversation', messages: [], createdAt: new Date() };
@@ -272,7 +288,7 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="ai-assistant-shell" style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+    <div className="ai-assistant-shell" style={{ display: 'flex', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Conversation list — hidden on mobile via CSS */}
       <div className="ai-conv-list" style={{
         width: 220,
@@ -328,7 +344,7 @@ export default function AIAssistant() {
       {/* Chat area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{
+        <div className="ai-chat-header" style={{
           padding: '0.75rem 1.5rem',
           borderBottom: '1px solid var(--border)',
           display: 'flex',
@@ -356,9 +372,12 @@ export default function AIAssistant() {
 
         {/* Messages */}
         <div
+          className="ai-messages"
           style={{
             flex: 1,
+            minHeight: 0,
             overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
@@ -439,10 +458,10 @@ export default function AIAssistant() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
-        <div style={{
+        {/* Input area — stays visible when the Android keyboard is open */}
+        <div className="ai-composer" style={{
           padding: '1rem 1.5rem',
-          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+          paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))',
           borderTop: '1px solid var(--border)',
           background: 'var(--bg-secondary)',
           flexShrink: 0,

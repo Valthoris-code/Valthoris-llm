@@ -28,6 +28,7 @@ const en: Catalogue = {
   'nav.community': 'Community Reports',
   'nav.crypto': 'Crypto Intelligence',
   'nav.safeLocation': 'Safe Location',
+  'nav.safeRooms': 'Safe Rooms',
   'nav.threat': 'Threat Intelligence',
   'nav.notifications': 'Notifications',
   'nav.downloads': 'Downloads',

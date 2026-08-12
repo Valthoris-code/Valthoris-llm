@@ -28,6 +28,7 @@ const pt: Catalogue = {
   'nav.community': 'Denúncias da Comunidade',
   'nav.crypto': 'Inteligência Cripto',
   'nav.safeLocation': 'Local Seguro',
+  'nav.safeRooms': 'Salas Seguras',
   'nav.threat': 'Inteligência de Ameaças',
   'nav.notifications': 'Notificações',
   'nav.downloads': 'Transferências',

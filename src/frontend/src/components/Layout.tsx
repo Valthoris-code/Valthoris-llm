@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import BetaBanner from './BetaBanner';
 import TopToolbar from './TopToolbar';
 import Sidebar from './Sidebar';
@@ -9,7 +9,21 @@ import AppFooter from './AppFooter';
 import ErrorBoundary from './ErrorBoundary';
 import ConsentGate from './ConsentGate';
 import CookieBanner from './CookieBanner';
+import { useViewportMetrics } from '../hooks/useViewportMetrics';
 import './Layout.css';
+
+/**
+ * Routes whose page owns the full height of the content area: the shell itself
+ * must not scroll, the page manages its own scrolling regions.
+ */
+const FULL_HEIGHT_ROUTES = ['/assistant'];
+
+/**
+ * Routes that must not render the marketing footer. On a phone that footer was
+ * appearing inside the conversation and under the composer while the user was
+ * typing.
+ */
+const NO_FOOTER_ROUTES = ['/assistant', '/rooms', '/room/'];
 
 function PageFallback() {
   return (
@@ -43,6 +57,11 @@ function PageFallback() {
 export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { pathname } = useLocation();
+  useViewportMetrics();
+
+  const fullHeight = FULL_HEIGHT_ROUTES.some(route => pathname.startsWith(route));
+  const showFooter = !NO_FOOTER_ROUTES.some(route => pathname.startsWith(route));
 
   return (
     <div className="layout">
@@ -81,15 +100,27 @@ export default function Layout() {
           <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
         </ErrorBoundary>
 
-        <main id="main-content" className="content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ flex: 1 }}>
+        <main
+          id="main-content"
+          className={`content${fullHeight ? ' content-full-height' : ''}`}
+          style={{
+            flex: 1,
+            overflowY: fullHeight ? 'hidden' : 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
+        >
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <ErrorBoundary fallback={<PageFallback />}>
               <Outlet />
             </ErrorBoundary>
           </div>
-          <ErrorBoundary fallback={null}>
-            <AppFooter />
-          </ErrorBoundary>
+          {showFooter && (
+            <ErrorBoundary fallback={null}>
+              <AppFooter />
+            </ErrorBoundary>
+          )}
         </main>
       </div>
 

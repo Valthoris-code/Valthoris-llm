@@ -1,15 +1,34 @@
 /* ─── Layout shell ─────────────────────────────────────────────── */
+/*
+ * Height comes from the *visual* viewport, not from `100vh`.
+ *
+ * On Android `100vh` is the viewport without the dynamic browser UI, so a
+ * `100vh` shell is taller than the screen: the header ends up under the URL
+ * bar and the footer falls outside the viewport. `--app-height` is published
+ * by useViewportMetrics from `visualViewport.height`; `100dvh` is the static
+ * fallback for browsers where the hook has not run yet.
+ */
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  height: var(--app-height, 100dvh);
+  max-width: 100%;
   overflow: hidden;
 }
 
 /* ─── Main content ─────────────────────────────────────────────── */
 .content {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pages that own their own scrolling regions (AI Assistant). */
+.content-full-height {
+  overflow: hidden;
 }
 
 /* ─── Navbar (legacy, kept for compat) ─────────────────────────── */
@@ -282,6 +301,32 @@
   /* bottom padding accounts for nav bar height + safe area */
   .content {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+  /*
+   * A full-height page (the AI Assistant) reserves the space for the bottom
+   * navigation on the element itself instead of padding its scroll container,
+   * so the composer stays visible above the nav bar rather than behind it.
+   */
+  .content-full-height {
+    padding-bottom: 0;
+    height: 100%;
+  }
+  .content-full-height > * {
+    min-height: 0;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /*
+   * Android soft keyboard open: the bottom navigation is collapsed so it can
+   * neither cover the composer nor push it off-screen, and the reserved space
+   * disappears with it.
+   */
+  html[data-keyboard='open'] .mobile-nav {
+    display: none !important;
+  }
+  html[data-keyboard='open'] .content,
+  html[data-keyboard='open'] .content-full-height > * {
+    padding-bottom: 0;
   }
   .mobile-drawer-backdrop {
     display: flex !important;
