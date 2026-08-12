@@ -151,7 +151,13 @@ activemq-data/
 *.sage.py
 
 # Environments
+# Every local env file is ignored (.env, .env.local, .env.production, ...) so a
+# real key can never be committed by accident. The placeholder-only
+# `.env.example` files are deliberately kept under version control.
 .env
+.env.*
+!.env.example
+!.env.*.example
 .envrc
 .venv
 env/

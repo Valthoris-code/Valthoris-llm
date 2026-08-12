@@ -10,6 +10,21 @@ Provided at build time by Vite (`.env` in `src/frontend/`, or the CI
 environment). These are public values — never place a service-role key or an
 LLM API key here.
 
+Start from the tracked template:
+
+```bash
+cd src/frontend
+cp .env.example .env
+```
+
+> **Build-time, not run-time.** Vite inlines every `VITE_*` variable into the
+> generated bundle during `npm run build`. Exporting or rotating them on the
+> host that serves `dist/` has **no effect** — the frontend must be rebuilt
+> after any change. A bundle built without `VITE_SUPABASE_URL` /
+> `VITE_SUPABASE_ANON_KEY` starts normally but every Supabase-backed feature
+> (AI Assistant, waiting list, profiles) fails; the app logs a warning at
+> startup explaining exactly this.
+
 | Variable | Purpose |
 | --- | --- |
 | `VITE_SUPABASE_URL` | Supabase project URL. Also used to reach the `ai-chat` Edge Function. |
