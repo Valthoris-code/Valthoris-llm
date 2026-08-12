@@ -84,14 +84,24 @@ curl -s -X POST "https://<project-ref>.supabase.co/functions/v1/safe-room" \
 
 ## 2c. Other platform secrets
 
-These belong to the backend/Edge Function secret store only. The Administration
-page reports them as CONFIGURED / NOT CONFIGURED and never shows a value.
+These belong to the backend/Edge Function secret store only. They are never
+exposed to the browser and no page ever displays a value.
 
-| Secret | Used by | Status |
+The table below states what the code in this repository actually reads today,
+not what is planned. A secret that is configured in the project but that no code
+path consumes is listed as such, because reporting it as "in use" would suggest
+an integration that does not exist.
+
+| Secret | Read by | Status |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | `ai-chat` | in use |
-| `ABUSEIPDB_API_KEY` | IP reputation enrichment (`src/services`) | in use |
-| `COINGECKO_API_KEY` | crypto market/intelligence enrichment | in use |
+| `GEMINI_API_KEY` | `supabase/functions/ai-chat` | **in use** — the assistant and the fraud analysis both call Gemini with it |
+| `ABUSEIPDB_API_KEY` | — | **configured, not yet read** — no IP-reputation enrichment is wired up |
+| `COINGECKO_API_KEY` | — | **configured, not yet read** — no market/crypto enrichment is wired up |
+
+Keeping the last two configured is harmless and they are ready for the
+enrichment services described in `docs/architecture/apis.md`. Until a code path
+reads them, no screen claims that AbuseIPDB or CoinGecko data is available, and
+nothing fabricates a reputation or a price to stand in for them.
 
 CryptoScamDB, Etherscan, EtherscamDB, OpenCNAM, Nomorobo and WhoCallsMe are
 prepared in the threat-intelligence architecture but have **no credentials

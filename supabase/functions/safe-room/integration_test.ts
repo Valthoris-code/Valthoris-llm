@@ -283,6 +283,35 @@ Deno.test('leaving removes the location from the room immediately', async () => 
   assertEquals(rejected.status, 403);
 });
 
+Deno.test('changing room removes the participant from the room they left', async () => {
+  // Ana keeps two rooms open; Bruno moves from the first to the second.
+  const first = session((await call({ action: 'create', name: 'First', displayName: 'Ana' })).body);
+  const second = session((await call({ action: 'create', name: 'Second', displayName: 'Rita' })).body);
+
+  const brunoFirst = session(
+    (await call({ action: 'join', roomToken: first.roomToken, displayName: 'Bruno', acceptTerms: true }))
+      .body,
+  );
+  await call({ action: 'location', ...brunoFirst, latitude: 38.7, longitude: -9.1 });
+  assertEquals((await call({ action: 'state', ...first })).body.participants.length, 2);
+
+  // Moving room releases the previous seat (what the client does on join).
+  await call({ action: 'leave', ...brunoFirst });
+  const brunoSecond = session(
+    (await call({ action: 'join', roomToken: second.roomToken, displayName: 'Bruno', acceptTerms: true }))
+      .body,
+  );
+  await call({ action: 'location', ...brunoSecond, latitude: 41.15, longitude: -8.61 });
+
+  // Gone from the first room, present with a live marker in the second.
+  const inFirst = await call({ action: 'state', ...first });
+  assertEquals(inFirst.body.participants.map((p: any) => p.displayName), ['Ana']);
+
+  const inSecond = await call({ action: 'state', ...second });
+  const located = inSecond.body.participants.filter((p: any) => p.latitude !== null);
+  assertEquals(located.map((p: any) => p.displayName).sort(), ['Bruno']);
+});
+
 Deno.test('the terms must be accepted to join', async () => {
   const created = await call({ action: 'create', name: 'Terms', displayName: 'Ana' });
   const res = await call({

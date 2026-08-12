@@ -75,6 +75,14 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
   const startWatching = device.startWatching;
   const stopWatching = device.stopWatching;
 
+  /**
+   * Timestamp of the freshest snapshot already on screen. The poll, the
+   * location publisher and the chat all return a full room snapshot, so a slow
+   * response arriving after a newer one would otherwise roll the room back —
+   * making a just-sent message or a just-received marker disappear.
+   */
+  const appliedAt = useRef(Date.parse(initialState.serverTime) || 0);
+
   useEffect(() => {
     storeSession(session);
   }, [session]);
@@ -92,6 +100,14 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
   }, []);
 
   const apply = useCallback((next: SafeRoomState) => {
+    // `serverTime` is stamped by the backend, so it orders responses reliably
+    // even when the browser clock drifts.
+    const stamp = Date.parse(next.serverTime);
+    if (Number.isFinite(stamp) && stamp < appliedAt.current) {
+      setError('');
+      return;
+    }
+    if (Number.isFinite(stamp)) appliedAt.current = stamp;
     setState(next);
     setError('');
   }, []);

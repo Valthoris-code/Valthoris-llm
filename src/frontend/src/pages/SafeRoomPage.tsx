@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import EmptyState from '../components/ui/EmptyState';
 import SafeRoomPanel from '../safeLocation/SafeRoomPanel';
@@ -192,11 +192,21 @@ export default function SafeRoomPage() {
                 checked={acceptTerms}
                 onChange={e => setAcceptTerms(e.target.checked)}
               />
+              {/*
+                * The legal pages open through the router (so they resolve
+                * against the deployment base path) and in a new tab, so reading
+                * the terms never discards the name already typed or the
+                * acceptance already given on this screen.
+                */}
               <span>
                 {t('room.terms')}{' '}
-                <a href="/legal/terms">{t('room.termsLink')}</a>
+                <Link to="/legal/terms" target="_blank" rel="noopener noreferrer">
+                  {t('room.termsLink')}
+                </Link>
                 {' · '}
-                <a href="/legal/privacy">{t('room.privacyLink')}</a>
+                <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer">
+                  {t('room.privacyLink')}
+                </Link>
               </span>
             </label>
             <button

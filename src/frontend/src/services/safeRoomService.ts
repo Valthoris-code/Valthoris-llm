@@ -153,7 +153,30 @@ export interface CreateRoomInput {
   principal?: string | null;
 }
 
+/**
+ * Releases the seat this browser still holds in another room before it takes a
+ * seat in a new one.
+ *
+ * Without this, changing room would leave the previous marker on the previous
+ * map until the server-side presence timeout expired — the participant would
+ * still appear in a room they are no longer in. Best-effort on purpose: if the
+ * old room is already gone the new one must still be joinable.
+ */
+async function releasePreviousSeat(nextRoomToken?: string): Promise<void> {
+  const previous = loadStoredSession();
+  if (!previous) return;
+  if (nextRoomToken && previous.roomToken === nextRoomToken) return;
+  try {
+    await invoke<{ left: boolean }>({ action: 'leave', ...previous });
+  } catch {
+    // The previous room may have expired, closed, or already dropped the seat.
+  } finally {
+    clearStoredSession();
+  }
+}
+
 export async function createRoom(input: CreateRoomInput): Promise<SafeRoomJoinResult> {
+  await releasePreviousSeat();
   return invoke<SafeRoomJoinResult>({
     action: 'create',
     name: input.name,
@@ -170,6 +193,7 @@ export async function joinRoom(input: {
   acceptTerms: boolean;
   principal?: string | null;
 }): Promise<SafeRoomJoinResult> {
+  await releasePreviousSeat(input.roomToken);
   return invoke<SafeRoomJoinResult>({
     action: 'join',
     roomToken: input.roomToken,
