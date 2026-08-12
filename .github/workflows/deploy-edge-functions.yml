@@ -8,8 +8,12 @@ name: Deploy Supabase Edge Functions
 #   SUPABASE_ACCESS_TOKEN — personal access token of an account with access to
 #                           the project (Account → Access Tokens)
 #   SUPABASE_PROJECT_REF  — the project reference (e.g. abcdefghijklmnopqrst)
+#
+# Optional repository secrets:
 #   SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY — public anon key used for the
-#                           post-deploy canary request.
+#                           post-deploy canary request. When neither is set the
+#                           canary is skipped with a warning instead of failing
+#                           the deployment.
 #
 # Required *function* secrets (set once with `supabase secrets set`, they are
 # never stored in this repository and never reach the browser):
@@ -62,9 +66,11 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          test -n "$SUPABASE_ANON_KEY" || {
-            echo "SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY) secret is not set"; exit 1;
-          }
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning::Neither SUPABASE_ANON_KEY nor VITE_SUPABASE_ANON_KEY is" \
+              "configured; skipping the post-deploy canary. The function was still deployed."
+            exit 0
+          fi
           url="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/ai-chat"
           # An empty message list must be rejected with HTTP 400 by the newly
           # deployed code. Anything else means the deployment did not take.
