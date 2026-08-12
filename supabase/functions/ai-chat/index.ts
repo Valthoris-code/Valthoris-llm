@@ -4,17 +4,19 @@
  * Real backend for the Valthoris AI Security Assistant.
  *
  * The browser must never hold an LLM API key, so the assistant calls this
- * function instead. The provider selection mirrors `src/services/src/config`
- * (AI_PROVIDER + OPENAI_* / ANTHROPIC_*) so a single set of secrets configures
- * both the fraud worker and the assistant.
+ * function instead.
  *
- * Required secrets (set with `supabase secrets set …`):
- *   AI_PROVIDER       — "openai" (default) or "anthropic"
- *   OPENAI_API_KEY    — required when the resolved provider is openai
- *   ANTHROPIC_API_KEY — required when the resolved provider is anthropic
+ * Google Gemini is the provider of record for Valthoris. OpenAI and Anthropic
+ * remain supported as optional fallbacks so an operator can switch provider
+ * without a code change, but nothing is required beyond the Gemini key.
+ *
+ * Required secret (set with `supabase secrets set …`):
+ *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
  * Optional:
- *   OPENAI_MODEL      — default "gpt-4o-mini"
- *   ANTHROPIC_MODEL   — default "claude-3-5-haiku-20241022"
+ *   AI_PROVIDER       — "gemini" (default), "openai" or "anthropic"
+ *   GEMINI_MODEL      — default "gemini-2.0-flash"
+ *   OPENAI_API_KEY / OPENAI_MODEL       — optional fallback provider
+ *   ANTHROPIC_API_KEY / ANTHROPIC_MODEL — optional fallback provider
  *
  * The function never fabricates an answer: when no provider is configured or
  * the upstream call fails it returns a non-2xx response with a real error
@@ -124,6 +126,62 @@ interface Completion {
  */
 class AiChatError extends Error {}
 
+/**
+ * Google Gemini — the Valthoris provider of record.
+ *
+ * The key is passed in the `x-goog-api-key` header (never in the query string,
+ * where it would end up in proxy and server logs).
+ */
+async function callGemini(
+  messages: ChatMessage[],
+  apiKey: string,
+  systemPrompt: string = SYSTEM_PROMPT,
+): Promise<Completion> {
+  const model = env('GEMINI_MODEL') ?? 'gemini-2.0-flash';
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({
+            // Gemini names the assistant turn "model".
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+          })),
+        generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    // The upstream body can echo the request; it never reaches the browser.
+    console.error('[ai-chat] gemini', res.status, await res.text());
+    throw new AiChatError(`Gemini request failed with HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts;
+  const content = Array.isArray(parts)
+    ? parts.map((p: any) => (typeof p?.text === 'string' ? p.text : '')).join('').trim()
+    : '';
+  if (content.length === 0) {
+    const reason = data?.candidates?.[0]?.finishReason ?? data?.promptFeedback?.blockReason;
+    throw new AiChatError(
+      reason
+        ? `Gemini returned an empty completion (${String(reason)})`
+        : 'Gemini returned an empty completion',
+    );
+  }
+  return { content, provider: 'gemini', model: data?.modelVersion ?? model };
+}
+
 async function callOpenAi(
   messages: ChatMessage[],
   apiKey: string,
@@ -200,22 +258,27 @@ async function complete(
   messages: ChatMessage[],
   systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<Completion> {
-  const provider = (env('AI_PROVIDER') ?? 'openai').toLowerCase();
+  const provider = (env('AI_PROVIDER') ?? 'gemini').toLowerCase();
+  const geminiKey = env('GEMINI_API_KEY');
   const openaiKey = env('OPENAI_API_KEY');
   const anthropicKey = env('ANTHROPIC_API_KEY');
 
-  const attempts: Array<() => Promise<Completion>> = [];
-  if (provider === 'anthropic') {
-    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey, systemPrompt));
-    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey, systemPrompt));
-  } else {
-    if (openaiKey) attempts.push(() => callOpenAi(messages, openaiKey, systemPrompt));
-    if (anthropicKey) attempts.push(() => callAnthropic(messages, anthropicKey, systemPrompt));
-  }
+  const candidates: Array<[string, (() => Promise<Completion>) | null]> = [
+    ['gemini', geminiKey ? () => callGemini(messages, geminiKey, systemPrompt) : null],
+    ['openai', openaiKey ? () => callOpenAi(messages, openaiKey, systemPrompt) : null],
+    ['anthropic', anthropicKey ? () => callAnthropic(messages, anthropicKey, systemPrompt) : null],
+  ];
+
+  // The configured provider is tried first; the remaining configured providers
+  // stay available as fallbacks in their declared order.
+  const attempts = candidates
+    .sort((a, b) => Number(b[0] === provider) - Number(a[0] === provider))
+    .map(([, fn]) => fn)
+    .filter((fn): fn is () => Promise<Completion> => fn !== null);
 
   if (attempts.length === 0) {
     throw new AiChatError(
-      'No AI provider configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY as Supabase function secrets.',
+      'No AI provider configured. Set GEMINI_API_KEY as a Supabase function secret.',
     );
   }
 
@@ -236,7 +299,8 @@ async function complete(
   throw new AiChatError(`All AI providers failed: ${errors.join(' | ')}`);
 }
 
-(globalThis as any).Deno?.serve(async (req: Request) => {
+/** HTTP entry point. Exported so it can be exercised by the function tests. */
+export async function handleRequest(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
   }
@@ -275,7 +339,9 @@ async function complete(
   const analysis = await runFraudPipeline(messages, payload.principal);
 
   return json(analysis ? { ...completion, analysis } : completion, 200);
-});
+}
+
+(globalThis as any).Deno?.serve(handleRequest);
 
 /**
  * Records a genuine security analysis for the last user turn.
