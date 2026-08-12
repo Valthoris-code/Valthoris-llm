@@ -274,21 +274,31 @@ async function touch(participantId: string, patch: Record<string, unknown> = {})
   });
 }
 
+/** Most recent messages returned for a room, newest-window not oldest-window. */
+const MESSAGE_WINDOW = 200;
+
 async function roomState(room: RoomRow, selfId: string, since?: unknown) {
   const participants = await activeParticipants(room.id);
   let messageFilter = '';
   if (typeof since === 'string' && since.length > 0 && !Number.isNaN(Date.parse(since))) {
     messageFilter = `&created_at=gt.${encodeURIComponent(new Date(since).toISOString())}`;
   }
-  const messages = await rest(
+  // The window is taken from the NEWEST end: sorting ascending and limiting
+  // would return the first 200 messages ever sent and freeze the chat as soon
+  // as a busy room passed that mark. `id` breaks ties so two messages written
+  // in the same millisecond still have one stable order.
+  const rows = await rest(
     `safe_room_messages?room_id=eq.${room.id}${messageFilter}` +
-      '&select=id,participant_id,author_name,body,created_at&order=created_at.asc&limit=200',
+      `&select=id,participant_id,author_name,body,created_at` +
+      `&order=created_at.desc,id.desc&limit=${MESSAGE_WINDOW}`,
     { method: 'GET' },
   );
+  // Restore chronological order for rendering.
+  const messages = (Array.isArray(rows) ? rows : []).slice().reverse();
   return {
     room: publicRoom(room, participants.length),
     participants: participants.map((p) => publicParticipant(p, selfId)),
-    messages: (Array.isArray(messages) ? messages : []).map((m: any) => ({
+    messages: messages.map((m: any) => ({
       id: m.id,
       participantId: m.participant_id,
       authorName: m.author_name,

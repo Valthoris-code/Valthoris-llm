@@ -58,7 +58,29 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
   const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
 
   if (method === 'GET') {
-    const found = rows.filter((r) => matches(r, url.searchParams));
+    let found = rows.filter((r) => matches(r, url.searchParams));
+    // `order` and `limit` are applied exactly as PostgREST would: the window is
+    // taken AFTER sorting, so a query that sorts ascending and limits returns
+    // the OLDEST rows. The chat depends on getting the newest ones.
+    const order = url.searchParams.get('order');
+    if (order) {
+      // PostgREST accepts several comma-separated `column.direction` terms.
+      const terms = order.split(',').map((term) => {
+        const [column, direction] = term.split('.');
+        return { column, sign: direction === 'desc' ? -1 : 1 };
+      });
+      found = [...found].sort((a, b) => {
+        for (const { column, sign } of terms) {
+          const left = a[column];
+          const right = b[column];
+          if (left === right) continue;
+          return (left < right ? -1 : 1) * sign;
+        }
+        return 0;
+      });
+    }
+    const limit = Number(url.searchParams.get('limit'));
+    if (Number.isFinite(limit) && limit > 0) found = found.slice(0, limit);
     return Promise.resolve(new Response(JSON.stringify(found), { status: 200 }));
   }
   if (method === 'POST') {
@@ -210,6 +232,31 @@ Deno.test('chat is scoped to the room and attributed to the author', async () =>
   const otherState = await call({ action: 'state', ...other });
   assertEquals(otherState.body.messages.length, 0);
   assertEquals(otherState.body.participants.length, 1);
+});
+
+Deno.test('a busy room keeps showing the most recent messages', async () => {
+  const created = await call({ action: 'create', name: 'Busy', displayName: 'Ana' });
+  const ana = session(created.body);
+  const bruno = session(
+    (await call({ action: 'join', roomToken: ana.roomToken, displayName: 'Bruno', acceptTerms: true }))
+      .body,
+  );
+
+  // Past the 200-message window the room must show the newest messages, not
+  // the first ones ever written.
+  let latest: any;
+  for (let i = 1; i <= 205; i += 1) {
+    latest = await call({ action: 'message', ...ana, body: `mensagem ${i}` });
+  }
+  assertEquals(latest.body.messages.length, 200);
+  assertEquals(latest.body.messages.at(-1).body, 'mensagem 205');
+  assertEquals(latest.body.messages[0].body, 'mensagem 6');
+
+  // The other participant sees the same recent window, in the same order.
+  const seen = await call({ action: 'state', ...bruno });
+  assertEquals(seen.body.messages.length, 200);
+  assertEquals(seen.body.messages.at(-1).body, 'mensagem 205');
+  assertEquals(seen.body.messages.at(-1).isSelf, false);
 });
 
 Deno.test('leaving removes the location from the room immediately', async () => {
