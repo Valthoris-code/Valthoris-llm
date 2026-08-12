@@ -6,7 +6,24 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { I18nProvider } from './i18n/I18nContext';
 import { ConsentProvider } from './consent/ConsentContext';
 import { ToastProvider } from './components/ui/Toast';
+import { isSupabaseConfigured, SUPABASE_CONFIG_ERROR } from './services/supabaseClient';
 import './styles/app.css';
+
+// Fail loudly — at startup — when the Supabase configuration is missing.
+// `VITE_*` variables are inlined by Vite at BUILD time, so a bundle built
+// without them can never pick them up at runtime: the build must be re-run.
+// Without this warning the only symptom is a late error thrown by the first
+// feature that needs Supabase (AI Assistant, waiting list, profiles), which
+// makes a misconfigured build look like a broken integration.
+if (!isSupabaseConfigured) {
+  console.warn(
+    `[Valthoris] ${SUPABASE_CONFIG_ERROR} ` +
+    'These variables are read at build time — copy src/frontend/.env.example ' +
+    'to src/frontend/.env, fill them in and rebuild. ' +
+    'Supabase-backed features (AI Assistant, waiting list, profiles) stay ' +
+    'unavailable until then.',
+  );
+}
 
 // Backwards compatibility: older builds shipped a 404.html that redirected
 // to "/?p=<encodedPath>". 404.html now boots the SPA directly at the

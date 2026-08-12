@@ -601,6 +601,13 @@ The frontend contains a Supabase client using:
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 
+These are build-time variables: Vite inlines them into the bundle during
+`npm run build`, so they must be present when the frontend is built — defining
+them afterwards on the host that serves the built assets has no effect. Copy
+`src/frontend/.env.example` to `src/frontend/.env` for local development. When
+they are missing, the application still starts and logs a warning at startup,
+but every Supabase-backed feature remains unavailable.
+
 The browser-side integration is designed around the public anonymous key rather than exposing a service-role key to the browser.
 
 The repository also contains Supabase-related service abstractions associated with areas such as:
