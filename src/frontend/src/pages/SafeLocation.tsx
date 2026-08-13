@@ -14,9 +14,12 @@ import { useDeviceLocation } from '../safeLocation/useDeviceLocation';
 import {
   DEFAULT_SETTINGS,
   SHARE_DURATIONS,
+  SETTINGS_METHOD_MISSING_NOTICE,
   UNTIL_DISABLED_TTL_SECONDS,
+  cacheSettings,
   fetchSettings,
   getCachedSettings,
+  isMissingCanisterMethod,
   persistSettings,
 } from '../safeLocation/model';
 import type { Geofence, GeofenceDraft, SafeLocationSettings, ShareDurationId } from '../safeLocation/model';
@@ -63,6 +66,7 @@ export default function SafeLocation() {
   const [geofenceBusy, setGeofenceBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [duration, setDuration] = useState<ShareDurationId>(DEFAULT_SETTINGS.defaultDuration);
   const [label, setLabel] = useState('');
@@ -85,6 +89,14 @@ export default function SafeLocation() {
     try {
       setSettings(await persistSettings(actors.safeLocation, principal, next));
     } catch (e) {
+      // The deployed canister may still predate the settings methods. Keep the
+      // change in the browser cache and say so, instead of losing the edit or
+      // pretending it was stored on chain.
+      if (isMissingCanisterMethod(e)) {
+        cacheSettings(principal, next);
+        setNotice(SETTINGS_METHOD_MISSING_NOTICE);
+        return;
+      }
       setSettings(previous);
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -93,13 +105,20 @@ export default function SafeLocation() {
   const loadSafeSettings = useCallback(async () => {
     if (!principal) return;
     // Paint the cached copy immediately, then replace it with the canister truth.
-    setSettings(getCachedSettings(principal));
+    const cached = getCachedSettings(principal);
+    setSettings(cached);
     try {
       const stored = await fetchSettings(actors.safeLocation, principal);
       setSettings(stored);
       setDuration(stored.defaultDuration);
+      setNotice('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (isMissingCanisterMethod(e)) {
+        setDuration(cached.defaultDuration);
+        setNotice(SETTINGS_METHOD_MISSING_NOTICE);
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setSettingsLoaded(true);
     }
@@ -310,6 +329,7 @@ export default function SafeLocation() {
           🆘 {t('safe.sosActive')} — trusted contacts with SOS permission will be notified.
         </div>
       )}
+      {notice && <div className="alert-warning mt-2" role="status">{notice}</div>}
       {error && <div className="alert-error mt-2">{error}</div>}
       {device.error && <div className="alert-error mt-2">{device.error}</div>}
 

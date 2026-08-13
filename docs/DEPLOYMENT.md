@@ -194,6 +194,12 @@ dfx deploy --network ic safe_location --mode upgrade
 
 The other four canisters are unchanged and do not need to be redeployed.
 
+Until that upgrade is applied, the deployed canister rejects `getMySettings` /
+`setMySettings` with "method not found". The Safe Location page detects that
+rejection, falls back to the browser-local settings cache and shows an amber
+notice explaining that a `dfx deploy` is still pending, instead of failing the
+whole page. The notice disappears as soon as the upgraded canister answers.
+
 Upgrades can also be triggered from GitHub Actions with
 `.github/workflows/upgrade-icp-canisters.yml` (manual dispatch, one canister per
 run). That workflow always passes `--mode upgrade` for Motoko canisters, so a
