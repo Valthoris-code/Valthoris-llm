@@ -499,6 +499,33 @@ Therefore:
 
 ---
 
+Safe Rooms
+
+Safe Rooms are the multi-participant side of Safe Location: a short-lived room,
+shared by link, where every authorised participant publishes their own position
+and sees the other participants of the same room on the same map, together with
+a private chat scoped to that room.
+
+Rules enforced by the backend (`supabase/functions/safe-room`) and by database
+CHECK constraints:
+
+- at most 30 participants per room;
+- at most 24 hours of lifetime, with a visible countdown;
+- safety radius chosen by the creator, at most 1000 metres;
+- entry only through the share link and after accepting the terms;
+- one marker per participant, updated live;
+- leaving the room (EXIT) immediately removes that participant's location for
+  everybody else, and the creator leaving closes the room;
+- participants of other rooms are never visible.
+
+State lives in `safe_rooms`, `safe_room_participants` and `safe_room_messages`.
+RLS is enabled with no public policy: because Valthoris authenticates with
+Internet Identity the browser has no Supabase session, so the Edge Function is
+the single reader/writer, authorising each call with the room token plus a
+per-participant secret whose SHA-256 hash is all that is stored.
+
+---
+
 Community
 
 Community functionality exists as a dedicated Motoko canister.

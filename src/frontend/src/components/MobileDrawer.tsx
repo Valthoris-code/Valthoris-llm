@@ -19,6 +19,7 @@ const DRAWER_ITEMS: DrawerItem[] = [
   { to: '/lookup',              label: 'Lookup',              labelKey: 'nav.lookup',       icon: '🔎', public: true },
   { to: '/radar',               label: 'Radar Global',        labelKey: 'nav.radar',        icon: '🗺', public: true },
   { to: '/safe-location',       label: 'Safe Location',       labelKey: 'nav.safeLocation', icon: '📍' },
+  { to: '/rooms',               label: 'Safe Rooms',          labelKey: 'nav.safeRooms',    icon: '🛰', public: true },
   { to: '/community',           label: 'Community Reports',   labelKey: 'nav.community',    icon: '🚨', public: true },
   { to: '/crypto-intelligence', label: 'Crypto Intelligence', labelKey: 'nav.crypto',       icon: '₿',  public: true },
   { to: '/threat-intelligence', label: 'Threat Intelligence', labelKey: 'nav.threat',       icon: '🛡', public: true },

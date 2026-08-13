@@ -1,15 +1,34 @@
 /* ─── Layout shell ─────────────────────────────────────────────── */
+/*
+ * Height comes from the *visual* viewport, not from `100vh`.
+ *
+ * On Android `100vh` is the viewport without the dynamic browser UI, so a
+ * `100vh` shell is taller than the screen: the header ends up under the URL
+ * bar and the footer falls outside the viewport. `--app-height` is published
+ * by useViewportMetrics from `visualViewport.height`; `100dvh` is the static
+ * fallback for browsers where the hook has not run yet.
+ */
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  height: var(--app-height, 100dvh);
+  max-width: 100%;
   overflow: hidden;
 }
 
 /* ─── Main content ─────────────────────────────────────────────── */
 .content {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pages that own their own scrolling regions (AI Assistant). */
+.content-full-height {
+  overflow: hidden;
 }
 
 /* ─── Navbar (legacy, kept for compat) ─────────────────────────── */
@@ -279,9 +298,67 @@
   .sidebar {
     display: none !important;
   }
-  /* bottom padding accounts for nav bar height + safe area */
+  /*
+   * Space for the fixed bottom navigation.
+   *
+   * The padding is applied to the page inside the scroll container, not to the
+   * container itself: bottom padding on an overflow container is not added to
+   * its scrollable length in every engine, so the last elements of a long page
+   * (a chat composer, a submit button) ended up underneath the nav bar and
+   * could not be scrolled into view. Padding on the in-flow child always
+   * counts.
+   */
   .content {
+    padding-bottom: 0;
+  }
+  .content > * {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+  /*
+   * A full-height page (the AI Assistant) reserves the space for the bottom
+   * navigation on the element itself instead of padding its scroll container,
+   * so the composer stays visible above the nav bar rather than behind it.
+   */
+  .content-full-height {
+    padding-bottom: 0;
+    height: 100%;
+  }
+  .content-full-height > * {
+    min-height: 0;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /*
+   * Android soft keyboard open: the bottom navigation is collapsed so it can
+   * neither cover the composer nor push it off-screen, and the reserved space
+   * disappears with it.
+   */
+  html[data-keyboard='open'] .mobile-nav {
+    display: none !important;
+  }
+  html[data-keyboard='open'] .content,
+  html[data-keyboard='open'] .content > *,
+  html[data-keyboard='open'] .content-full-height > * {
+    padding-bottom: 0;
+  }
+
+  /*
+   * With the keyboard open the visible area is roughly a third of the screen.
+   * The assistant's decorative chat header and its disclaimer line together
+   * take more room than the composer itself, which pushed the input field —
+   * the one element the user is actually looking at — below the keyboard.
+   *
+   * They are collapsed only while typing, so the design is untouched in the
+   * normal state and returns as soon as the keyboard closes.
+   */
+  html[data-keyboard='open'] .ai-chat-header,
+  html[data-keyboard='open'] .ai-composer-note {
+    /* These elements carry inline styles, so the override has to win. */
+    display: none !important;
+  }
+  html[data-keyboard='open'] .ai-composer {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
   }
   .mobile-drawer-backdrop {
     display: flex !important;

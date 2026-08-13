@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Circle, MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -22,6 +22,10 @@ export interface MapMarker {
 interface Props {
   /** Centre of the viewport. */
   center?: { lat: number; lng: number };
+  /** Optional safety radius drawn around a point (Safe Rooms). */
+  circle?: { lat: number; lng: number; radiusMeters: number };
+  /** Zoom level. Defaults to a world view; room/city views pass a closer one. */
+  zoom?: number;
   markers?: MapMarker[];
   height?: number | string;
   /** Visual layers requested by the parent module (reserved for future use). */
@@ -77,6 +81,8 @@ function MapResizer() {
  */
 export default function MapPlaceholder({
   center,
+  circle,
+  zoom,
   markers = [],
   height = 420,
   heatmap = false,
@@ -100,7 +106,7 @@ export default function MapPlaceholder({
     >
       <MapContainer
         center={mapCenter}
-        zoom={4}
+        zoom={zoom ?? 4}
         style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
         scrollWheelZoom
         attributionControl
@@ -110,6 +116,13 @@ export default function MapPlaceholder({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {circle && (
+          <Circle
+            center={[circle.lat, circle.lng]}
+            radius={circle.radiusMeters}
+            pathOptions={{ color: '#00d4ff', fillColor: '#00d4ff', fillOpacity: 0.08 }}
+          />
+        )}
         {markers.map(marker => (
           <Marker
             key={marker.id}

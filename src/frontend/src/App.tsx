@@ -11,6 +11,7 @@ import Scanner         from './pages/Scanner';
 import Reports         from './pages/Reports';
 import SafeLocation    from './pages/SafeLocation';
 import SharedLocation  from './pages/SharedLocation';
+import SafeRoomPage    from './pages/SafeRoomPage';
 import Profile         from './pages/Profile';
 import AdminDashboard  from './pages/AdminDashboard';
 import UserManagement  from './pages/UserManagement';
@@ -83,6 +84,11 @@ export default function App() {
 
           {/* Public share-link resolution */}
           <Route path="share/:token" element={<SharedLocation />} />
+
+          {/* Safe Rooms — creation and link-based entry (guests welcome: the
+              room token plus the accepted terms are the authorisation). */}
+          <Route path="rooms"        element={<SafeRoomPage />} />
+          <Route path="room/:token"  element={<SafeRoomPage />} />
 
           {/* Lookup sub-routes */}
           <Route path="lookup/*"   element={<Lookup />} />
