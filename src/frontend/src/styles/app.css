@@ -908,7 +908,18 @@ input:focus, textarea:focus, select:focus {
   .safe-room-header { gap: 0.5rem; }
   .safe-room-header-actions { width: 100%; }
   .safe-room-header-actions button { flex: 1; }
-  .safe-room-messages { max-height: 40vh; }
+  .safe-room-messages {
+    /*
+     * `vh` is the layout viewport, which does NOT shrink when the Android
+     * keyboard opens, so a `40vh` message list kept its full height and pushed
+     * the room composer behind the keyboard. `--app-height` follows the visual
+     * viewport, so the list gives its space back as soon as the keyboard is up.
+     */
+    max-height: calc(var(--app-height, 100vh) * 0.4);
+  }
+  html[data-keyboard='open'] .safe-room-messages {
+    max-height: calc(var(--app-height, 100vh) * 0.35);
+  }
 
   /* Prevent text overflow everywhere */
   * { word-break: break-word; overflow-wrap: break-word; }

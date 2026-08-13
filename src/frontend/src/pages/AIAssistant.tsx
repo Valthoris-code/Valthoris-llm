@@ -342,7 +342,7 @@ export default function AIAssistant() {
       </div>
 
       {/* Chat area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="ai-chat-column" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div className="ai-chat-header" style={{
           padding: '0.75rem 1.5rem',
@@ -540,7 +540,7 @@ export default function AIAssistant() {
               {sending ? '⏳' : '➤'}
             </button>
           </div>
-          <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.4rem 0 0' }}>
+          <p className="ai-composer-note" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.4rem 0 0' }}>
             VALTHORIS AI may produce errors. Verify critical information.
           </p>
         </div>

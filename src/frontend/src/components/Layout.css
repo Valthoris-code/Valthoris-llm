@@ -341,6 +341,25 @@
   html[data-keyboard='open'] .content-full-height > * {
     padding-bottom: 0;
   }
+
+  /*
+   * With the keyboard open the visible area is roughly a third of the screen.
+   * The assistant's decorative chat header and its disclaimer line together
+   * take more room than the composer itself, which pushed the input field —
+   * the one element the user is actually looking at — below the keyboard.
+   *
+   * They are collapsed only while typing, so the design is untouched in the
+   * normal state and returns as soon as the keyboard closes.
+   */
+  html[data-keyboard='open'] .ai-chat-header,
+  html[data-keyboard='open'] .ai-composer-note {
+    /* These elements carry inline styles, so the override has to win. */
+    display: none !important;
+  }
+  html[data-keyboard='open'] .ai-composer {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
   .mobile-drawer-backdrop {
     display: flex !important;
     opacity: 1;
