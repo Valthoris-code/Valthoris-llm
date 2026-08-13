@@ -13,8 +13,12 @@
  * Required secret (set with `supabase secrets set …`):
  *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
  * Optional:
- *   GEMINI_MODEL      — default "gemini-1.5-flash"
- *                       (e.g. "gemini-1.5-pro" or "gemini-2.0-flash")
+ *   GEMINI_MODEL      — default "gemini-2.5-flash"
+ *                       (e.g. "gemini-2.5-pro" or "gemini-2.5-flash-lite").
+ *                       A blank, "models/"-prefixed or retired value is
+ *                       tolerated: the name is normalised and, when Google
+ *                       answers 404 (model retired or unknown to this key),
+ *                       the call is retried on a model that is still served.
  *
  * The function never fabricates an answer: when the key is missing or the
  * upstream call fails it returns a non-2xx response with a real error message
@@ -132,6 +136,50 @@ class AiChatError extends Error {
   }
 }
 
+/** Raised when Google answers 404 for one model name, so the next can be tried. */
+class GeminiModelNotFound extends Error {}
+
+/** Model used when `GEMINI_MODEL` is unset, blank or unusable. */
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+
+/**
+ * Models tried, in order, when the configured one answers 404.
+ *
+ * Google retires model names (the previous default, `gemini-1.5-flash`, is no
+ * longer served on v1beta and answers `404 NOT_FOUND`), which surfaced in the
+ * app as "Gemini request failed with HTTP 404". A 404 is not a transient
+ * upstream failure: it means *this* name does not exist for *this* key, so the
+ * call is retried once on a name that is still served instead of failing the
+ * whole conversation.
+ */
+const GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+/**
+ * Normalises the configured model name.
+ *
+ * The secret is written by a human, so it may carry surrounding whitespace, a
+ * trailing slash or the fully-qualified `models/<name>` form copied from the
+ * Google docs. Left as-is, `models/gemini-2.5-flash` is percent-encoded into
+ * the path segment and Google answers 404. Anything that is not a plausible
+ * model id falls back to the default rather than building a broken URL.
+ */
+function resolveGeminiModel(): string {
+  const configured = env('GEMINI_MODEL');
+  if (!configured) return DEFAULT_GEMINI_MODEL;
+  const cleaned = configured.trim().replace(/^\/+|\/+$/g, '').replace(/^models\//, '').trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(cleaned)) return DEFAULT_GEMINI_MODEL;
+  return cleaned;
+}
+
+/** The ordered list of models to try: the configured one first, then fallbacks. */
+function geminiModelChain(): string[] {
+  const chain = [resolveGeminiModel()];
+  for (const fallback of GEMINI_FALLBACK_MODELS) {
+    if (!chain.includes(fallback)) chain.push(fallback);
+  }
+  return chain;
+}
+
 /**
  * Google Gemini — the only provider.
  *
@@ -143,7 +191,32 @@ async function callGemini(
   apiKey: string,
   systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<Completion> {
-  const model = env('GEMINI_MODEL') ?? 'gemini-1.5-flash';
+  const chain = geminiModelChain();
+  let lastNotFound: AiChatError | undefined;
+  for (const model of chain) {
+    try {
+      return await callGeminiModel(messages, apiKey, systemPrompt, model);
+    } catch (err) {
+      if (err instanceof GeminiModelNotFound) {
+        lastNotFound = new AiChatError(
+          `Gemini model "${model}" is not available for this API key (HTTP 404). ` +
+            'Set the GEMINI_MODEL secret to a model your key can serve.',
+        );
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastNotFound ??
+    new AiChatError('Gemini request failed: no model could be reached.');
+}
+
+async function callGeminiModel(
+  messages: ChatMessage[],
+  apiKey: string,
+  systemPrompt: string,
+  model: string,
+): Promise<Completion> {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(
@@ -178,6 +251,9 @@ async function callGemini(
         res.status,
       );
     }
+    // A 404 identifies the model, not the request: let the caller try the next
+    // name in the chain before giving up.
+    if (res.status === 404) throw new GeminiModelNotFound(model);
     throw new AiChatError(`Gemini request failed with HTTP ${res.status}`);
   }
 

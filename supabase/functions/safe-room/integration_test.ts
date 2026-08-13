@@ -46,6 +46,23 @@ function matches(row: Row, params: URLSearchParams): boolean {
   return true;
 }
 
+/**
+ * Milliseconds by which the simulated database clock lags the function clock.
+ *
+ * Real deployments run PostgREST and the Edge Function on different machines,
+ * so `now()` and `Date.now()` never agree exactly. The stub reproduces that so
+ * a room created for the maximum 24 hours cannot silently depend on the two
+ * clocks matching.
+ */
+const DB_CLOCK_LAG_MS = 2_000;
+
+/** Failure the stub returns instead of serving the request, when set. */
+interface StorageFailure {
+  status: number;
+  body: unknown;
+}
+const storageFailure: { current: StorageFailure | null } = { current: null };
+
 const realFetch = globalThis.fetch;
 globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
   const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -56,6 +73,11 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
   if (!rows) return Promise.reject(new Error(`unexpected table ${table}`));
 
   const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+
+  const failure = storageFailure.current;
+  if (failure) {
+    return Promise.resolve(new Response(JSON.stringify(failure.body), { status: failure.status }));
+  }
 
   if (method === 'GET') {
     let found = rows.filter((r) => matches(r, url.searchParams));
@@ -84,7 +106,8 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
     return Promise.resolve(new Response(JSON.stringify(found), { status: 200 }));
   }
   if (method === 'POST') {
-    const now = new Date().toISOString();
+    // The database stamps its own defaults with ITS clock, not the caller's.
+    const now = new Date(Date.now() - DB_CLOCK_LAG_MS).toISOString();
     const row: Row = {
       id: uuid(),
       created_at: now,
@@ -99,6 +122,22 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
       terms_version: 'safe-room-v1',
       ...body,
     };
+    // Mirrors the table constraint `expires_at <= created_at + INTERVAL '24 hours'`.
+    if (
+      table === 'safe_rooms' &&
+      new Date(row.expires_at).getTime() >
+        new Date(row.created_at).getTime() + 24 * 3_600_000
+    ) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            code: '23514',
+            message: 'new row violates check constraint "safe_rooms_max_duration"',
+          }),
+          { status: 400 },
+        ),
+      );
+    }
     rows.push(row);
     return Promise.resolve(new Response(JSON.stringify([row]), { status: 201 }));
   }
@@ -394,4 +433,51 @@ Deno.test('the health probe reports configuration without leaking room data', as
   const serialised = JSON.stringify(res.body);
   assert(!serialised.includes('Health'), 'health must not expose room names');
   assert(!serialised.includes('Ana'), 'health must not expose participant names');
+});
+
+Deno.test('a 24-hour room is created even when the database clock lags', async () => {
+  // The maximum duration lands exactly on the `expires_at <= created_at + 24h`
+  // constraint, so it must not depend on the storage and the function agreeing
+  // on the current instant — otherwise creation fails with
+  // "Safe Rooms storage rejected the operation.".
+  const created = await call({
+    action: 'create',
+    name: 'All day',
+    displayName: 'Ana',
+    durationMinutes: 24 * 60,
+  });
+
+  assertEquals(created.status, 200);
+  const room = tables.safe_rooms.find((r) => r.token === created.body.roomToken)!;
+  assertEquals(
+    new Date(room.expires_at).getTime() - new Date(room.created_at).getTime(),
+    24 * 3_600_000,
+  );
+});
+
+Deno.test('missing Safe Room tables are reported as a storage setup failure', async () => {
+  storageFailure.current = {
+    status: 404,
+    body: { code: 'PGRST205', message: "Could not find the table 'public.safe_rooms'" },
+  };
+  try {
+    const res = await call({ action: 'create', name: 'Any', displayName: 'Ana' });
+    assertEquals(res.status, 503);
+    assert(String(res.body.error).includes('safe_rooms'), res.body.error);
+    // The upstream body itself is never echoed to the browser.
+    assert(!String(res.body.error).includes('Could not find the table'), res.body.error);
+  } finally {
+    storageFailure.current = null;
+  }
+});
+
+Deno.test('a refused service-role key is reported as a credential failure', async () => {
+  storageFailure.current = { status: 401, body: { message: 'Invalid API key' } };
+  try {
+    const res = await call({ action: 'create', name: 'Any', displayName: 'Ana' });
+    assertEquals(res.status, 503);
+    assert(String(res.body.error).includes('SUPABASE_SERVICE_ROLE_KEY'), res.body.error);
+  } finally {
+    storageFailure.current = null;
+  }
 });

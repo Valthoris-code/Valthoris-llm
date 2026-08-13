@@ -63,7 +63,15 @@ variable, and the built bundle contains no provider endpoint or key.
 | Secret | Required | Default |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | yes — this is the only key the function reads | — |
-| `GEMINI_MODEL` | no (e.g. `gemini-1.5-pro`, `gemini-2.0-flash`) | `gemini-1.5-flash` |
+| `GEMINI_MODEL` | no (e.g. `gemini-2.5-pro`, `gemini-2.5-flash-lite`) | `gemini-2.5-flash` |
+
+The model name is normalised before the endpoint is built: surrounding
+whitespace and the fully-qualified `models/<name>` form are accepted, and a
+blank or malformed value falls back to the default. Google retires model names
+(`gemini-1.5-flash`, the previous default, is no longer served on `v1beta`),
+which surfaced as **"Gemini request failed with HTTP 404"**; when the configured
+model answers 404 the function retries on a model that is still served, and if
+none is reachable the error names `GEMINI_MODEL` so the secret can be fixed.
 
 If the key is not configured the function returns HTTP 502 with a real error
 message naming `GEMINI_API_KEY`, and the assistant displays it instead of an
@@ -171,6 +179,17 @@ supabase db push
 public policy: only the service role (i.e. the `safe-room` Edge Function) can
 read or write them, and the ≤30 participants / ≤24 h / ≤1000 m rules are also
 enforced by CHECK constraints.
+
+If this migration has not been applied, every Safe Room call fails because the
+tables do not exist. The function now reports that case explicitly ("Safe Rooms
+storage is not initialised…", HTTP 503) instead of the opaque **"Safe Rooms
+storage rejected the operation."**, and a refused service-role key is reported
+as a credential failure naming `SUPABASE_SERVICE_ROLE_KEY`.
+
+`safe_rooms` also constrains `expires_at <= created_at + 24 hours`. The function
+writes `created_at` explicitly so a 24 h room — the maximum the UI offers — no
+longer depends on the database and the function clock agreeing, which could make
+the insert violate that constraint.
 
 No migration in this change set drops or truncates anything.
 

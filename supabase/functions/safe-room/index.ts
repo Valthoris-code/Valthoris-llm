@@ -106,7 +106,7 @@ async function rest(
   if (!res.ok) {
     // The PostgREST body can contain schema details: log it, do not return it.
     console.error('[safe-room] rest', init.method, path, res.status, text);
-    throw new SafeRoomError('Safe Rooms storage rejected the operation.', 502);
+    throw storageError(res.status, text);
   }
   if (!text) return null;
   try {
@@ -117,6 +117,41 @@ async function rest(
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Turns a PostgREST failure into an error the operator can act on.
+ *
+ * The upstream body is never echoed (it can carry schema internals), but the
+ * two failures an operator can actually fix — the Safe Room tables missing
+ * because the migration was never applied, and a service-role key the project
+ * refuses — are named explicitly instead of collapsing into the opaque
+ * "Safe Rooms storage rejected the operation." that the app was showing.
+ */
+function storageError(status: number, body: string): SafeRoomError {
+  let code = '';
+  try {
+    const parsed = JSON.parse(body);
+    if (typeof parsed?.code === 'string') code = parsed.code;
+  } catch {
+    // Not JSON: fall back to the status alone.
+  }
+  // PGRST205: the table is absent from the schema cache (migration not applied).
+  if (status === 404 || code === 'PGRST205' || code === '42P01') {
+    return new SafeRoomError(
+      'Safe Rooms storage is not initialised: the safe_rooms tables are missing. ' +
+        'Apply the supabase/migrations Safe Rooms migration to the project.',
+      503,
+    );
+  }
+  if (status === 401 || status === 403) {
+    return new SafeRoomError(
+      'Safe Rooms storage refused the service credentials. ' +
+        'Check the SUPABASE_SERVICE_ROLE_KEY secret of the function.',
+      503,
+    );
+  }
+  return new SafeRoomError('Safe Rooms storage rejected the operation.', 502);
+}
 
 function randomToken(bytes = 24): string {
   const buf = new Uint8Array(bytes);
@@ -336,6 +371,14 @@ async function createRoom(payload: any) {
   const token = randomToken();
   const secret = randomToken(32);
   const now = Date.now();
+  // `created_at` is written explicitly instead of relying on the column
+  // default: the table enforces `expires_at <= created_at + INTERVAL '24 hours'`
+  // and a 24 h room lands exactly on that bound. With the default, `created_at`
+  // is the database clock while `expires_at` is this function's clock, so the
+  // smallest skew between the two makes PostgREST reject the insert and the app
+  // shows "Safe Rooms storage rejected the operation.". Deriving both from the
+  // same instant makes the check deterministic.
+  const createdAt = new Date(now).toISOString();
 
   const inserted = await rest('safe_rooms', {
     method: 'POST',
@@ -345,6 +388,7 @@ async function createRoom(payload: any) {
       name,
       radius_meters: radiusMeters,
       max_participants: MAX_PARTICIPANTS,
+      created_at: createdAt,
       expires_at: new Date(now + durationMinutes * 60_000).toISOString(),
     },
   });
