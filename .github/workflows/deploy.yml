@@ -33,37 +33,53 @@ jobs:
         working-directory: src/frontend
         run: npm ci
 
+      # A bundle without Supabase configuration still boots, so the site looks
+      # deployed while the AI Assistant, the Safe Rooms and every other
+      # Supabase-backed feature quietly do nothing. Publishing that is worse
+      # than not publishing at all, so resolve the configuration first and fail
+      # fast — before spending a build — when it cannot be resolved.
+      #
+      # Only the anon key has to be stored as its own secret: the project URL is
+      # derived from SUPABASE_PROJECT_REF, which the Edge Function deployment
+      # already requires. Both anon key spellings are accepted so a single
+      # secret can serve this workflow and the Edge Function canary.
+      - name: Resolve Supabase configuration
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VITE_SUPABASE_URL:-}" ] && [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
+            echo "::error::Cannot determine the Supabase project URL. Set either" \
+              "VITE_SUPABASE_URL or SUPABASE_PROJECT_REF in Settings → Secrets and" \
+              "variables → Actions, then re-run this workflow."
+            exit 1
+          fi
+          if [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Missing repository secret VITE_SUPABASE_ANON_KEY (or" \
+              "SUPABASE_ANON_KEY). The built bundle cannot reach Supabase, so the" \
+              "AI Assistant and the Safe Rooms would be dead in production. Copy the" \
+              "project's public anon key from Supabase → Project Settings → API and" \
+              "add it in Settings → Secrets and variables → Actions, then re-run" \
+              "this workflow."
+            exit 1
+          fi
+
       - name: Build
         working-directory: src/frontend
         run: npm run build
         env:
           NODE_ENV: production
-          # Without these the production bundle has no Supabase configuration
-          # and every Supabase-backed feature silently no-ops.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
 
-      # A bundle without Supabase configuration still boots, so the site looks
-      # deployed while the AI Assistant, the Safe Rooms and every other
-      # Supabase-backed feature quietly do nothing. Publishing that is worse
-      # than not publishing at all, so fail here instead.
       - name: Fail if the bundle has no Supabase configuration
         working-directory: src/frontend
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
         run: |
           set -euo pipefail
-          missing=""
-          [ -n "${VITE_SUPABASE_URL:-}" ] || missing="$missing VITE_SUPABASE_URL"
-          [ -n "${VITE_SUPABASE_ANON_KEY:-}" ] || missing="$missing VITE_SUPABASE_ANON_KEY"
-          if [ -n "$missing" ]; then
-            echo "::error::Missing repository secret(s):$missing." \
-              "The built bundle cannot reach Supabase, so the AI Assistant and" \
-              "the Safe Rooms would be dead in production. Add the secret(s) in" \
-              "Settings → Secrets and variables → Actions, then re-run this workflow."
-            exit 1
-          fi
           # Confirm the value really reached the bundle rather than only the job.
           if ! grep -rqF "$VITE_SUPABASE_URL" dist/assets; then
             echo "::error::VITE_SUPABASE_URL is set but is absent from the built" \

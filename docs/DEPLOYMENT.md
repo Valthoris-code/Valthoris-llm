@@ -33,15 +33,15 @@ cp .env.example .env
 ### Required GitHub Actions secrets
 
 The Pages deployment (`.github/workflows/deploy.yml`) builds the bundle in CI, so
-the same two values must also exist as **repository** secrets under
+the Supabase values must also be reachable as **repository** secrets under
 *Settings → Secrets and variables → Actions*:
 
 | Repository secret | Used by | Effect when missing |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL` | `deploy.yml` build | Deployment fails; without the guard the site would publish with a dead backend. |
-| `VITE_SUPABASE_ANON_KEY` | `deploy.yml` build, and the `deploy-edge-functions.yml` post-deploy canary | Same as above; the canary is also skipped. |
+| `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY`) | `deploy.yml` build, and the `deploy-edge-functions.yml` post-deploy canary | Deployment fails; without the guard the site would publish with a dead backend. The canary is also skipped. |
 | `SUPABASE_ACCESS_TOKEN` | `deploy-edge-functions.yml` | Edge Functions cannot be deployed. |
-| `SUPABASE_PROJECT_REF` | `deploy-edge-functions.yml` | Edge Functions cannot be deployed. |
+| `SUPABASE_PROJECT_REF` | `deploy-edge-functions.yml`, and `deploy.yml` to derive the project URL | Edge Functions cannot be deployed; the Pages build cannot derive `VITE_SUPABASE_URL`. |
+| `VITE_SUPABASE_URL` | `deploy.yml` build | Optional. When absent the build derives `https://<SUPABASE_PROJECT_REF>.supabase.co`; only set it for a project on a custom Supabase domain. |
 
 `deploy.yml` refuses to publish when the Supabase values are absent, and also
 verifies that the project URL is actually present inside `dist/assets`. This is
