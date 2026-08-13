@@ -62,6 +62,10 @@ jobs:
       # On a push there is no workflow input: keep production in sync by
       # syncing the asset canister that actually serves the site.
       TARGET_CANISTER: ${{ inputs.canister || 'frontend' }}
+      # Resolved once: the bundle is built twice (explicit build, then again by
+      # `dfx deploy frontend`) and both builds must carry the configuration.
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -95,9 +99,6 @@ jobs:
       - name: Build the frontend bundle
         if: ${{ (inputs.canister || 'frontend') == 'frontend' }}
         working-directory: src/frontend
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${VITE_SUPABASE_URL:-}" ] || [ "$VITE_SUPABASE_URL" = 'https://.supabase.co' ]; then
@@ -127,12 +128,6 @@ jobs:
       - name: Upgrade the canister
         env:
           ADMIN_PRINCIPAL: ${{ secrets.ADMIN_PRINCIPAL }}
-          # `dfx deploy frontend` re-runs the bundle build declared in dfx.json,
-          # so the configuration has to be present here as well — otherwise the
-          # verified bundle is silently replaced by one without Supabase
-          # configuration and the AI Assistant is dead in production.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
           target="$TARGET_CANISTER"
