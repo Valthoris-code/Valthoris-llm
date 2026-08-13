@@ -1,0 +1,54 @@
+type Backend = service {
+  ensureManagedUser : () -> (ManagedUserResult);
+  getProfile : (text) -> (opt UserProfile) query;
+  getProfileDetails : () -> (ProfileDetailsResult) query;
+  getSystemStats : () -> (SystemStats) query;
+  getUserProfile : () -> (ProfileResult) query;
+  getVersion : () -> (text) query;
+  healthCheck : () -> (bool) query;
+  isRegistered : () -> (bool) query;
+  listManagedUsers : () -> (ManagedUsersResult);
+  recordReport : () -> (VoidResult);
+  recordScan : () -> (VoidResult);
+  registerUser : (text) -> (ProfileResult);
+  setProfileDetails : (opt text, opt text, opt text, opt text, bool, bool) -> (
+      ProfileDetailsResult,
+    );
+  setUserActive : (text, bool) -> (ManagedUserResult);
+  setUserRole : (text, UserRole) -> (ManagedUserResult);
+};
+type ManagedUser = record {
+  "principal" : text;
+  displayName : text;
+  role : UserRole;
+  isActive : bool;
+  registeredAt : int;
+};
+type ManagedUserResult = variant { ok : ManagedUser; err : text };
+type ManagedUsersResult = variant { ok : vec ManagedUser; err : text };
+type ProfileDetails = record {
+  bio : opt text;
+  "principal" : text;
+  country : opt text;
+  displayName : opt text;
+  twoFactor : bool;
+  publicProfile : bool;
+  updatedAt : int;
+  avatarUrl : opt text;
+};
+type ProfileDetailsResult = variant { ok : ProfileDetails; err : text };
+type ProfileResult = variant { ok : UserProfile; err : text };
+type SystemStats = record { startTime : int; version : text; totalUsers : nat };
+type UserProfile = record {
+  "principal" : text;
+  reputationScore : nat;
+  displayName : text;
+  createdAt : int;
+  totalReports : nat;
+  isActive : bool;
+  totalScans : nat;
+  updatedAt : int;
+};
+type UserRole = variant { member; moderator; administrator };
+type VoidResult = variant { ok; err : text };
+service : Backend

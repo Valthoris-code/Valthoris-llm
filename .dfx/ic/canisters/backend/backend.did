@@ -1,0 +1,116 @@
+type VoidResult = 
+ variant {
+   err: text;
+   ok;
+ };
+type UserRole = 
+ variant {
+   administrator;
+   member;
+   moderator;
+ };
+type UserProfile = 
+ record {
+   createdAt: int;
+   displayName: text;
+   isActive: bool;
+   "principal": text;
+   reputationScore: nat;
+   totalReports: nat;
+   totalScans: nat;
+   updatedAt: int;
+ };
+type SystemStats = 
+ record {
+   startTime: int;
+   totalUsers: nat;
+   version: text;
+ };
+type ProfileResult = 
+ variant {
+   err: text;
+   ok: UserProfile;
+ };
+type ProfileDetailsResult = 
+ variant {
+   err: text;
+   ok: ProfileDetails;
+ };
+type ProfileDetails = 
+ record {
+   avatarUrl: opt text;
+   bio: opt text;
+   country: opt text;
+   displayName: opt text;
+   "principal": text;
+   publicProfile: bool;
+   twoFactor: bool;
+   updatedAt: int;
+ };
+type ManagedUsersResult = 
+ variant {
+   err: text;
+   ok: vec ManagedUser;
+ };
+type ManagedUserResult = 
+ variant {
+   err: text;
+   ok: ManagedUser;
+ };
+type ManagedUser = 
+ record {
+   displayName: text;
+   isActive: bool;
+   "principal": text;
+   registeredAt: int;
+   role: UserRole;
+ };
+type Backend = 
+ service {
+   ensureManagedUser: () -> (ManagedUserResult);
+   /// Return any user's public profile by their principal string.
+   getProfile: ("principal": text) -> (opt UserProfile) query;
+   /// Return the caller's extended profile (avatar, bio, preferences).
+   /// Returns an empty, unsaved record when the caller never saved one, so the
+   /// UI can distinguish "nothing stored yet" from a read failure.
+   getProfileDetails: () -> (ProfileDetailsResult) query;
+   /// Platform-wide statistics.
+   getSystemStats: () -> (SystemStats) query;
+   /// Return the caller's own profile.
+   getUserProfile: () -> (ProfileResult) query;
+   /// Canister version string.
+   getVersion: () -> (text) query;
+   /// Returns true when the canister is running.
+   healthCheck: () -> (bool) query;
+   /// True when the caller already has a registered profile.
+   isRegistered: () -> (bool) query;
+   listManagedUsers: () -> (ManagedUsersResult);
+   /// Increment the report counter and slightly boost the caller's reputation.
+   recordReport: () -> (VoidResult);
+   /// Increment the scan counter for the caller.
+   recordScan: () -> (VoidResult);
+   /// Register a new user or update the display name of an existing one.
+   registerUser: (displayName: text) -> (ProfileResult);
+   /// Create or replace the caller's extended profile.
+   /// Every field is validated here: the canister — not the browser — is the
+   /// authority for what ends up persisted.
+   setProfileDetails: (displayName: opt text, avatarUrl: opt text, bio:
+    opt text, country: opt text, publicProfile: bool, twoFactor: bool) ->
+    (ProfileDetailsResult);
+   setUserActive: ("principal": text, isActive: bool) -> (ManagedUserResult);
+   setUserRole: ("principal": text, role: UserRole) -> (ManagedUserResult);
+ };
+/// Backend Core — coordinates platform services, manages user profiles,
+/// and exposes system statistics.
+/// First-administrator bootstrap
+/// ─────────────────────────────
+/// The first administrator is provisioned at canister install time by the
+/// deployer, who supplies their Internet Identity principal as a constructor
+/// argument.  This happens before any user can call the canister, so the
+/// identity of the first administrator is set by a trusted, deployment-
+/// authorised authority rather than by any browser client or runtime caller.
+/// Deployment command (run once when installing the canister):
+///   dfx deploy backend --argument '(principal "YOUR-II-PRINCIPAL-ID")'
+/// On subsequent upgrades the constructor is NOT called again; stable storage
+/// preserves all managed-user records across upgrades.
+service : (initialAdminPrincipal: principal) -> Backend

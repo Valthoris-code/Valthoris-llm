@@ -1,0 +1,38 @@
+// Version: 1.0.0
+type GeofenceZone__1068483521 =
+  {
+    alertOnEnter : Bool;
+    alertOnExit : Bool;
+    centerLat : Float;
+    centerLng : Float;
+    createdAt : Int;
+    id : Text;
+    isActive : Bool;
+    name : Text;
+    owner : Text;
+    radiusMeters : Float
+  };
+type LocationData__64464740 =
+  {
+    accuracy : ?Float;
+    latitude : Float;
+    locationLabel : ?Text;
+    longitude : Float;
+    timestamp : Int
+  };
+type ShareInfo__1014549515 =
+  {
+    createdAt : Int;
+    expiresAt : Int;
+    isActive : Bool;
+    owner : Text;
+    recipient : ?Text;
+    token : Text
+  };
+actor {
+  stable var geofenceCounter : Nat;
+  stable var geofencesEntries : [(Text, GeofenceZone__1068483521)];
+  stable var locationsEntries : [(Text, LocationData__64464740)];
+  stable var shareCounter : Nat;
+  stable var sharesEntries : [(Text, ShareInfo__1014549515)]
+};

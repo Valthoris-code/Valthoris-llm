@@ -1,0 +1,118 @@
+type VoidResult = 
+ variant {
+   err: text;
+   ok;
+ };
+type TrustedContact = 
+ record {
+   handle: text;
+   id: text;
+   name: text;
+   permissions: vec text;
+   relation: text;
+ };
+type ShareResult = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type ShareInfo = 
+ record {
+   createdAt: int;
+   expiresAt: int;
+   isActive: bool;
+   owner: text;
+   recipient: opt text;
+   token: text;
+ };
+type SettingsResult = 
+ variant {
+   err: text;
+   ok: SafeSettings;
+ };
+type SafeSettings = 
+ record {
+   contacts: vec TrustedContact;
+   defaultDuration: text;
+   emergencyMode: bool;
+   highAccuracy: bool;
+   owner: text;
+   shareBattery: bool;
+   updatedAt: int;
+ };
+type LocationData = 
+ record {
+   accuracy: opt float64;
+   latitude: float64;
+   locationLabel: opt text;
+   longitude: float64;
+   timestamp: int;
+ };
+type LocResult = 
+ variant {
+   err: text;
+   ok: LocationData;
+ };
+type GeofenceZone = 
+ record {
+   alertOnEnter: bool;
+   alertOnExit: bool;
+   centerLat: float64;
+   centerLng: float64;
+   createdAt: int;
+   id: text;
+   isActive: bool;
+   name: text;
+   owner: text;
+   radiusMeters: float64;
+ };
+type GeofenceAlertType = 
+ variant {
+   entered;
+   exited;
+ };
+type GeofenceAlert = 
+ record {
+   alertType: GeofenceAlertType;
+   timestamp: int;
+   zoneId: text;
+   zoneName: text;
+ };
+service : {
+  /// Check provided coordinates against all active geofences owned by the caller.
+  /// Returns an alert for every zone the point falls inside.
+  checkGeofences: (lat: float64, lng: float64) -> (vec GeofenceAlert) query;
+  /// Soft-delete a geofence owned by the caller.
+  deleteGeofence: (id: text) -> (VoidResult);
+  /// Read the caller's Safe Location configuration.
+  /// Returns the defaults when nothing has been saved yet, so the UI always
+  /// hydrates from the canister instead of from browser storage.
+  getMySettings: () -> (SettingsResult) query;
+  /// Read the current location of an active share.
+  /// Access: owner, named recipient, or anyone when recipient is null.
+  getSharedLocation: (token: text) -> (LocResult);
+  /// List all active geofences owned by the caller.
+  listMyGeofences: () -> (vec GeofenceZone) query;
+  /// List all shares created by the caller.
+  listMyShares: () -> (vec ShareInfo) query;
+  /// Revoke a share before it expires.
+  revokeShare: (token: text) -> (VoidResult);
+  /// Create a geofence zone owned by the caller.
+  setGeofence: (name: text, centerLat: float64, centerLng: float64,
+   radiusMeters: float64, alertOnEnter: bool, alertOnExit: bool) ->
+   (ShareResult);
+  /// Persist the caller's Safe Location configuration (trusted contacts,
+  /// emergency mode and device preferences). Owner-scoped: a caller can only
+  /// ever read or write their own record.
+  setMySettings: (contacts: vec TrustedContact, emergencyMode: bool,
+   defaultDuration: text, highAccuracy: bool, shareBattery: bool) ->
+   (SettingsResult);
+  /// Create a new location share. Returns a unique access token.
+  /// `ttlSeconds` must be 1–2592000 (30 days max).
+  shareLocation: (lat: float64, lng: float64, accuracy: opt float64,
+   ttlSeconds: nat, recipient: opt text, locationLabel: opt text) ->
+   (ShareResult);
+  /// Push a new coordinate to an existing, active share.
+  updateSharedLocation: (token: text, lat: float64, lng: float64, accuracy:
+   opt float64) -> (VoidResult);
+}

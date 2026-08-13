@@ -1,0 +1,60 @@
+// Version: 1.0.0
+type GeofenceZone__1068483521 =
+  {
+    alertOnEnter : Bool;
+    alertOnExit : Bool;
+    centerLat : Float;
+    centerLng : Float;
+    createdAt : Int;
+    id : Text;
+    isActive : Bool;
+    name : Text;
+    owner : Text;
+    radiusMeters : Float
+  };
+type LocationData__64464740 =
+  {
+    accuracy : ?Float;
+    latitude : Float;
+    locationLabel : ?Text;
+    longitude : Float;
+    timestamp : Int
+  };
+type SafeSettings__1020112233 =
+  {
+    contacts : [TrustedContact__451538132];
+    defaultDuration : Text;
+    emergencyMode : Bool;
+    highAccuracy : Bool;
+    owner : Text;
+    shareBattery : Bool;
+    updatedAt : Int
+  };
+type ShareInfo__1014549515 =
+  {
+    createdAt : Int;
+    expiresAt : Int;
+    isActive : Bool;
+    owner : Text;
+    recipient : ?Text;
+    token : Text
+  };
+type TrustedContact__451538132 =
+  {
+    handle : Text;
+    id : Text;
+    name : Text;
+    permissions : [Text];
+    relation : Text
+  };
+actor {
+  stable MAX_CONTACTS : Nat;
+  stable MAX_PERMS : Nat;
+  stable MAX_TEXT_LEN : Nat;
+  stable var geofenceCounter : Nat;
+  stable var geofencesEntries : [(Text, GeofenceZone__1068483521)];
+  stable var locationsEntries : [(Text, LocationData__64464740)];
+  stable var settingsEntries : [(Text, SafeSettings__1020112233)];
+  stable var shareCounter : Nat;
+  stable var sharesEntries : [(Text, ShareInfo__1014549515)]
+};

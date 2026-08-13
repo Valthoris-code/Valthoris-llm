@@ -1,0 +1,86 @@
+type VoidResult = 
+ variant {
+   err: text;
+   ok;
+ };
+type UserRole = 
+ variant {
+   administrator;
+   member;
+   moderator;
+ };
+type UserProfile = 
+ record {
+   createdAt: int;
+   displayName: text;
+   isActive: bool;
+   "principal": text;
+   reputationScore: nat;
+   totalReports: nat;
+   totalScans: nat;
+   updatedAt: int;
+ };
+type SystemStats = 
+ record {
+   startTime: int;
+   totalUsers: nat;
+   version: text;
+ };
+type ProfileResult = 
+ variant {
+   err: text;
+   ok: UserProfile;
+ };
+type ProfileDetailsResult = 
+ variant {
+   err: text;
+   ok: ProfileDetails;
+ };
+type ProfileDetails = 
+ record {
+   avatarUrl: opt text;
+   bio: opt text;
+   country: opt text;
+   displayName: opt text;
+   "principal": text;
+   publicProfile: bool;
+   twoFactor: bool;
+   updatedAt: int;
+ };
+type ManagedUsersResult = 
+ variant {
+   err: text;
+   ok: vec ManagedUser;
+ };
+type ManagedUserResult = 
+ variant {
+   err: text;
+   ok: ManagedUser;
+ };
+type ManagedUser = 
+ record {
+   displayName: text;
+   isActive: bool;
+   "principal": text;
+   registeredAt: int;
+   role: UserRole;
+ };
+service : {
+  ensureManagedUser: () -> (ManagedUserResult);
+  getProfile: ("principal": text) -> (opt UserProfile) query;
+  getProfileDetails: () -> (ProfileDetailsResult) query;
+  getSystemStats: () -> (SystemStats) query;
+  getUserProfile: () -> (ProfileResult) query;
+  getVersion: () -> (text) query;
+  healthCheck: () -> (bool) query;
+  isRegistered: () -> (bool) query;
+  listManagedUsers: () -> (ManagedUsersResult);
+  recordReport: () -> (VoidResult);
+  recordScan: () -> (VoidResult);
+  registerUser: (displayName: text) -> (ProfileResult);
+  setProfileDetails: (displayName: opt text, avatarUrl: opt text, bio:
+   opt text, country: opt text, publicProfile: bool, twoFactor: bool) ->
+   (ProfileDetailsResult);
+  setUserActive: ("principal": text, isActive: bool) -> (ManagedUserResult);
+  setUserRole: ("principal": text, role: UserRole) -> (ManagedUserResult);
+}

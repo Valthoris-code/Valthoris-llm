@@ -1,0 +1,39 @@
+// Version: 1.0.0
+type ManagedUser__300295685 =
+  {
+    displayName : Text;
+    isActive : Bool;
+    principal : Text;
+    registeredAt : Int;
+    role : UserRole__464679309
+  };
+type ProfileDetails__60779953 =
+  {
+    avatarUrl : ?Text;
+    bio : ?Text;
+    country : ?Text;
+    displayName : ?Text;
+    principal : Text;
+    publicProfile : Bool;
+    twoFactor : Bool;
+    updatedAt : Int
+  };
+type UserProfile__430907568 =
+  {
+    createdAt : Int;
+    displayName : Text;
+    isActive : Bool;
+    principal : Text;
+    reputationScore : Nat;
+    totalReports : Nat;
+    totalScans : Nat;
+    updatedAt : Int
+  };
+type UserRole__464679309 = {#administrator; #member; #moderator};
+actor {
+  stable var managedUserEntries : [(Text, ManagedUser__300295685)];
+  stable var profileDetailsEntries : [(Text, ProfileDetails__60779953)];
+  stable startTime : Int;
+  stable var usersEntries : [(Text, UserProfile__430907568)];
+  stable version : Text
+};
