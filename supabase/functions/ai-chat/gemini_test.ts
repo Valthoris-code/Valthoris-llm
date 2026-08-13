@@ -2,9 +2,9 @@
  * Gemini provider tests for the `ai-chat` Edge Function.
  *
  * Gemini is the only Valthoris provider, so the request the function actually
- * sends to Google is asserted here: the model endpoint, the key in the
- * `x-goog-api-key` header (never in the URL), the system instruction and the
- * role mapping (`assistant` → `model`).
+ * sends to Google is asserted here: the model endpoint, the key in the `key`
+ * query-string parameter, the system instruction and the role mapping
+ * (`assistant` → `model`).
  *
  * The environment is restored after every test so the other test files are
  * unaffected.
@@ -58,7 +58,7 @@ function stubGemini() {
     return Promise.resolve(
       new Response(
         JSON.stringify({
-          modelVersion: 'gemini-2.0-flash',
+          modelVersion: 'gemini-1.5-flash',
           candidates: [{ content: { parts: [{ text }] }, finishReason: text ? 'STOP' : 'SAFETY' }],
         }),
         { status: 200 },
@@ -106,7 +106,7 @@ Deno.test('Gemini is used by default and its answer reaches the caller', async (
     assertEquals(res.status, 200);
     const body = await res.json();
     assertEquals(body.provider, 'gemini');
-    assertEquals(body.model, 'gemini-2.0-flash');
+    assertEquals(body.model, 'gemini-1.5-flash');
     assertEquals(body.content, 'Este domínio imita um banco e pede credenciais.');
     assert(!String(body.content).includes('Backend integration pending'));
 
@@ -114,13 +114,13 @@ Deno.test('Gemini is used by default and its answer reaches the caller', async (
     const call = recorded[0];
     assert(
       call.url.startsWith(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=test-gemini-key',
       ),
       call.url,
     );
-    // The key travels in the header, never in the URL.
-    assertEquals(call.headers.get('x-goog-api-key'), 'test-gemini-key');
-    assert(!call.url.includes('test-gemini-key'));
+    // The key travels in the query string, as the REST API requires.
+    assert(call.url.includes('?key=test-gemini-key'), call.url);
+    assertEquals(call.headers.get('Content-Type'), 'application/json');
     assertEquals(call.body.contents[0].role, 'user');
     assert(String(call.body.systemInstruction.parts[0].text).includes('VALTHORIS'));
   });
