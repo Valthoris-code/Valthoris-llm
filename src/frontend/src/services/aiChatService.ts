@@ -75,6 +75,15 @@ async function readFunctionError(error: unknown): Promise<string> {
         // fall through to the generic message below
       }
     }
+    if (context.status === 404) {
+      return (
+        `AI backend not found (HTTP 404): the Supabase project this browser is ` +
+        `configured with (VITE_SUPABASE_URL) has no "${AI_FUNCTION_NAME}" ` +
+        'Edge Function deployed. Deploy it with the "Deploy Supabase Edge ' +
+        'Functions" workflow and make sure SUPABASE_PROJECT_REF is the same ' +
+        'project as VITE_SUPABASE_URL.'
+      );
+    }
     if (context.status === 401) {
       return (
         'AI backend rejected the request (HTTP 401). Check that ' +

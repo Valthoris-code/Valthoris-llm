@@ -2,6 +2,8 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useT } from '../i18n/useI18n';
+import { hasMinimumRole } from '../models/User';
+import type { UserRole } from '../models/User';
 
 interface DrawerItem {
   to: string;
@@ -49,7 +51,9 @@ export default function MobileDrawer({ open, onClose }: Props) {
 
   const visibleItems = DRAWER_ITEMS.filter(item => {
     if (!item.public && !isAuthenticated) return false;
-    if (item.minRole && user?.role !== item.minRole) return false;
+    if (item.minRole) {
+      if (!user || !hasMinimumRole(user.role, item.minRole as UserRole)) return false;
+    }
     return true;
   });
 
