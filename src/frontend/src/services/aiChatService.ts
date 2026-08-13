@@ -3,15 +3,15 @@
  *
  * The assistant talks to the `ai-chat` Supabase Edge Function
  * (supabase/functions/ai-chat), which holds the LLM credentials. The browser
- * never sees an API key, and the function is the single place where the
- * provider (OpenAI / Anthropic) is selected.
+ * never sees an API key, and the function is the single place where Google
+ * Gemini — the only provider — is called.
  *
  * Required browser configuration:
  *   VITE_SUPABASE_URL
  *   VITE_SUPABASE_ANON_KEY
  *
  * Required Edge Function secrets:
- *   AI_PROVIDER, OPENAI_API_KEY and/or ANTHROPIC_API_KEY
+ *   GEMINI_API_KEY (optionally GEMINI_MODEL)
  *
  * Every failure is thrown as a real Error — the UI must show it instead of a
  * fabricated answer.

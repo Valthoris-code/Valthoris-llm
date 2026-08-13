@@ -17,9 +17,8 @@ name: Deploy Supabase Edge Functions
 #
 # Required *function* secrets (set once with `supabase secrets set`, they are
 # never stored in this repository and never reach the browser):
-#   GEMINI_API_KEY — the provider of record for the Valthoris AI Assistant.
-#   OPENAI_API_KEY / ANTHROPIC_API_KEY are optional fallbacks only; AI_PROVIDER
-#   selects the preferred provider and defaults to `gemini`.
+#   GEMINI_API_KEY — the only LLM key the Valthoris AI Assistant uses. Gemini
+#   is the sole provider; GEMINI_MODEL optionally overrides the default model.
 #   SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically by
 #   Supabase and are what allows the functions to write the fraud pipeline and
 #   the Safe Room tables.

@@ -54,24 +54,22 @@ Canister IDs are read from `canister_ids.json` / the dfx-generated `.env`
 
 ## 2. Supabase Edge Function secrets — `ai-chat`
 
-The AI Assistant calls `supabase/functions/ai-chat`. **Gemini is the provider of
-record for Valthoris.** The LLM credentials live only in the function's secret
+The AI Assistant calls `supabase/functions/ai-chat`. **Gemini is the only
+provider: the function has no OpenAI/Anthropic code path and no failover to
+another vendor.** The LLM credentials live only in the function's secret
 store and never reach the browser — there is deliberately no `VITE_GEMINI_*`
 variable, and the built bundle contains no provider endpoint or key.
 
 | Secret | Required | Default |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | yes — this is the provider Valthoris uses | — |
-| `GEMINI_MODEL` | no | `gemini-2.0-flash` |
-| `AI_PROVIDER` | no | `gemini` |
-| `OPENAI_API_KEY` | only if you deliberately fall back to OpenAI | — |
-| `OPENAI_MODEL` | no | `gpt-4o-mini` |
-| `ANTHROPIC_API_KEY` | only if you deliberately fall back to Anthropic | — |
-| `ANTHROPIC_MODEL` | no | `claude-3-5-haiku-20241022` |
+| `GEMINI_API_KEY` | yes — this is the only key the function reads | — |
+| `GEMINI_MODEL` | no (e.g. `gemini-1.5-flash`, `gemini-1.5-pro`) | `gemini-2.0-flash` |
 
-If no provider key is configured the function returns HTTP 502 with a real
-error message naming `GEMINI_API_KEY`, and the assistant displays it instead of
-an answer. It never returns a simulated answer.
+If the key is not configured the function returns HTTP 502 with a real error
+message naming `GEMINI_API_KEY`, and the assistant displays it instead of an
+answer. It never returns a simulated answer. When Google rejects the key the
+function answers with that same HTTP status (401/403) and returns Google's own
+`error.message`, so an invalid or restricted key is diagnosable from the UI.
 
 ### JWT verification
 
@@ -136,7 +134,7 @@ answers but the analysis is not recorded — and the reason is logged and
 returned to the browser instead of being hidden.
 
 ```bash
-supabase secrets set GEMINI_API_KEY=<key>       # AI_PROVIDER defaults to gemini
+supabase secrets set GEMINI_API_KEY=<key>       # the only key ai-chat needs
 supabase functions deploy ai-chat
 ```
 

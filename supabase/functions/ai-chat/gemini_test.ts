@@ -1,13 +1,13 @@
 /**
  * Gemini provider tests for the `ai-chat` Edge Function.
  *
- * Gemini is the Valthoris provider of record, so the request the function
- * actually sends to Google is asserted here: the model endpoint, the key in
- * the `x-goog-api-key` header (never in the URL), the system instruction and
- * the role mapping (`assistant` → `model`).
+ * Gemini is the only Valthoris provider, so the request the function actually
+ * sends to Google is asserted here: the model endpoint, the key in the
+ * `x-goog-api-key` header (never in the URL), the system instruction and the
+ * role mapping (`assistant` → `model`).
  *
- * The environment is restored after every test so the other test files, which
- * exercise the OpenAI path, are unaffected.
+ * The environment is restored after every test so the other test files are
+ * unaffected.
  *
  * Run with:  deno test --allow-net --allow-env supabase/functions/ai-chat
  */
@@ -31,12 +31,15 @@ interface Recorded {
 let recorded: Recorded[] = [];
 let answers: string[] = [];
 let httpStatus = 200;
+// deno-lint-ignore no-explicit-any
+let authError: any = { error: 'quota' };
 
 const realFetch = globalThis.fetch;
 
 function stubGemini() {
   recorded = [];
   httpStatus = 200;
+  authError = { error: 'quota' };
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     recorded.push({
@@ -48,7 +51,7 @@ function stubGemini() {
       return Promise.reject(new Error(`unexpected fetch to ${url}`));
     }
     if (httpStatus !== 200) {
-      return Promise.resolve(new Response(JSON.stringify({ error: 'quota' }), { status: httpStatus }));
+      return Promise.resolve(new Response(JSON.stringify(authError), { status: httpStatus }));
     }
     const text = answers.shift() ?? '';
     return Promise.resolve(
@@ -66,14 +69,9 @@ function stubGemini() {
 /** Runs `fn` with only the Gemini key configured, then restores the environment. */
 async function withGemini(fn: () => Promise<void>): Promise<void> {
   const previous = {
-    provider: Deno.env.get('AI_PROVIDER'),
-    openai: Deno.env.get('OPENAI_API_KEY'),
-    anthropic: Deno.env.get('ANTHROPIC_API_KEY'),
+    key: Deno.env.get('GEMINI_API_KEY'),
     supabaseUrl: Deno.env.get('SUPABASE_URL'),
   };
-  Deno.env.delete('AI_PROVIDER');
-  Deno.env.delete('OPENAI_API_KEY');
-  Deno.env.delete('ANTHROPIC_API_KEY');
   // No fraud-pipeline configuration: this file only tests the completion path.
   Deno.env.delete('SUPABASE_URL');
   Deno.env.set('GEMINI_API_KEY', 'test-gemini-key');
@@ -82,10 +80,8 @@ async function withGemini(fn: () => Promise<void>): Promise<void> {
     await fn();
   } finally {
     globalThis.fetch = realFetch;
-    Deno.env.delete('GEMINI_API_KEY');
-    if (previous.provider) Deno.env.set('AI_PROVIDER', previous.provider);
-    if (previous.openai) Deno.env.set('OPENAI_API_KEY', previous.openai);
-    if (previous.anthropic) Deno.env.set('ANTHROPIC_API_KEY', previous.anthropic);
+    if (previous.key) Deno.env.set('GEMINI_API_KEY', previous.key);
+    else Deno.env.delete('GEMINI_API_KEY');
     if (previous.supabaseUrl) Deno.env.set('SUPABASE_URL', previous.supabaseUrl);
   }
 }
@@ -176,15 +172,37 @@ Deno.test('an empty Gemini completion is reported with its finish reason', async
   });
 });
 
-Deno.test('without any provider key the failure names the Gemini secret', async () => {
-  const previous = {
-    provider: Deno.env.get('AI_PROVIDER'),
-    openai: Deno.env.get('OPENAI_API_KEY'),
-    anthropic: Deno.env.get('ANTHROPIC_API_KEY'),
-  };
-  Deno.env.delete('AI_PROVIDER');
-  Deno.env.delete('OPENAI_API_KEY');
-  Deno.env.delete('ANTHROPIC_API_KEY');
+Deno.test('a Gemini authentication failure returns Google\'s own error', async () => {
+  await withGemini(async () => {
+    httpStatus = 403;
+    authError = {
+      error: {
+        code: 403,
+        message: 'Requests from referer are blocked. API key not valid.',
+        status: 'PERMISSION_DENIED',
+      },
+    };
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Verifica isto' }] }));
+
+    assertEquals(res.status, 403);
+    const body = await res.json();
+    assert(String(body.error).includes('HTTP 403'), body.error);
+    assert(String(body.error).includes('API key not valid.'), body.error);
+  });
+});
+
+Deno.test('no other provider is ever contacted', async () => {
+  await withGemini(async () => {
+    answers = ['Resposta.'];
+    await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+    assertEquals(recorded.length, 1);
+    assert(recorded[0].url.startsWith('https://generativelanguage.googleapis.com/'), recorded[0].url);
+  });
+});
+
+Deno.test('without the Gemini key the failure names the secret', async () => {
+  const previous = Deno.env.get('GEMINI_API_KEY');
   Deno.env.delete('GEMINI_API_KEY');
   try {
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
@@ -192,8 +210,6 @@ Deno.test('without any provider key the failure names the Gemini secret', async 
     const body = await res.json();
     assert(String(body.error).includes('GEMINI_API_KEY'), body.error);
   } finally {
-    if (previous.provider) Deno.env.set('AI_PROVIDER', previous.provider);
-    if (previous.openai) Deno.env.set('OPENAI_API_KEY', previous.openai);
-    if (previous.anthropic) Deno.env.set('ANTHROPIC_API_KEY', previous.anthropic);
+    if (previous) Deno.env.set('GEMINI_API_KEY', previous);
   }
 });
