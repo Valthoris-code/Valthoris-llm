@@ -31,15 +31,23 @@ interface Recorded {
 let recorded: Recorded[] = [];
 let answers: string[] = [];
 let httpStatus = 200;
+/** Model names the stub answers 404 for, as Google does for a retired model. */
+let notFoundModels: string[] = [];
 /** Body the stub returns when `httpStatus` is not 200. */
 // deno-lint-ignore no-explicit-any
 let errorBody: any = { error: 'quota' };
 
 const realFetch = globalThis.fetch;
 
+/** Extracts the model name from a `:generateContent` URL. */
+function modelOf(url: string): string {
+  return url.split('/models/')[1]?.split(':')[0] ?? '';
+}
+
 function stubGemini() {
   recorded = [];
   httpStatus = 200;
+  notFoundModels = [];
   errorBody = { error: 'quota' };
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -51,6 +59,14 @@ function stubGemini() {
     if (!url.startsWith('https://generativelanguage.googleapis.com/')) {
       return Promise.reject(new Error(`unexpected fetch to ${url}`));
     }
+    if (notFoundModels.some((model) => url.includes(`/models/${model}:`))) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ error: { code: 404, message: 'model not found', status: 'NOT_FOUND' } }),
+          { status: 404 },
+        ),
+      );
+    }
     if (httpStatus !== 200) {
       return Promise.resolve(new Response(JSON.stringify(errorBody), { status: httpStatus }));
     }
@@ -58,7 +74,7 @@ function stubGemini() {
     return Promise.resolve(
       new Response(
         JSON.stringify({
-          modelVersion: 'gemini-1.5-flash',
+          modelVersion: modelOf(url),
           candidates: [{ content: { parts: [{ text }] }, finishReason: text ? 'STOP' : 'SAFETY' }],
         }),
         { status: 200 },
@@ -71,10 +87,12 @@ function stubGemini() {
 async function withGemini(fn: () => Promise<void>): Promise<void> {
   const previous = {
     key: Deno.env.get('GEMINI_API_KEY'),
+    model: Deno.env.get('GEMINI_MODEL'),
     supabaseUrl: Deno.env.get('SUPABASE_URL'),
   };
   // No fraud-pipeline configuration: this file only tests the completion path.
   Deno.env.delete('SUPABASE_URL');
+  Deno.env.delete('GEMINI_MODEL');
   Deno.env.set('GEMINI_API_KEY', 'test-gemini-key');
   stubGemini();
   try {
@@ -83,6 +101,8 @@ async function withGemini(fn: () => Promise<void>): Promise<void> {
     globalThis.fetch = realFetch;
     if (previous.key) Deno.env.set('GEMINI_API_KEY', previous.key);
     else Deno.env.delete('GEMINI_API_KEY');
+    if (previous.model) Deno.env.set('GEMINI_MODEL', previous.model);
+    else Deno.env.delete('GEMINI_MODEL');
     if (previous.supabaseUrl) Deno.env.set('SUPABASE_URL', previous.supabaseUrl);
   }
 }
@@ -106,7 +126,7 @@ Deno.test('Gemini is used by default and its answer reaches the caller', async (
     assertEquals(res.status, 200);
     const body = await res.json();
     assertEquals(body.provider, 'gemini');
-    assertEquals(body.model, 'gemini-1.5-flash');
+    assertEquals(body.model, 'gemini-2.5-flash');
     assertEquals(body.content, 'Este domínio imita um banco e pede credenciais.');
     assert(!String(body.content).includes('Backend integration pending'));
 
@@ -114,7 +134,7 @@ Deno.test('Gemini is used by default and its answer reaches the caller', async (
     const call = recorded[0];
     assert(
       call.url.startsWith(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=test-gemini-key',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=test-gemini-key',
       ),
       call.url,
     );
@@ -213,4 +233,61 @@ Deno.test('without the Gemini key the failure names the secret', async () => {
   } finally {
     if (previous) Deno.env.set('GEMINI_API_KEY', previous);
   }
+});
+
+Deno.test('a "models/"-prefixed GEMINI_MODEL still builds a valid endpoint', async () => {
+  await withGemini(async () => {
+    Deno.env.set('GEMINI_MODEL', '  models/gemini-2.5-pro  ');
+    answers = ['Resposta.'];
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 200);
+    assertEquals(
+      recorded[0].url,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=test-gemini-key',
+    );
+  });
+});
+
+Deno.test('a blank GEMINI_MODEL falls back to the default model', async () => {
+  await withGemini(async () => {
+    Deno.env.set('GEMINI_MODEL', '   ');
+    answers = ['Resposta.'];
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 200);
+    assert(recorded[0].url.includes('/models/gemini-2.5-flash:generateContent'), recorded[0].url);
+  });
+});
+
+Deno.test('a retired model answering 404 is retried on a supported one', async () => {
+  await withGemini(async () => {
+    Deno.env.set('GEMINI_MODEL', 'gemini-1.5-flash');
+    notFoundModels = ['gemini-1.5-flash'];
+    answers = ['Resposta real.'];
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.content, 'Resposta real.');
+    assertEquals(recorded.length, 2);
+    assert(recorded[0].url.includes('/models/gemini-1.5-flash:'), recorded[0].url);
+    assert(recorded[1].url.includes('/models/gemini-2.5-flash:'), recorded[1].url);
+  });
+});
+
+Deno.test('when every model answers 404 the error names the secret to fix', async () => {
+  await withGemini(async () => {
+    notFoundModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 502);
+    const body = await res.json();
+    assert(String(body.error).includes('GEMINI_MODEL'), body.error);
+    assert(String(body.error).includes('404'), body.error);
+  });
 });
