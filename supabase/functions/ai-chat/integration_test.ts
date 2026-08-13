@@ -72,7 +72,7 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
     return Promise.resolve(
       new Response(
         JSON.stringify({
-          modelVersion: 'gemini-2.0-flash',
+          modelVersion: 'gemini-1.5-flash',
           candidates: [{ content: { parts: [{ text: content }] } }],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -167,7 +167,7 @@ Deno.test('a real analysis produces a completed run, a decision and a justificat
   const decision = restCalls('fraud_decisions')[0].body as Record<string, any>;
   assertEquals(decision.verdict, 'fraud');
   assertEquals(decision.confidence_score, 88);
-  assertEquals(decision.ai_provider, 'gemini:gemini-2.0-flash');
+  assertEquals(decision.ai_provider, 'gemini:gemini-1.5-flash');
 
   const justification = restCalls('fraud_decision_justifications')[0].body as Record<string, any>;
   assertEquals(justification.risk_signals, ['look-alike domain', 'credential harvesting form']);

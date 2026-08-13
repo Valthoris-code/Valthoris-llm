@@ -13,8 +13,8 @@
  * Required secret (set with `supabase secrets set …`):
  *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
  * Optional:
- *   GEMINI_MODEL      — default "gemini-2.0-flash"
- *                       (e.g. "gemini-1.5-flash" or "gemini-1.5-pro")
+ *   GEMINI_MODEL      — default "gemini-1.5-flash"
+ *                       (e.g. "gemini-1.5-pro" or "gemini-2.0-flash")
  *
  * The function never fabricates an answer: when the key is missing or the
  * upstream call fails it returns a non-2xx response with a real error message
@@ -135,23 +135,22 @@ class AiChatError extends Error {
 /**
  * Google Gemini — the only provider.
  *
- * The key is passed in the `x-goog-api-key` header (never in the query string,
- * where it would end up in proxy and server logs).
+ * The REST API expects the key in the `key` query-string parameter of the
+ * `:generateContent` endpoint.
  */
 async function callGemini(
   messages: ChatMessage[],
   apiKey: string,
   systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<Completion> {
-  const model = env('GEMINI_MODEL') ?? 'gemini-2.0-flash';
+  const model = env('GEMINI_MODEL') ?? 'gemini-1.5-flash';
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    url,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: messages

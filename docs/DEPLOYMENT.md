@@ -63,7 +63,7 @@ variable, and the built bundle contains no provider endpoint or key.
 | Secret | Required | Default |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | yes — this is the only key the function reads | — |
-| `GEMINI_MODEL` | no (e.g. `gemini-1.5-flash`, `gemini-1.5-pro`) | `gemini-2.0-flash` |
+| `GEMINI_MODEL` | no (e.g. `gemini-1.5-pro`, `gemini-2.0-flash`) | `gemini-1.5-flash` |
 
 If the key is not configured the function returns HTTP 502 with a real error
 message naming `GEMINI_API_KEY`, and the assistant displays it instead of an
