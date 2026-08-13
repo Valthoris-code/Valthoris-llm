@@ -103,16 +103,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsAuthenticated(true);
         setError(null);
       } catch (err) {
-        // The delegation is valid but the backend canister did not answer.
-        // That is a genuine backend failure and must be reported as such —
-        // silently dropping the session makes it look like Internet Identity
-        // is broken and hides the real cause.
+        // The delegation is valid but the backend canister did not answer (for
+        // example while it is being upgraded). Dropping the session here made
+        // the whole application look broken — the user could not even reach the
+        // pages that do not need the canister. The session is therefore kept
+        // with the least-privileged role, and the real failure is surfaced so
+        // it is visible instead of silent. This grants nothing: every
+        // privileged operation is authorised by the canister from `msg.caller`,
+        // never from this value.
         const message = err instanceof Error ? err.message : String(err);
         console.error('[AuthContext] Failed to resolve backend role:', err);
-        setIdentity(null);
-        setPrincipal(null);
-        setUser(null);
-        setIsAuthenticated(false);
+        setIdentity(id);
+        setPrincipal(p);
+        setUser({ principal: p, role: 'member' });
+        setIsAuthenticated(true);
         setError(`Backend canister did not answer: ${message}`);
       }
     } else {

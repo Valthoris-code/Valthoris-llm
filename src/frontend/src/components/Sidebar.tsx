@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useT } from '../i18n/useI18n';
+import { hasMinimumRole } from '../models/User';
+import type { UserRole } from '../models/User';
 
 interface NavItem {
   to: string;
@@ -74,7 +76,9 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
 
   const visibleItems = NAV_ITEMS.filter(item => {
     if (!item.public && !isAuthenticated) return false;
-    if (item.minRole && user?.role !== item.minRole) return false;
+    if (item.minRole) {
+      if (!user || !hasMinimumRole(user.role, item.minRole as UserRole)) return false;
+    }
     return true;
   });
 

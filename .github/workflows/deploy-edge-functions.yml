@@ -28,13 +28,15 @@ name: Deploy Supabase Edge Functions
 # authenticates with Internet Identity, so the browser has no Supabase JWT and
 # the gateway would answer HTTP 401 before the function ran.
 
+# Deliberately NOT restricted with `paths`: a path filter means the functions
+# are only redeployed when their own sources change, so a project that never
+# received them (or received them from another branch) stays broken and the
+# browser keeps getting HTTP 404 from `functions/v1/ai-chat`. Redeploying on
+# every push to `main` is cheap and makes production match this repository.
 on:
   push:
     branches:
       - main
-    paths:
-      - 'supabase/functions/**'
-      - '.github/workflows/deploy-edge-functions.yml'
   workflow_dispatch:
 
 jobs:
@@ -101,6 +103,13 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"messages":[]}')
           echo "HTTP $status: $(cat /tmp/resp.json)"
+          if [ "$status" = "404" ]; then
+            echo "::error::The gateway does not know the \"ai-chat\" function on" \
+              "project $SUPABASE_PROJECT_REF. This is the HTTP 404 the AI" \
+              "Assistant shows: SUPABASE_PROJECT_REF points at a different" \
+              "project than VITE_SUPABASE_URL used to build the frontend."
+            exit 1
+          fi
           test "$status" = "400"
 
           # The Safe Rooms health probe must answer 200 through the same
@@ -111,4 +120,9 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"action":"health"}')
           echo "HTTP $status: $(cat /tmp/room.json)"
+          if [ "$status" = "404" ]; then
+            echo "::error::The \"safe-room\" function is not reachable on project" \
+              "$SUPABASE_PROJECT_REF."
+            exit 1
+          fi
           test "$status" = "200"

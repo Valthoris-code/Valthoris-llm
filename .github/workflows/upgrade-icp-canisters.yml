@@ -28,6 +28,13 @@ name: Upgrade ICP canisters
 #                       re-executed and existing state is preserved.
 
 on:
+  # Production is served from the ICP asset canister, so a bundle that is only
+  # published to GitHub Pages never reaches the users. Every push to `main`
+  # therefore syncs the `frontend` canister as well; syncing an asset canister
+  # only replaces assets and touches no Wasm state.
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       canister:
@@ -46,6 +53,15 @@ on:
 jobs:
   upgrade:
     runs-on: ubuntu-latest
+    env:
+      # The CI identity is imported in plaintext (a workflow has no keyring).
+      # Without this, *every* mainnet dfx command aborts with
+      # "The ci identity is not stored securely" and exit code 255, which is
+      # what silently stopped all canister upgrades.
+      DFX_WARNING: -mainnet_plaintext_identity
+      # On a push there is no workflow input: keep production in sync by
+      # syncing the asset canister that actually serves the site.
+      TARGET_CANISTER: ${{ inputs.canister || 'frontend' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -73,27 +89,53 @@ jobs:
           dfx identity use ci
           dfx identity get-principal
 
+      # A bundle without Supabase configuration boots but the AI Assistant and
+      # the Safe Rooms are dead in it. Publishing that to the canister that
+      # serves production is worse than not publishing at all.
       - name: Build the frontend bundle
-        if: ${{ inputs.canister == 'frontend' }}
+        if: ${{ (inputs.canister || 'frontend') == 'frontend' }}
         working-directory: src/frontend
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
+          set -euo pipefail
+          if [ -z "${VITE_SUPABASE_URL:-}" ] || [ "$VITE_SUPABASE_URL" = 'https://.supabase.co' ]; then
+            echo "::error::Cannot determine the Supabase project URL. Set either" \
+              "VITE_SUPABASE_URL or SUPABASE_PROJECT_REF in Settings → Secrets and" \
+              "variables → Actions."
+            exit 1
+          fi
+          if [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Missing repository secret VITE_SUPABASE_ANON_KEY (or" \
+              "SUPABASE_ANON_KEY); the bundle could not reach Supabase."
+            exit 1
+          fi
           npm ci
           npm run build
+          # Confirm the value really reached the bundle, not only the job.
+          grep -rqF "$VITE_SUPABASE_URL" dist/assets || {
+            echo "::error::VITE_SUPABASE_URL is absent from the built bundle."
+            exit 1
+          }
 
       - name: Record the pre-upgrade module hash
         run: |
           set -euo pipefail
-          dfx canister --network ic info "${{ inputs.canister }}" || true
+          dfx canister --network ic info "$TARGET_CANISTER" || true
 
       - name: Upgrade the canister
         env:
           ADMIN_PRINCIPAL: ${{ secrets.ADMIN_PRINCIPAL }}
+          # `dfx deploy frontend` re-runs the bundle build declared in dfx.json,
+          # so the configuration has to be present here as well — otherwise the
+          # verified bundle is silently replaced by one without Supabase
+          # configuration and the AI Assistant is dead in production.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
-          target='${{ inputs.canister }}'
+          target="$TARGET_CANISTER"
 
           if [ "$target" = 'frontend' ]; then
             # Asset canisters are updated by syncing assets; state is the asset
@@ -112,7 +154,7 @@ jobs:
       - name: Verify the upgraded canister answers
         run: |
           set -euo pipefail
-          target='${{ inputs.canister }}'
+          target="$TARGET_CANISTER"
           dfx canister --network ic info "$target"
           # A real call against the upgraded canister — a successful build is
           # not evidence that the canister works.

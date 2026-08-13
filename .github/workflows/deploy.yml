@@ -56,6 +56,18 @@ jobs:
               "variables → Actions, then re-run this workflow."
             exit 1
           fi
+          # A project URL that does not match the project the Edge Functions are
+          # deployed to is exactly what makes the browser get HTTP 404 from
+          # `functions/v1/ai-chat` while every workflow reports success.
+          configured_url="${VITE_SUPABASE_URL%/}"
+          if [ -n "${configured_url:-}" ] && [ -n "${SUPABASE_PROJECT_REF:-}" ] \
+             && [ "$configured_url" != "https://$SUPABASE_PROJECT_REF.supabase.co" ]; then
+            echo "::error::VITE_SUPABASE_URL ($VITE_SUPABASE_URL) does not belong to" \
+              "the project SUPABASE_PROJECT_REF ($SUPABASE_PROJECT_REF) the Edge" \
+              "Functions are deployed to. The AI Assistant would call a project" \
+              "without the \"ai-chat\" function and get HTTP 404."
+            exit 1
+          fi
           if [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
             echo "::error::Missing repository secret VITE_SUPABASE_ANON_KEY (or" \
               "SUPABASE_ANON_KEY). The built bundle cannot reach Supabase, so the" \
