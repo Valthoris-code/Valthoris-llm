@@ -31,15 +31,16 @@ interface Recorded {
 let recorded: Recorded[] = [];
 let answers: string[] = [];
 let httpStatus = 200;
+/** Body the stub returns when `httpStatus` is not 200. */
 // deno-lint-ignore no-explicit-any
-let authError: any = { error: 'quota' };
+let errorBody: any = { error: 'quota' };
 
 const realFetch = globalThis.fetch;
 
 function stubGemini() {
   recorded = [];
   httpStatus = 200;
-  authError = { error: 'quota' };
+  errorBody = { error: 'quota' };
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     recorded.push({
@@ -51,7 +52,7 @@ function stubGemini() {
       return Promise.reject(new Error(`unexpected fetch to ${url}`));
     }
     if (httpStatus !== 200) {
-      return Promise.resolve(new Response(JSON.stringify(authError), { status: httpStatus }));
+      return Promise.resolve(new Response(JSON.stringify(errorBody), { status: httpStatus }));
     }
     const text = answers.shift() ?? '';
     return Promise.resolve(
@@ -175,7 +176,7 @@ Deno.test('an empty Gemini completion is reported with its finish reason', async
 Deno.test('a Gemini authentication failure returns Google\'s own error', async () => {
   await withGemini(async () => {
     httpStatus = 403;
-    authError = {
+    errorBody = {
       error: {
         code: 403,
         message: 'Requests from referer are blocked. API key not valid.',
