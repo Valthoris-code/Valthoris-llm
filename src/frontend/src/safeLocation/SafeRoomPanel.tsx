@@ -145,16 +145,24 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
   // cadence so the other participants keep seeing a live marker.
   const position = device.position;
   const lastPublished = useRef(0);
+  const publishing = useRef(false);
   useEffect(() => {
     if (!position) return;
     let cancelled = false;
     const publish = async () => {
+      // A slow request must not let the interval start a second, concurrent
+      // publish: two in-flight calls can resolve out of order and apply a
+      // stale room snapshot over a newer one.
+      if (publishing.current) return;
+      publishing.current = true;
       try {
         const next = await publishLocation(session, position);
         lastPublished.current = Date.now();
         if (!cancelled) apply(next);
       } catch (e) {
         if (!cancelled) handleFailure(e);
+      } finally {
+        publishing.current = false;
       }
     };
     if (Date.now() - lastPublished.current > PUBLISH_MS) void publish();

@@ -82,7 +82,7 @@ function restConfig(): { url: string; key: string } {
   return { url: url.replace(/\/$/, ''), key };
 }
 
-const AUTH_SCHEME = 'Bea' + 'rer';
+const AUTH_SCHEME = 'Bearer';
 
 async function rest(
   path: string,
