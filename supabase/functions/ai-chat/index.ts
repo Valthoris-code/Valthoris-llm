@@ -6,21 +6,19 @@
  * The browser must never hold an LLM API key, so the assistant calls this
  * function instead.
  *
- * Google Gemini is the provider of record for Valthoris. OpenAI and Anthropic
- * remain supported as optional fallbacks so an operator can switch provider
- * without a code change, but nothing is required beyond the Gemini key.
+ * Google Gemini is the only provider: there is no OpenAI/Anthropic dependency
+ * and no failover to another vendor. The call is a plain `fetch` against the
+ * Google Generative Language REST API, so no SDK is needed under Deno.
  *
  * Required secret (set with `supabase secrets set …`):
  *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
  * Optional:
- *   AI_PROVIDER       — "gemini" (default), "openai" or "anthropic"
  *   GEMINI_MODEL      — default "gemini-2.0-flash"
- *   OPENAI_API_KEY / OPENAI_MODEL       — optional fallback provider
- *   ANTHROPIC_API_KEY / ANTHROPIC_MODEL — optional fallback provider
+ *                       (e.g. "gemini-1.5-flash" or "gemini-1.5-pro")
  *
- * The function never fabricates an answer: when no provider is configured or
- * the upstream call fails it returns a non-2xx response with a real error
- * message so the UI can show it.
+ * The function never fabricates an answer: when the key is missing or the
+ * upstream call fails it returns a non-2xx response with a real error message
+ * so the UI can show it.
  */
 
 // deno-lint-ignore-file no-explicit-any
@@ -124,10 +122,18 @@ interface Completion {
  * message may embed internal details or a stack trace) is logged server-side
  * and reported to the client as a generic failure instead.
  */
-class AiChatError extends Error {}
+class AiChatError extends Error {
+  /** HTTP status to answer with; defaults to 502 (upstream failure). */
+  readonly status: number;
+
+  constructor(message: string, status = 502) {
+    super(message);
+    this.status = status;
+  }
+}
 
 /**
- * Google Gemini — the Valthoris provider of record.
+ * Google Gemini — the only provider.
  *
  * The key is passed in the `x-goog-api-key` header (never in the query string,
  * where it would end up in proxy and server logs).
@@ -161,8 +167,18 @@ async function callGemini(
   );
 
   if (!res.ok) {
-    // The upstream body can echo the request; it never reaches the browser.
-    console.error('[ai-chat] gemini', res.status, await res.text());
+    // The upstream body can echo the request; it never reaches the browser…
+    const body = await res.text();
+    console.error('[ai-chat] gemini', res.status, body);
+    // …except for an authentication failure, where Google's own message is the
+    // only thing that tells the operator which key or restriction is wrong. It
+    // describes the credential, not the prompt, so it is safe to return.
+    if (res.status === 401 || res.status === 403) {
+      throw new AiChatError(
+        `Gemini authentication failed (HTTP ${res.status}): ${googleErrorMessage(body)}`,
+        res.status,
+      );
+    }
     throw new AiChatError(`Gemini request failed with HTTP ${res.status}`);
   }
 
@@ -182,121 +198,33 @@ async function callGemini(
   return { content, provider: 'gemini', model: data?.modelVersion ?? model };
 }
 
-async function callOpenAi(
-  messages: ChatMessage[],
-  apiKey: string,
-  systemPrompt: string = SYSTEM_PROMPT,
-): Promise<Completion> {
-  const model = env('OPENAI_MODEL') ?? 'gpt-4o-mini';
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  headers['Authorization'] = 'Bearer ' + apiKey;
-
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-      max_tokens: 800,
-      temperature: 0.2,
-    }),
-  });
-
-  if (!res.ok) {
-    console.error('[ai-chat] openai', res.status, await res.text());
-    throw new AiChatError(`OpenAI request failed with HTTP ${res.status}`);
+/** Extracts the native `error.message` Google returns, falling back to its status text. */
+function googleErrorMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    const message = parsed?.error?.message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message.slice(0, 500);
+    }
+    const status = parsed?.error?.status;
+    if (typeof status === 'string' && status.length > 0) return status;
+  } catch {
+    // Not JSON: do not echo an arbitrary upstream body to the browser.
   }
-
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string' || content.length === 0) {
-    throw new AiChatError('OpenAI returned an empty completion');
-  }
-  return { content, provider: 'openai', model: data?.model ?? model };
-}
-
-async function callAnthropic(
-  messages: ChatMessage[],
-  apiKey: string,
-  systemPrompt: string = SYSTEM_PROMPT,
-): Promise<Completion> {
-  const model = env('ANTHROPIC_MODEL') ?? 'claude-3-5-haiku-20241022';
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'anthropic-version': '2023-06-01',
-  };
-  headers['x-api-key'] = apiKey;
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      system: systemPrompt,
-      max_tokens: 800,
-      temperature: 0.2,
-      messages: messages
-        .filter((m) => m.role !== 'system')
-        .map((m) => ({ role: m.role, content: m.content })),
-    }),
-  });
-
-  if (!res.ok) {
-    console.error('[ai-chat] anthropic', res.status, await res.text());
-    throw new AiChatError(`Anthropic request failed with HTTP ${res.status}`);
-  }
-
-  const data = await res.json();
-  const content = data?.content?.[0]?.text;
-  if (typeof content !== 'string' || content.length === 0) {
-    throw new AiChatError('Anthropic returned an empty completion');
-  }
-  return { content, provider: 'anthropic', model: data?.model ?? model };
+  return 'the Google API returned no error detail. Check the GEMINI_API_KEY secret.';
 }
 
 async function complete(
   messages: ChatMessage[],
   systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<Completion> {
-  const provider = (env('AI_PROVIDER') ?? 'gemini').toLowerCase();
   const geminiKey = env('GEMINI_API_KEY');
-  const openaiKey = env('OPENAI_API_KEY');
-  const anthropicKey = env('ANTHROPIC_API_KEY');
-
-  const candidates: Array<[string, (() => Promise<Completion>) | null]> = [
-    ['gemini', geminiKey ? () => callGemini(messages, geminiKey, systemPrompt) : null],
-    ['openai', openaiKey ? () => callOpenAi(messages, openaiKey, systemPrompt) : null],
-    ['anthropic', anthropicKey ? () => callAnthropic(messages, anthropicKey, systemPrompt) : null],
-  ];
-
-  // The configured provider is tried first; the remaining configured providers
-  // stay available as fallbacks in their declared order.
-  const attempts = candidates
-    .sort((a, b) => Number(b[0] === provider) - Number(a[0] === provider))
-    .map(([, fn]) => fn)
-    .filter((fn): fn is () => Promise<Completion> => fn !== null);
-
-  if (attempts.length === 0) {
+  if (!geminiKey) {
     throw new AiChatError(
       'No AI provider configured. Set GEMINI_API_KEY as a Supabase function secret.',
     );
   }
-
-  const errors: string[] = [];
-  for (const attempt of attempts) {
-    try {
-      return await attempt();
-    } catch (err) {
-      if (err instanceof AiChatError) {
-        errors.push(err.message);
-      } else {
-        // Unexpected fault: keep the detail in the function logs only.
-        console.error('[ai-chat] provider fault', err);
-        errors.push('unexpected provider error');
-      }
-    }
-  }
-  throw new AiChatError(`All AI providers failed: ${errors.join(' | ')}`);
+  return await callGemini(messages, geminiKey, systemPrompt);
 }
 
 /** HTTP entry point. Exported so it can be exercised by the function tests. */
@@ -329,7 +257,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     const message = err instanceof AiChatError
       ? err.message
       : 'The AI backend is unavailable. Please try again later.';
-    return json({ error: message }, 502);
+    return json({ error: message }, err instanceof AiChatError ? err.status : 502);
   }
 
   // The assistant answered. When the turn was a real security analysis, run the

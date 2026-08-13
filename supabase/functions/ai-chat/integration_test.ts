@@ -17,8 +17,7 @@ import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.t
 
 // ─── Environment (read by the function at call time) ─────────────────────────
 
-Deno.env.set('OPENAI_API_KEY', 'test-openai-key');
-Deno.env.set('AI_PROVIDER', 'openai');
+Deno.env.set('GEMINI_API_KEY', 'test-gemini-key');
 Deno.env.set('SUPABASE_URL', 'https://stub.supabase.test');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-role-key');
 
@@ -68,11 +67,14 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
     prefer: headers.get('Prefer') ?? undefined,
   });
 
-  if (url.startsWith('https://api.openai.com/')) {
+  if (url.startsWith('https://generativelanguage.googleapis.com/')) {
     const content = providerAnswers.shift() ?? '';
     return Promise.resolve(
       new Response(
-        JSON.stringify({ model: 'gpt-4o-mini', choices: [{ message: { content } }] }),
+        JSON.stringify({
+          modelVersion: 'gemini-2.0-flash',
+          candidates: [{ content: { parts: [{ text: content }] } }],
+        }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
@@ -138,7 +140,7 @@ Deno.test('a real analysis produces a completed run, a decision and a justificat
 
   // The answer is the real provider answer, not a placeholder.
   assertEquals(body.content, 'This link is a phishing page imitating a bank.');
-  assertEquals(body.provider, 'openai');
+  assertEquals(body.provider, 'gemini');
   assert(!String(body.content).includes('Backend integration pending'));
 
   // The verdict is exactly what the provider returned.
@@ -165,7 +167,7 @@ Deno.test('a real analysis produces a completed run, a decision and a justificat
   const decision = restCalls('fraud_decisions')[0].body as Record<string, any>;
   assertEquals(decision.verdict, 'fraud');
   assertEquals(decision.confidence_score, 88);
-  assertEquals(decision.ai_provider, 'openai:gpt-4o-mini');
+  assertEquals(decision.ai_provider, 'gemini:gemini-2.0-flash');
 
   const justification = restCalls('fraud_decision_justifications')[0].body as Record<string, any>;
   assertEquals(justification.risk_signals, ['look-alike domain', 'credential harvesting form']);

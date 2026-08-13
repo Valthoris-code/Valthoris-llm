@@ -61,8 +61,8 @@ Deno.test('the same artefact always produces the same event id', async () => {
 Deno.test('parses a valid structured verdict', () => {
   const analysis = parseStructuredAnalysis(
     '```json\n{"verdict":"fraud","confidenceScore":91,"justification":"Look-alike domain.","riskSignals":["homograph domain"],"recommendedAction":"Do not enter credentials."}\n```',
-    'openai',
-    'gpt-4o-mini',
+    'gemini',
+    'gemini-2.0-flash',
   );
   assertEquals(analysis.verdict, 'fraud');
   assertEquals(analysis.confidenceScore, 91);
@@ -72,7 +72,7 @@ Deno.test('parses a valid structured verdict', () => {
 Deno.test('rejects a non-JSON answer instead of inventing a verdict', () => {
   let threw = false;
   try {
-    parseStructuredAnalysis('I think this looks dangerous.', 'openai', 'gpt-4o-mini');
+    parseStructuredAnalysis('I think this looks dangerous.', 'gemini', 'gemini-2.0-flash');
   } catch {
     threw = true;
   }
@@ -84,8 +84,8 @@ Deno.test('rejects an out-of-range confidence score', () => {
   try {
     parseStructuredAnalysis(
       '{"verdict":"fraud","confidenceScore":500,"justification":"x"}',
-      'openai',
-      'gpt-4o-mini',
+      'gemini',
+      'gemini-2.0-flash',
     );
   } catch {
     threw = true;
@@ -99,8 +99,8 @@ Deno.test('rejects an unknown verdict value', async () => {
       Promise.resolve().then(() =>
         parseStructuredAnalysis(
           '{"verdict":"very-bad","confidenceScore":10,"justification":"x"}',
-          'openai',
-          'gpt-4o-mini',
+          'gemini',
+          'gemini-2.0-flash',
         )
       ),
     Error,
