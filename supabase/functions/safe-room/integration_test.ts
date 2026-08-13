@@ -363,6 +363,20 @@ Deno.test('the safety radius is capped at 1000 metres', async () => {
   assertEquals(created.body.room.radiusMeters, 1000);
 });
 
+Deno.test('a blank room name falls back to the default instead of failing', async () => {
+  // The room name is a label, so a missing or blank one must not block the
+  // creation — but a missing display name still must, since it identifies the
+  // participant on the map.
+  for (const name of [undefined, '', '   ', 42]) {
+    const created = await call({ action: 'create', name, displayName: 'Ana' });
+    assertEquals(created.status, 200);
+    assertEquals(created.body.room.name, 'Safe Room');
+  }
+
+  const withoutDisplayName = await call({ action: 'create', name: 'Named' });
+  assertEquals(withoutDisplayName.status, 400);
+});
+
 Deno.test('an unknown action is rejected', async () => {
   const res = await call({ action: 'drop-everything' });
   assertEquals(res.status, 400);

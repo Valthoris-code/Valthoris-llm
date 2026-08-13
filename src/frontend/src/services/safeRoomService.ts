@@ -84,10 +84,28 @@ export type SafeRoomJoinResult = SafeRoomSession & SafeRoomState;
 
 const STORAGE_KEY = 'valthoris.safeRoom.session';
 
+/**
+ * The stored seat, plus the instant it stops being usable.
+ *
+ * `participantSecret` is a bearer capability, so it is deliberately kept in
+ * `sessionStorage` rather than in `localStorage`: the value dies with the tab,
+ * is bound to this origin, and grants nothing beyond one room — no account, no
+ * profile, no other room. Keeping it is what allows a page reload (or the
+ * Android browser reclaiming the tab) to return to the same seat instead of
+ * silently creating a duplicate participant on the map.
+ *
+ * `expiresAt` bounds it further: a room lives at most 24 hours, so a secret
+ * that outlived its room is discarded on read instead of lingering in storage.
+ */
+interface StoredSeat extends SafeRoomSession {
+  expiresAt?: string;
+}
+
 /** Remembers the seat so a reload rejoins the same room as the same person. */
-export function storeSession(session: SafeRoomSession): void {
+export function storeSession(session: SafeRoomSession, expiresAt?: string): void {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    const seat: StoredSeat = { ...session, ...(expiresAt ? { expiresAt } : {}) };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(seat));
   } catch {
     // Private-mode browsers refuse storage; the room still works for this tab.
   }
@@ -97,10 +115,22 @@ export function loadStoredSession(roomToken?: string): SafeRoomSession | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as SafeRoomSession;
+    const parsed = JSON.parse(raw) as StoredSeat;
     if (!parsed?.roomToken || !parsed.participantId || !parsed.participantSecret) return null;
     if (roomToken && parsed.roomToken !== roomToken) return null;
-    return parsed;
+    // The room is over: drop the credential instead of keeping it around.
+    if (parsed.expiresAt) {
+      const expiry = Date.parse(parsed.expiresAt);
+      if (Number.isFinite(expiry) && expiry <= Date.now()) {
+        clearStoredSession();
+        return null;
+      }
+    }
+    return {
+      roomToken: parsed.roomToken,
+      participantId: parsed.participantId,
+      participantSecret: parsed.participantSecret,
+    };
   } catch {
     return null;
   }
@@ -228,9 +258,20 @@ export async function sendRoomMessage(
   return invoke<SafeRoomState>({ action: 'message', ...session, body });
 }
 
+/**
+ * Leaves the room and drops the stored seat.
+ *
+ * The seat is cleared even when the call fails: the caller asked to leave, and
+ * a room that refused the request (expired, closed, seat already released) is
+ * one this browser must not keep credentials for either. The error is still
+ * rethrown so the caller can report it.
+ */
 export async function leaveRoom(session: SafeRoomSession): Promise<void> {
-  await invoke<{ left: boolean }>({ action: 'leave', ...session });
-  clearStoredSession();
+  try {
+    await invoke<{ left: boolean }>({ action: 'leave', ...session });
+  } finally {
+    clearStoredSession();
+  }
 }
 
 /**

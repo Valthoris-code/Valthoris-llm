@@ -80,7 +80,7 @@ export default function SafeRoomPage() {
       participantId: result.participantId,
       participantSecret: result.participantSecret,
     };
-    storeSession(next);
+    storeSession(next, result.room.expiresAt);
     setSession(next);
     setState(result);
   }, []);

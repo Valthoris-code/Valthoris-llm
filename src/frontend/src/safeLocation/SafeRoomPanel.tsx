@@ -84,8 +84,8 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
   const appliedAt = useRef(Date.parse(initialState.serverTime) || 0);
 
   useEffect(() => {
-    storeSession(session);
-  }, [session]);
+    storeSession(session, state.room.expiresAt);
+  }, [session, state.room.expiresAt]);
 
   // Continuous positioning while the participant is inside the room.
   useEffect(() => {
@@ -104,7 +104,8 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
     // even when the browser clock drifts.
     const stamp = Date.parse(next.serverTime);
     if (Number.isFinite(stamp) && stamp < appliedAt.current) {
-      setError('');
+      // A stale snapshot proves nothing about the current state, so an error
+      // already on screen must stay there.
       return;
     }
     if (Number.isFinite(stamp)) appliedAt.current = stamp;

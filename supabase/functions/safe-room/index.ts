@@ -313,7 +313,12 @@ async function roomState(room: RoomRow, selfId: string, since?: unknown) {
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 async function createRoom(payload: any) {
-  const name = requireString(payload?.name ?? 'Safe Room', 'name', MAX_NAME_CHARS);
+  // A missing, blank or non-string name falls back to the default instead of
+  // failing: the room name is a label, not an authorisation input.
+  const name =
+    typeof payload?.name === 'string' && payload.name.trim().length > 0
+      ? requireString(payload.name, 'name', MAX_NAME_CHARS)
+      : 'Safe Room';
   const displayName = requireString(payload?.displayName, 'displayName', MAX_NAME_CHARS);
   const durationMinutes = Math.min(
     Math.max(Math.round(Number(payload?.durationMinutes ?? 60)) || 60, 5),
