@@ -161,6 +161,7 @@ persistent actor class Backend(initialAdminPrincipal : Principal) {
   transient let PLATFORM_ADMINISTRATORS : [Text] = [
     "6wzpv-jfxnt-kzbeg-4isuv-vd2m2-yfzmk-znnho-tpvrg-lmarn-afsnw-tae",
     "5zuwu-tg4w3-24k2i-oj4co-jtrvg-awxcp-cb3kq-a44yk-oug3q-zes7x-6ae",
+    "kd56h-227wm-fcd33-tuuln-h6o6n-oqq6b-zhtmj-hfvc3-4uq63-ldy2i-nqe",
   ];
 
   func isPlatformAdministrator(principal : Text) : Bool {

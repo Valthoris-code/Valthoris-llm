@@ -197,7 +197,8 @@ function AdminDashboardContent() {
         </p>
         {operator && (
           <p className="text-muted" style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
-            {operator.label} — contact <code>{operator.email}</code>
+            {operator.label}
+            {operator.email && <> — contact <code>{operator.email}</code></>}
           </p>
         )}
         <p className="text-muted" style={{ margin: '0.5rem 0 0', fontSize: '0.78rem' }}>

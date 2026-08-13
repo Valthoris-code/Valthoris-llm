@@ -13,6 +13,9 @@ name: Upgrade ICP canisters
 #   • Motoko canisters are deployed with an explicit `--mode upgrade`, so a
 #     reinstall (which would destroy all stored profiles) cannot happen, not
 #     even accidentally.
+#   • Motoko canisters are compiled with enhanced orthogonal persistence
+#     (see dfx.json), so the upgrade must be issued with
+#     `--wasm-memory-persistence keep`; without it dfx refuses the upgrade.
 #   • Canister ids come from canister_ids.json — no canister is ever created.
 #   • The workflow is manual (workflow_dispatch) and takes the canister to
 #     upgrade as an input.
@@ -98,10 +101,12 @@ jobs:
             dfx deploy frontend --network ic --yes
           elif [ "$target" = 'backend' ]; then
             test -n "$ADMIN_PRINCIPAL" || { echo "ADMIN_PRINCIPAL is not set"; exit 1; }
-            dfx deploy backend --network ic --mode upgrade --yes \
+            dfx deploy backend --network ic --mode upgrade \
+              --wasm-memory-persistence keep --yes \
               --argument "(principal \"$ADMIN_PRINCIPAL\")"
           else
-            dfx deploy "$target" --network ic --mode upgrade --yes
+            dfx deploy "$target" --network ic --mode upgrade \
+              --wasm-memory-persistence keep --yes
           fi
 
       - name: Verify the upgraded canister answers

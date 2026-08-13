@@ -24,7 +24,7 @@ export interface PlatformAdministrator {
   /** Internet Identity principal — the canonical identity. */
   principal: string;
   /** Contact address shown in the Administration UI. Never an auth input. */
-  email: string;
+  email?: string;
   label: string;
 }
 
@@ -38,6 +38,10 @@ export const PLATFORM_ADMINISTRATORS: PlatformAdministrator[] = [
     principal: '5zuwu-tg4w3-24k2i-oj4co-jtrvg-awxcp-cb3kq-a44yk-oug3q-zes7x-6ae',
     email: 'coragem77@gmail.com',
     label: 'Administrator B (controller)',
+  },
+  {
+    principal: 'kd56h-227wm-fcd33-tuuln-h6o6n-oqq6b-zhtmj-hfvc3-4uq63-ldy2i-nqe',
+    label: 'Administrator C (operator)',
   },
 ];
 
