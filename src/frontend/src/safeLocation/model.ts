@@ -123,7 +123,12 @@ export function getCachedSettings(principal: string): SafeLocationSettings {
   }
 }
 
-function cacheSettings(principal: string, settings: SafeLocationSettings): void {
+/**
+ * Store settings in the local render cache. Also used as a degraded-mode
+ * fallback when the deployed canister has no settings methods; the data is
+ * browser-local and never authoritative.
+ */
+export function cacheSettings(principal: string, settings: SafeLocationSettings): void {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
     const cache = raw ? (JSON.parse(raw) as Record<string, SafeLocationSettings>) : {};
@@ -185,15 +190,6 @@ export const SETTINGS_METHOD_MISSING_NOTICE =
   'The deployed safe_location canister does not expose the Safe Location ' +
   'settings methods yet (run `dfx deploy safe_location --network ic`). ' +
   'Your preferences are being kept in this browser only until it is updated.';
-
-/**
- * Store settings in the local render cache without touching the canister.
- * Used only as a degraded-mode fallback when the deployed canister has no
- * settings methods; the data is browser-local and non-authoritative.
- */
-export function cacheSettingsLocally(principal: string, settings: SafeLocationSettings): void {
-  cacheSettings(principal, settings);
-}
 
 /**
  * Read the caller's configuration from the canister.

@@ -16,7 +16,7 @@ import {
   SHARE_DURATIONS,
   SETTINGS_METHOD_MISSING_NOTICE,
   UNTIL_DISABLED_TTL_SECONDS,
-  cacheSettingsLocally,
+  cacheSettings,
   fetchSettings,
   getCachedSettings,
   isMissingCanisterMethod,
@@ -93,7 +93,7 @@ export default function SafeLocation() {
       // change in the browser cache and say so, instead of losing the edit or
       // pretending it was stored on chain.
       if (isMissingCanisterMethod(e)) {
-        cacheSettingsLocally(principal, next);
+        cacheSettings(principal, next);
         setNotice(SETTINGS_METHOD_MISSING_NOTICE);
         return;
       }
