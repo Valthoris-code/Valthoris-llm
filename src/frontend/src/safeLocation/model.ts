@@ -163,6 +163,39 @@ function toCanisterContacts(contacts: TrustedContact[]): CanisterContact[] {
 }
 
 /**
+ * True when the canister rejected the call because the method is absent from
+ * its interface — i.e. the deployed canister predates `getMySettings` /
+ * `setMySettings` and still needs a `dfx deploy`. The IC returns this as a
+ * `DestinationInvalid` rejection whose message mentions the missing method.
+ */
+export function isMissingCanisterMethod(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    message.includes('method not found') ||
+    message.includes('has no query method') ||
+    message.includes('has no update method') ||
+    message.includes('no query method') ||
+    message.includes('no update method') ||
+    /canister .* has no .* method/.test(message)
+  );
+}
+
+/** Message shown when the deployed canister is missing the settings methods. */
+export const SETTINGS_METHOD_MISSING_NOTICE =
+  'The deployed safe_location canister does not expose the Safe Location ' +
+  'settings methods yet (run `dfx deploy safe_location --network ic`). ' +
+  'Your preferences are being kept in this browser only until it is updated.';
+
+/**
+ * Store settings in the local render cache without touching the canister.
+ * Used only as a degraded-mode fallback when the deployed canister has no
+ * settings methods; the data is browser-local and non-authoritative.
+ */
+export function cacheSettingsLocally(principal: string, settings: SafeLocationSettings): void {
+  cacheSettings(principal, settings);
+}
+
+/**
  * Read the caller's configuration from the canister.
  * Throws when the canister rejects the call so the UI can show the real error
  * instead of silently rendering stale cache data.

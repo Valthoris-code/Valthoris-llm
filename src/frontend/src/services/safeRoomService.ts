@@ -16,7 +16,12 @@
  */
 
 import { BASE_PATH } from '../basePath';
-import { getSupabase, isSupabaseConfigured, SUPABASE_CONFIG_ERROR } from './supabaseClient';
+import {
+  functionAuthHeaders,
+  getSupabase,
+  isSupabaseConfigured,
+  SUPABASE_CONFIG_ERROR,
+} from './supabaseClient';
 
 export const SAFE_ROOM_FUNCTION_NAME = 'safe-room';
 
@@ -154,6 +159,14 @@ async function readFunctionError(error: unknown): Promise<string> {
     } catch {
       // fall through
     }
+    if (context.status === 401) {
+      return (
+        'Safe Rooms backend rejected the request (HTTP 401). Check that ' +
+        'VITE_SUPABASE_ANON_KEY matches the project and that the ' +
+        `"${SAFE_ROOM_FUNCTION_NAME}" function is deployed with JWT ` +
+        'verification disabled (supabase/config.toml).'
+      );
+    }
     return `Safe Rooms backend returned HTTP ${context.status}`;
   }
   return error instanceof Error ? error.message : String(error);
@@ -165,7 +178,7 @@ async function invoke<T>(payload: Record<string, unknown>): Promise<T> {
   }
   const { data, error } = await getSupabase().functions.invoke<T | { error: string }>(
     SAFE_ROOM_FUNCTION_NAME,
-    { body: payload },
+    { body: payload, headers: functionAuthHeaders() },
   );
   if (error) throw new Error(await readFunctionError(error));
   if (!data) throw new Error('Safe Rooms backend returned an empty response');

@@ -131,8 +131,9 @@ input:focus, textarea:focus, select:focus {
   margin-top: 1.5rem;
 }
 
-/* Error / success banners */
+/* Error / warning / success banners */
 .alert-error   { padding: 0.8rem 1rem; border-radius: var(--radius); background: rgba(255,51,102,0.12); border: 1px solid var(--accent-red); color: var(--accent-red); }
+.alert-warning { padding: 0.8rem 1rem; border-radius: var(--radius); background: rgba(255,170,0,0.12); border: 1px solid var(--accent-amber); color: var(--accent-amber); }
 .alert-success { padding: 0.8rem 1rem; border-radius: var(--radius); background: rgba(0,255,136,0.1);  border: 1px solid var(--accent-green); color: var(--accent-green); }
 
 /* Loading spinner */

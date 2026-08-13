@@ -17,7 +17,12 @@
  * fabricated answer.
  */
 
-import { getSupabase, isSupabaseConfigured, SUPABASE_CONFIG_ERROR } from './supabaseClient';
+import {
+  functionAuthHeaders,
+  getSupabase,
+  isSupabaseConfigured,
+  SUPABASE_CONFIG_ERROR,
+} from './supabaseClient';
 
 export const AI_FUNCTION_NAME = 'ai-chat';
 
@@ -70,6 +75,14 @@ async function readFunctionError(error: unknown): Promise<string> {
         // fall through to the generic message below
       }
     }
+    if (context.status === 401) {
+      return (
+        'AI backend rejected the request (HTTP 401). Check that ' +
+        'VITE_SUPABASE_ANON_KEY matches the project and that the ' +
+        `"${AI_FUNCTION_NAME}" function is deployed with JWT verification ` +
+        'disabled (supabase/config.toml).'
+      );
+    }
     return `AI backend returned HTTP ${context.status}`;
   }
   return error instanceof Error ? error.message : String(error);
@@ -92,7 +105,10 @@ export async function sendChat(
 
   const { data, error } = await getSupabase().functions.invoke<AiChatReply | { error: string }>(
     AI_FUNCTION_NAME,
-    { body: { messages, ...(principal ? { principal } : {}) } },
+    {
+      body: { messages, ...(principal ? { principal } : {}) },
+      headers: functionAuthHeaders(),
+    },
   );
 
   if (error) {
