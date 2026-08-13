@@ -50,10 +50,10 @@ export function getSupabase(): SupabaseClient {
  * Headers every Edge Function call must carry.
  *
  * Valthoris authenticates users with Internet Identity, never with Supabase
- * Auth, so there is no user JWT to send: the gateway expects the public anon
- * key. Sending it explicitly also protects against a stale or expired Supabase
- * session token being attached automatically by supabase-js, which the gateway
- * rejects with HTTP 401.
+ * Auth, so there is no user JWT to send: the gateway only needs the public anon
+ * key in the `apikey` header. No `Authorization` header is sent — the functions
+ * run with `verify_jwt = false` and an `Authorization: ****** key>` header
+ * makes the gateway try to validate it as a user JWT, which fails with HTTP 401.
  */
 export function functionAuthHeaders(): Record<string, string> {
   if (!isSupabaseConfigured) {
@@ -61,7 +61,6 @@ export function functionAuthHeaders(): Record<string, string> {
   }
   return {
     apikey: supabaseAnon,
-    Authorization: 'Bearer ' + supabaseAnon,
   };
 }
 
