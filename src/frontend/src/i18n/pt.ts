@@ -64,6 +64,7 @@ const pt: Catalogue = {
   'room.expired': 'Sala encerrada',
   'room.participants': 'Participantes ({count}/{max})',
   'room.you': 'você',
+  'room.offline': 'offline',
   'room.creator': 'criador',
   'room.noLocation': 'sem localização ainda',
   'room.chat': 'Chat da sala',

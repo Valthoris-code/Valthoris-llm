@@ -296,7 +296,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
                 <span className="text-muted safe-list-sub">
                   {p.latitude !== null
                     ? `📍 ${p.latitude.toFixed(5)}, ${p.longitude?.toFixed(5)}`
-                    : p.present ? t('room.noLocation') : 'offline'}
+                    : p.present ? t('room.noLocation') : t('room.offline')}
                 </span>
               </li>
             ))}

@@ -64,6 +64,7 @@ const en: Catalogue = {
   'room.expired': 'Room closed',
   'room.participants': 'Participants ({count}/{max})',
   'room.you': 'you',
+  'room.offline': 'offline',
   'room.creator': 'creator',
   'room.noLocation': 'no location yet',
   'room.chat': 'Room chat',
