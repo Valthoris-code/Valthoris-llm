@@ -1,0 +1,25 @@
+# Supabase project configuration (Valthoris)
+#
+# Only the settings Valthoris actually depends on are declared here; everything
+# else keeps the Supabase defaults.
+#
+# ─── Why JWT verification is disabled on these functions ──────────────────────
+#
+# Valthoris authenticates users with Internet Identity, not with Supabase Auth:
+# the browser never opens a Supabase session, so it has no user JWT to send.
+# With the platform default (`verify_jwt = true`) the API gateway rejects every
+# call from the app before it reaches the function code, which is exactly the
+# "AI backend returned HTTP 401" the assistant was showing.
+#
+# Disabling gateway JWT verification does NOT remove authorization: each
+# function performs its own checks (payload validation, room tokens bound to a
+# per-participant secret, size limits) and all privileged credentials stay in
+# the function secret store. The anon key is still required by the gateway.
+
+project_id = "valthoris"
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.safe-room]
+verify_jwt = false

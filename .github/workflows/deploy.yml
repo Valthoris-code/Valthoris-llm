@@ -43,6 +43,34 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      # A bundle without Supabase configuration still boots, so the site looks
+      # deployed while the AI Assistant, the Safe Rooms and every other
+      # Supabase-backed feature quietly do nothing. Publishing that is worse
+      # than not publishing at all, so fail here instead.
+      - name: Fail if the bundle has no Supabase configuration
+        working-directory: src/frontend
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -n "${VITE_SUPABASE_URL:-}" ] || missing="$missing VITE_SUPABASE_URL"
+          [ -n "${VITE_SUPABASE_ANON_KEY:-}" ] || missing="$missing VITE_SUPABASE_ANON_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing." \
+              "The built bundle cannot reach Supabase, so the AI Assistant and" \
+              "the Safe Rooms would be dead in production. Add the secret(s) in" \
+              "Settings → Secrets and variables → Actions, then re-run this workflow."
+            exit 1
+          fi
+          # Confirm the value really reached the bundle rather than only the job.
+          if ! grep -rqF "$VITE_SUPABASE_URL" dist/assets; then
+            echo "::error::VITE_SUPABASE_URL is set but is absent from the built" \
+              "bundle; the build did not pick the configuration up."
+            exit 1
+          fi
+
       - name: Add CNAME and .nojekyll to dist
         run: |
           cp CNAME src/frontend/dist/CNAME

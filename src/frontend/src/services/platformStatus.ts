@@ -22,6 +22,11 @@ import { CANISTER_IDS, IC_HOST } from './canisterIds';
 import type { Actors } from './actors';
 import { getSupabase, isSupabaseConfigured, SUPABASE_CONFIG_ERROR, SUPABASE_URL } from './supabaseClient';
 import { AI_BACKEND_CONFIG_ERROR, isAiBackendConfigured, sendChat } from './aiChatService';
+import {
+  isSafeRoomBackendConfigured,
+  probeSafeRoomBackend as safeRoomHealth,
+  SAFE_ROOM_CONFIG_ERROR,
+} from './safeRoomService';
 
 export type ProbeState = 'operational' | 'unavailable';
 
@@ -208,6 +213,46 @@ export async function probeSupabaseApi(): Promise<ServiceStatus> {
   }
 }
 
+/**
+ * Safe Rooms backend probe.
+ *
+ * The `health` action neither creates a room nor reads participant data, so
+ * this probe is safe to run with every status refresh.
+ */
+async function probeSafeRoomBackend(): Promise<ServiceStatus> {
+  const base = { name: 'Safe Rooms backend (safe-room)' };
+  if (!isSafeRoomBackendConfigured) {
+    return { ...base, state: 'unavailable', detail: 'Not configured', error: SAFE_ROOM_CONFIG_ERROR };
+  }
+  try {
+    const health = await safeRoomHealth();
+    if (health.status !== 'configured' || health.storage !== 'connected') {
+      return {
+        ...base,
+        state: 'unavailable',
+        detail: 'Not configured',
+        error:
+          'The safe-room Edge Function is deployed but SUPABASE_URL / ' +
+          'SUPABASE_SERVICE_ROLE_KEY are missing in its environment.',
+      };
+    }
+    return {
+      ...base,
+      state: 'operational',
+      detail: 'Edge Function reachable, storage connected',
+      facts: [
+        ['Secrets', 'CONFIGURED'],
+        ['Storage', 'CONNECTED'],
+        ['Max participants', String(health.limits.maxParticipants)],
+        ['Max duration', `${health.limits.maxDurationMinutes} min`],
+        ['Max radius', `${health.limits.maxRadiusMeters} m`],
+      ],
+    };
+  } catch (err) {
+    return { ...base, state: 'unavailable', detail: 'Status unavailable', error: message(err) };
+  }
+}
+
 // ─── AI backend probe (operator triggered — it costs a real API call) ───────
 
 export async function probeAiBackend(): Promise<ServiceStatus> {
@@ -367,6 +412,7 @@ export async function fetchServiceStatuses(actors: Actors): Promise<ServiceStatu
     probeSafeLocation(actors),
     probeSupabase(),
     probeSupabaseApi(),
+    probeSafeRoomBackend(),
   ]);
 }
 
