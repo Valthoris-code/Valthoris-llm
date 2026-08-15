@@ -565,7 +565,7 @@
   /* Space reserved for the bar has to match its real height. */
   .content > *,
   .content-full-height > * {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Beta banner: the notice stays, the bar stays thin. */
