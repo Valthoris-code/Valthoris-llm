@@ -100,7 +100,8 @@ Deno.test('one failing provider does not take the analysis down', async () => {
   const realFetch = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    if (url.includes('abuseipdb.com')) {
+    const host = new URL(url).hostname;
+    if (host === 'api.abuseipdb.com') {
       return Promise.resolve(
         new Response(
           JSON.stringify({ data: { abuseConfidenceScore: 92, totalReports: 41, countryCode: 'RU' } }),
@@ -108,7 +109,7 @@ Deno.test('one failing provider does not take the analysis down', async () => {
         ),
       );
     }
-    if (url.includes('ipinfo.io')) {
+    if (host === 'ipinfo.io') {
       return Promise.resolve(new Response('quota exceeded', { status: 429 }));
     }
     return Promise.reject(new Error(`unexpected call to ${url}`));
