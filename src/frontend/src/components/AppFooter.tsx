@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../i18n/useI18n';
+import { VALTHORIS_REPOSITORY } from './SocialShare';
 
 const LEGAL_LINKS = [
   { to: '/legal/privacy', key: 'legal.privacy' },
@@ -14,7 +15,7 @@ const LEGAL_LINKS = [
 ];
 
 const SOCIAL = [
-  { label: 'GitHub', href: 'https://github.com/Valthoris-code', icon: '⬡' },
+  { label: 'GitHub', href: VALTHORIS_REPOSITORY, icon: '⬡' },
   { label: 'Discord', href: 'https://discord.com', icon: '💬' },
   { label: 'LinkedIn', href: 'https://linkedin.com', icon: '🔗' },
   { label: 'X', href: 'https://x.com', icon: '✕' },

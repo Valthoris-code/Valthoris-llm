@@ -4,8 +4,11 @@ import {
   isAiBackendConfigured,
   sendChat,
 } from '../services/aiChatService';
-import type { AiChatAnalysis, AiChatMessage } from '../services/aiChatService';
+import type { AiChatAnalysis, AiChatMessage, AiChatSource } from '../services/aiChatService';
 import { useAuth } from '../hooks/useAuth';
+import SocialShare from '../components/SocialShare';
+import ValthorisShield from '../components/ValthorisShield';
+import { useT } from '../i18n/useI18n';
 
 interface Message {
   id: string;
@@ -21,6 +24,8 @@ interface Message {
    * the UI never derives or invents a verdict of its own.
    */
   analysis?: AiChatAnalysis;
+  /** External lookups the backend performed for this turn. */
+  sources?: AiChatSource[];
 }
 
 interface Conversation {
@@ -31,12 +36,12 @@ interface Conversation {
 }
 
 const SUGGESTIONS = [
-  '🔍 Analyze this URL for threats',
-  '📧 Check if this email is a phishing attempt',
-  '🛡 What are the latest cybersecurity threats?',
-  '₿ Is this crypto wallet address safe?',
-  '📞 Lookup this phone number for scam reports',
-  '🌐 Scan this domain for malware',
+  { icon: '🔍', key: 'assistant.suggestion.url' },
+  { icon: '📧', key: 'assistant.suggestion.email' },
+  { icon: '🛡', key: 'assistant.suggestion.threats' },
+  { icon: '₿', key: 'assistant.suggestion.wallet' },
+  { icon: '📞', key: 'assistant.suggestion.phone' },
+  { icon: '🌐', key: 'assistant.suggestion.domain' },
 ];
 
 function TypingIndicator() {
@@ -85,6 +90,59 @@ function AnalysisBadge({ analysis }: { analysis: AiChatAnalysis }) {
   );
 }
 
+const SOURCE_STATUS_STYLE: Record<AiChatSource['status'], { icon: string; color: string }> = {
+  success:        { icon: '✓', color: 'var(--accent-green, #2ed573)' },
+  failed:         { icon: '✕', color: 'var(--accent-amber, #ffa502)' },
+  not_configured: { icon: '–', color: 'var(--text-muted)' },
+};
+
+/**
+ * Sources actually consulted for the answer.
+ *
+ * Every provider is shown with the outcome of its own lookup, so a partial
+ * outage is visible instead of silently narrowing the analysis. Providers that
+ * are not available on this deployment are listed as such and are never
+ * presented as if they had answered.
+ */
+function SourcePanel({ sources }: { sources: AiChatSource[] }) {
+  const t = useT();
+  const consulted = sources.filter(s => s.status !== 'not_configured');
+  if (consulted.length === 0) return null;
+
+  return (
+    <details className="ai-sources">
+      <summary>
+        🔗 {t('assistant.sources')} ({consulted.filter(s => s.status === 'success').length}/{consulted.length})
+      </summary>
+      <ul className="ai-sources-list">
+        {consulted.map(source => {
+          const style = SOURCE_STATUS_STYLE[source.status];
+          return (
+            <li key={`${source.provider}-${source.endpoint}`}>
+              <span style={{ color: style.color }}>{style.icon}</span>{' '}
+              <strong>{source.provider}</strong>
+              <span className="text-muted"> · {source.endpoint}</span>
+              <div className="ai-sources-meta">
+                {new Date(source.timestamp).toLocaleString()}
+                {source.status === 'failed' && ` · ${t('assistant.sourceUnavailable')}: ${source.error ?? t('assistant.sourceNoAnswer')}`}
+              </div>
+              {source.status === 'success' && source.data && Object.keys(source.data).length > 0 && (
+                <div className="ai-sources-data">
+                  {Object.entries(source.data).map(([key, value]) => (
+                    <span key={key}>
+                      {key}: {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </details>
+  );
+}
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
   return (
@@ -111,7 +169,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         fontSize: '0.9rem',
         flexShrink: 0,
       }}>
-        {isUser ? '👤' : '🛡'}
+        {isUser ? '👤' : <ValthorisShield size={20} />}
       </div>
       <div style={{
         background: isUser
@@ -141,6 +199,7 @@ function MessageBubble({ msg }: { msg: Message }) {
           </span>
         )}
         {msg.analysis && !msg.isStreaming && <AnalysisBadge analysis={msg.analysis} />}
+        {msg.sources && msg.sources.length > 0 && !msg.isStreaming && <SourcePanel sources={msg.sources} />}
         <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', textAlign: 'right' }}>
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
@@ -151,6 +210,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 
 export default function AIAssistant() {
   const { principal } = useAuth();
+  const t = useT();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -195,11 +255,11 @@ export default function AIAssistant() {
 
   const createConversation = useCallback(() => {
     const id = Date.now().toString();
-    const conv: Conversation = { id, title: 'New conversation', messages: [], createdAt: new Date() };
+    const conv: Conversation = { id, title: t('assistant.newConversation'), messages: [], createdAt: new Date() };
     setConversations(prev => [conv, ...prev]);
     setActiveId(id);
     return id;
-  }, []);
+  }, [t]);
 
   const sendMessage = useCallback(async (text: string) => {
     const content = text.trim();
@@ -260,7 +320,7 @@ export default function AIAssistant() {
 
     try {
       const reply = await sendChat([...history, { role: 'user', content }], principal);
-      replaceThinking({ content: reply.content, analysis: reply.analysis });
+      replaceThinking({ content: reply.content, analysis: reply.analysis, sources: reply.sources });
     } catch (err) {
       replaceThinking({
         content: err instanceof Error ? err.message : String(err),
@@ -305,13 +365,13 @@ export default function AIAssistant() {
             style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem' }}
             onClick={createConversation}
           >
-            + New Chat
+            {t('assistant.newChat')}
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
           {conversations.length === 0 ? (
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem 0.5rem' }}>
-              No conversations yet
+              {t('assistant.noConversations')}
             </p>
           ) : (
             conversations.map(conv => (
@@ -344,30 +404,20 @@ export default function AIAssistant() {
       {/* Chat area */}
       <div className="ai-chat-column" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div className="ai-chat-header" style={{
-          padding: '0.75rem 1.5rem',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          background: 'var(--bg-secondary)',
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: '1.2rem' }}>🛡</span>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>VALTHORIS AI Assistant</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Cybersecurity Intelligence •{' '}
+        <div className="ai-chat-header">
+          <ValthorisShield size={28} className="ai-chat-header-shield" />
+          <div className="ai-chat-header-text">
+            <div className="ai-chat-header-title">VALTHORIS AI Assistant</div>
+            <div className="ai-chat-header-subtitle">
+              {t('assistant.subtitle')} •{' '}
               {isAiBackendConfigured ? (
-                <span style={{ color: 'var(--accent-green)' }}>Backend connected</span>
+                <span style={{ color: 'var(--accent-green)' }}>{t('assistant.backendConnected')}</span>
               ) : (
-                <span style={{ color: 'var(--accent-red, #ff4757)' }}>Backend not configured</span>
+                <span style={{ color: 'var(--accent-red, #ff4757)' }}>{t('assistant.backendMissing')}</span>
               )}
             </div>
           </div>
-          <div style={{ marginLeft: 'auto' }}>
-            <span className="badge-beta">BETA</span>
-          </div>
+          <span className="badge-beta ai-chat-header-badge">BETA</span>
         </div>
 
         {/* Messages */}
@@ -415,18 +465,18 @@ export default function AIAssistant() {
           {!activeConv || activeConv.messages.length === 0 ? (
             /* Welcome screen */
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
-              <div style={{ fontSize: '3rem' }}>🛡</div>
+              <ValthorisShield size={72} />
               <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
-                VALTHORIS AI Assistant
+                {t('assistant.title')}
               </h2>
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, margin: 0, fontSize: '0.9rem' }}>
-                Your AI-powered cybersecurity companion. Ask about threats, scan URLs, analyze suspicious content, and stay protected.
+                {t('assistant.welcome')}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
                 {SUGGESTIONS.map(s => (
                   <button
-                    key={s}
-                    onClick={() => { setInput(s.substring(2)); textareaRef.current?.focus(); }}
+                    key={s.key}
+                    onClick={() => { setInput(t(s.key)); textareaRef.current?.focus(); }}
                     style={{
                       background: 'rgba(10,37,64,0.8)',
                       border: '1px solid var(--border)',
@@ -447,7 +497,7 @@ export default function AIAssistant() {
                       e.currentTarget.style.color = 'var(--text-muted)';
                     }}
                   >
-                    {s}
+                    {s.icon} {t(s.key)}
                   </button>
                 ))}
               </div>
@@ -502,7 +552,7 @@ export default function AIAssistant() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask VALTHORIS AI… (Shift+Enter for new line)"
+              placeholder={t('assistant.placeholder')}
               rows={1}
               style={{
                 flex: 1,
@@ -541,8 +591,10 @@ export default function AIAssistant() {
             </button>
           </div>
           <p className="ai-composer-note" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.4rem 0 0' }}>
-            VALTHORIS AI may produce errors. Verify critical information.
+            {t('assistant.disclaimer')}
           </p>
+          {/* Fills the gap between the disclaimer and the bottom navigation. */}
+          <SocialShare className="ai-social-share" />
         </div>
       </div>
     </div>

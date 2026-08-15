@@ -190,6 +190,34 @@ const pt: Catalogue = {
   'waiting.country': 'País',
   'waiting.reason': 'Motivo da inscrição',
   'waiting.submit': 'Entrar na Lista de Espera',
+  // ── Assistente AI ──────────────────────────────────────────────────────────
+  'assistant.title': 'Assistente AI VALTHORIS',
+  'assistant.subtitle': 'Inteligência de Cibersegurança',
+  'assistant.backendConnected': 'Backend ligado',
+  'assistant.backendMissing': 'Backend não configurado',
+  'assistant.disclaimer': 'A VALTHORIS AI pode cometer erros. Verifique informação crítica.',
+  'assistant.newChat': '+ Nova conversa',
+  'assistant.noConversations': 'Ainda não existem conversas',
+  'assistant.welcome': 'O seu companheiro de cibersegurança com IA. Pergunte sobre ameaças, analise URLs e conteúdos suspeitos e mantenha-se protegido.',
+  'assistant.placeholder': 'Pergunte à VALTHORIS AI… (Shift+Enter para nova linha)',
+  'assistant.sources': 'Fontes consultadas',
+  'assistant.sourceUnavailable': 'indisponível',
+  'assistant.sourceNoAnswer': 'sem resposta',
+  'assistant.newConversation': 'Nova conversa',
+  'assistant.suggestion.url': 'Analisar ameaças neste URL',
+  'assistant.suggestion.email': 'Verificar se este e-mail é uma tentativa de phishing',
+  'assistant.suggestion.threats': 'Quais são as ameaças de cibersegurança mais recentes?',
+  'assistant.suggestion.wallet': 'Esta carteira de criptomoedas é segura?',
+  'assistant.suggestion.phone': 'Consultar denúncias de burla sobre este número de telefone',
+  'assistant.suggestion.domain': 'Analisar este domínio à procura de malware',
+
+  // ── Aviso de beta ──────────────────────────────────────────────────────────
+  'beta.title': 'BETA PRIVADA',
+  'beta.notice': 'Plataforma em desenvolvimento. Algumas funcionalidades ainda estão em construção.',
+
+  // ── Partilha social ────────────────────────────────────────────────────────
+  'social.share': 'Partilhar a VALTHORIS',
+  'social.copied': 'Link copiado',
 };
 
 export default pt;

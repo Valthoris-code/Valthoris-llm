@@ -370,3 +370,244 @@
   }
 }
 
+
+/* ─── Beta banner ───────────────────────────────────────────────── */
+/*
+ * One compact line. The notice text is mandatory, so it is never removed:
+ * on a narrow screen it wraps to at most two lines with a smaller font
+ * instead of growing the bar with padding.
+ */
+.beta-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 1rem;
+  padding-top: max(0.2rem, env(safe-area-inset-top, 0px));
+  background: linear-gradient(90deg, rgba(255, 170, 0, 0.12) 0%, rgba(0, 212, 255, 0.08) 100%);
+  border-bottom: 1px solid rgba(255, 170, 0, 0.3);
+  font-size: 0.76rem;
+  line-height: 1.25;
+  color: #ffcc55;
+  flex-shrink: 0;
+  z-index: 200;
+}
+
+.beta-banner-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.beta-banner-version {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── AI Assistant header ───────────────────────────────────────── */
+.ai-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.ai-chat-header-text { min-width: 0; }
+
+.ai-chat-header-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-chat-header-subtitle {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-chat-header-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── Sources panel ─────────────────────────────────────────────── */
+.ai-sources {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  padding-top: 0.4rem;
+}
+.ai-sources > summary {
+  cursor: pointer;
+  color: var(--accent-cyan);
+  list-style: none;
+}
+.ai-sources > summary::-webkit-details-marker { display: none; }
+.ai-sources-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ai-sources-meta {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+.ai-sources-data {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  font-family: monospace;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+/* ─── Social share row ──────────────────────────────────────────── */
+.social-share {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0 0;
+}
+
+.social-share-label {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.social-share-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+  max-width: 100%;
+}
+
+.social-share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* comfortable touch target without adding vertical bulk */
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0.35rem;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.social-share-icon:hover,
+.social-share-icon:focus-visible {
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.08);
+  text-decoration: none;
+}
+
+.social-share-copied {
+  font-size: 0.64rem;
+  color: var(--accent-green, #2ed573);
+  min-height: 0.8rem;
+}
+
+/* The assistant row is hidden while the keyboard is open (see below). */
+.ai-social-share { padding-top: 0.15rem; }
+
+/* ─── Mobile refinements ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /*
+   * Bottom navigation: the labels were being clipped because the row was
+   * fixed at 64 px with single-line ellipsised text. The bar now sizes itself
+   * from its content and a label is allowed to use two short lines, so every
+   * item stays readable on a small phone.
+   */
+  .mobile-nav {
+    height: auto;
+    min-height: 58px;
+  }
+  .mobile-nav-item {
+    gap: 2px;
+    padding: 0.3rem 0.15rem;
+  }
+  .mobile-nav-icon { font-size: 1.15rem; }
+  .mobile-nav-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 0.58rem;
+    line-height: 1.05;
+    text-align: center;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  /* Space reserved for the bar has to match its real height. */
+  .content > *,
+  .content-full-height > * {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Beta banner: the notice stays, the bar stays thin. */
+  .beta-banner {
+    padding: 0.15rem 0.6rem;
+    font-size: 0.66rem;
+    gap: 0.35rem;
+  }
+  .beta-banner-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .beta-banner-version { font-size: 0.6rem; }
+
+  /* Assistant header: compact, single line, badge never split. */
+  .ai-chat-header {
+    padding: 0.35rem 0.7rem;
+    gap: 0.45rem;
+  }
+  .ai-chat-header-title { font-size: 0.85rem; }
+  .ai-chat-header-subtitle { font-size: 0.65rem; }
+  .ai-chat-header-shield { width: 24px !important; height: 24px !important; }
+
+  /* Social share: slightly tighter, still a 40 px touch target. */
+  .social-share-icon { min-width: 36px; min-height: 36px; padding: 0.25rem; }
+  .social-share-label { font-size: 0.6rem; }
+
+  /* With the keyboard open every pixel belongs to the composer. */
+  html[data-keyboard='open'] .ai-social-share,
+  html[data-keyboard='open'] .beta-banner {
+    display: none !important;
+  }
+}
+
+/*
+ * The BETA badge is an identity element: it must never be broken across two
+ * lines ("BET" / "A"). It is applied globally, not only on mobile.
+ */
+.badge-beta {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  flex-shrink: 0;
+}

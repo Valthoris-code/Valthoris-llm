@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import ValthorisShield from '../components/ValthorisShield';
 
 type AuthView = 'login' | 'register' | 'recovery';
 
@@ -23,18 +24,18 @@ export default function AuthPage() {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      padding: '2rem',
-    }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
+    /*
+     * The sign-in screen owns the whole viewport, so its height comes from the
+     * visual viewport (`--app-height`, published by useViewportMetrics) rather
+     * than from `100vh`: on Android `100vh` is taller than the visible area and
+     * the card was being cut off at the bottom. The panel scrolls on its own
+     * and respects the notch and the home bar.
+     */
+    <div className="auth-screen">
+      <div className="auth-screen-panel">
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🛡</div>
+          <ValthorisShield size={64} className="auth-screen-shield" />
           <h1 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '1.5rem', letterSpacing: '0.08em' }}>VALTHORIS</h1>
           <p className="text-muted" style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>AI Cybersecurity Platform</p>
         </div>

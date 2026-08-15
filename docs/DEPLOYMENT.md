@@ -120,18 +120,35 @@ an integration that does not exist.
 | Secret | Read by | Status |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | `supabase/functions/ai-chat` | **in use** — the assistant and the fraud analysis both call Gemini with it |
-| `ABUSEIPDB_API_KEY` | — | **configured, not yet read** — no IP-reputation enrichment is wired up |
-| `COINGECKO_API_KEY` | — | **configured, not yet read** — no market/crypto enrichment is wired up |
+| `ABUSEIPDB_API_KEY` | `ai-chat/intel.ts` | **in use** — IP reputation |
+| `IPINFO_API_KEY` | `ai-chat/intel.ts` | **in use** — IP geolocation / ASN |
+| `ABSTRACT_IP_API_KEY` | `ai-chat/intel.ts` | **in use** — IP intelligence |
+| `VIRUSTOTAL_API_KEY` | `ai-chat/intel.ts` | **in use** — URL / domain / IP reputation |
+| `URLSCAN_API_KEY` | `ai-chat/intel.ts` | **in use** — URL / domain scan history |
+| `GOPLUS_API_URL` | `ai-chat/intel.ts` | **in use** — phishing site and address security |
+| `ABSTRACT_EMAIL_API_KEY` | `ai-chat/intel.ts` | **in use** — e-mail intelligence |
+| `NUMVERIFY_API_KEY` | `ai-chat/intel.ts` | **in use** — phone validation |
+| `ABSTRACT_PHONE_API_KEY` | `ai-chat/intel.ts` | **in use** — phone intelligence |
+| `OPENIBAN_API_URL` | `ai-chat/intel.ts` | **in use** — IBAN validation |
+| `ABSTRACT_IBAN_API_KEY` | `ai-chat/intel.ts` | **in use** — IBAN intelligence |
+| `ABSTRACT_VAT_API_KEY` | `ai-chat/intel.ts` | **in use** — VAT / business validation |
+| `ETHERSCAN_API_KEY` | `ai-chat/intel.ts` | **in use** — Ethereum address activity |
+| `CRYPTOSCAMDB_API_URL` | `ai-chat/intel.ts` | **in use** — crypto scam database |
+| `COINGECKO_API_KEY` | `ai-chat/intel.ts` | **in use** — token market data |
+| `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence |
 
-Keeping the last two configured is harmless and they are ready for the
-enrichment services described in `docs/architecture/apis.md`. Until a code path
-reads them, no screen claims that AbuseIPDB or CoinGecko data is available, and
-nothing fabricates a reputation or a price to stand in for them.
+The full mapping (secret → provider → module → lookup → data returned) is in
+`docs/architecture/api-integration-matrix.md`.
 
-CryptoScamDB, Etherscan, EtherscamDB, OpenCNAM, Nomorobo and WhoCallsMe are
-prepared in the threat-intelligence architecture but have **no credentials
-configured**; no key is invented for them, and any feature that depends on one
-reports the missing configuration instead of fabricating data.
+A secret that is absent on a deployment is not a failure: the corresponding
+provider is reported to the user as *not consulted* and the analysis continues
+with the remaining sources. No screen ever fabricates a reputation, a price or
+a scan result to stand in for a provider that did not answer.
+
+EtherscamDB, OpenCNAM, Nomorobo and WhoCallsMe are prepared in the
+threat-intelligence architecture but have **no credentials configured**; no key
+is invented for them, and any feature that depends on one reports the missing
+configuration instead of fabricating data.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into every Edge
 Function by Supabase itself. They are what allows `ai-chat` to record real
@@ -142,7 +159,14 @@ answers but the analysis is not recorded — and the reason is logged and
 returned to the browser instead of being hidden.
 
 ```bash
-supabase secrets set GEMINI_API_KEY=<key>       # the only key ai-chat needs
+supabase secrets set GEMINI_API_KEY=<key>       # the assistant itself
+# Optional intelligence providers — each one that is set is queried for real,
+# each one that is missing is reported to the user as not consulted:
+# ABUSEIPDB_API_KEY IPINFO_API_KEY VIRUSTOTAL_API_KEY URLSCAN_API_KEY
+# ABSTRACT_IP_API_KEY ABSTRACT_EMAIL_API_KEY ABSTRACT_PHONE_API_KEY
+# ABSTRACT_IBAN_API_KEY ABSTRACT_VAT_API_KEY NUMVERIFY_API_KEY
+# ETHERSCAN_API_KEY COINGECKO_API_KEY NEWSDATA_API_KEY
+# OPENIBAN_API_URL CRYPTOSCAMDB_API_URL GOPLUS_API_URL
 supabase functions deploy ai-chat
 ```
 

@@ -25,7 +25,7 @@ export interface DetectedArtifact {
   /** The exact substring the user submitted. Never rewritten. */
   value: string;
   /** Narrower label kept in the event payload metadata. */
-  kind: 'url' | 'domain' | 'email' | 'crypto' | 'iban' | 'phone';
+  kind: 'url' | 'domain' | 'email' | 'crypto' | 'iban' | 'phone' | 'ip';
 }
 
 const URL_RE = /\bhttps?:\/\/[^\s<>"')]+/i;
@@ -36,6 +36,7 @@ const BTC_RE = /\b(?:bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})\b/;
 const ETH_RE = /\b0x[a-fA-F0-9]{40}\b/;
 const IBAN_RE = /\b[A-Z]{2}[0-9]{2}(?:[ ]?[A-Z0-9]{4}){2,7}[ ]?[A-Z0-9]{1,3}\b/;
 const PHONE_RE = /(?:\+|00)[0-9][0-9 ().-]{7,17}[0-9]/;
+const IPV4_RE = /\b(?:(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\b/;
 
 /**
  * Returns the first analysable artefact found in `text`, or null.
@@ -44,6 +45,9 @@ const PHONE_RE = /(?:\+|00)[0-9][0-9 ().-]{7,17}[0-9]/;
 export function detectArtifact(text: string): DetectedArtifact | null {
   const url = URL_RE.exec(text);
   if (url) return { eventType: 'url', value: url[0], kind: 'url' };
+
+  const ip = IPV4_RE.exec(text);
+  if (ip) return { eventType: 'unknown', value: ip[0], kind: 'ip' };
 
   const email = EMAIL_RE.exec(text);
   if (email) return { eventType: 'email', value: email[0], kind: 'email' };
