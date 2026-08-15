@@ -201,6 +201,13 @@ const en: Catalogue = {
   'assistant.welcome': 'Your AI-powered cybersecurity companion. Ask about threats, scan URLs, analyze suspicious content, and stay protected.',
   'assistant.placeholder': 'Ask VALTHORIS AI… (Shift+Enter for new line)',
   'assistant.sources': 'Sources consulted',
+  'assistant.newConversation': 'New conversation',
+  'assistant.suggestion.url': 'Analyze this URL for threats',
+  'assistant.suggestion.email': 'Check if this email is a phishing attempt',
+  'assistant.suggestion.threats': 'What are the latest cybersecurity threats?',
+  'assistant.suggestion.wallet': 'Is this crypto wallet address safe?',
+  'assistant.suggestion.phone': 'Lookup this phone number for scam reports',
+  'assistant.suggestion.domain': 'Scan this domain for malware',
 
   // ── Beta banner ────────────────────────────────────────────────────────────
   'beta.title': 'BETA PRIVATE',

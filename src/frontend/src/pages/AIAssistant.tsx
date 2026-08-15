@@ -36,12 +36,12 @@ interface Conversation {
 }
 
 const SUGGESTIONS = [
-  '🔍 Analyze this URL for threats',
-  '📧 Check if this email is a phishing attempt',
-  '🛡 What are the latest cybersecurity threats?',
-  '₿ Is this crypto wallet address safe?',
-  '📞 Lookup this phone number for scam reports',
-  '🌐 Scan this domain for malware',
+  { icon: '🔍', key: 'assistant.suggestion.url' },
+  { icon: '📧', key: 'assistant.suggestion.email' },
+  { icon: '🛡', key: 'assistant.suggestion.threats' },
+  { icon: '₿', key: 'assistant.suggestion.wallet' },
+  { icon: '📞', key: 'assistant.suggestion.phone' },
+  { icon: '🌐', key: 'assistant.suggestion.domain' },
 ];
 
 function TypingIndicator() {
@@ -255,11 +255,11 @@ export default function AIAssistant() {
 
   const createConversation = useCallback(() => {
     const id = Date.now().toString();
-    const conv: Conversation = { id, title: 'New conversation', messages: [], createdAt: new Date() };
+    const conv: Conversation = { id, title: t('assistant.newConversation'), messages: [], createdAt: new Date() };
     setConversations(prev => [conv, ...prev]);
     setActiveId(id);
     return id;
-  }, []);
+  }, [t]);
 
   const sendMessage = useCallback(async (text: string) => {
     const content = text.trim();
@@ -475,8 +475,8 @@ export default function AIAssistant() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
                 {SUGGESTIONS.map(s => (
                   <button
-                    key={s}
-                    onClick={() => { setInput(s.substring(2)); textareaRef.current?.focus(); }}
+                    key={s.key}
+                    onClick={() => { setInput(t(s.key)); textareaRef.current?.focus(); }}
                     style={{
                       background: 'rgba(10,37,64,0.8)',
                       border: '1px solid var(--border)',
@@ -497,7 +497,7 @@ export default function AIAssistant() {
                       e.currentTarget.style.color = 'var(--text-muted)';
                     }}
                   >
-                    {s}
+                    {s.icon} {t(s.key)}
                   </button>
                 ))}
               </div>
