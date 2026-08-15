@@ -124,7 +124,7 @@ function SourcePanel({ sources }: { sources: AiChatSource[] }) {
               <span className="text-muted"> · {source.endpoint}</span>
               <div className="ai-sources-meta">
                 {new Date(source.timestamp).toLocaleString()}
-                {source.status === 'failed' && ` · unavailable: ${source.error ?? 'no answer'}`}
+                {source.status === 'failed' && ` · ${t('assistant.sourceUnavailable')}: ${source.error ?? t('assistant.sourceNoAnswer')}`}
               </div>
               {source.status === 'success' && source.data && Object.keys(source.data).length > 0 && (
                 <div className="ai-sources-data">

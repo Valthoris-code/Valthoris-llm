@@ -201,6 +201,8 @@ const pt: Catalogue = {
   'assistant.welcome': 'O seu companheiro de cibersegurança com IA. Pergunte sobre ameaças, analise URLs e conteúdos suspeitos e mantenha-se protegido.',
   'assistant.placeholder': 'Pergunte à VALTHORIS AI… (Shift+Enter para nova linha)',
   'assistant.sources': 'Fontes consultadas',
+  'assistant.sourceUnavailable': 'indisponível',
+  'assistant.sourceNoAnswer': 'sem resposta',
   'assistant.newConversation': 'Nova conversa',
   'assistant.suggestion.url': 'Analisar ameaças neste URL',
   'assistant.suggestion.email': 'Verificar se este e-mail é uma tentativa de phishing',
