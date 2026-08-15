@@ -590,9 +590,35 @@
   .ai-chat-header-subtitle { font-size: 0.65rem; }
   .ai-chat-header-shield { width: 24px !important; height: 24px !important; }
 
-  /* Social share: slightly tighter, still a 40 px touch target. */
+  /* Social share: slightly tighter, still a comfortable touch target. */
   .social-share-icon { min-width: 36px; min-height: 36px; padding: 0.25rem; }
   .social-share-label { font-size: 0.6rem; }
+
+  /*
+   * Assistant bottom zone: it has to stay compact so the composer text field
+   * remains clearly visible. The disclaimer fits on one line whenever the
+   * device is wide enough, and the share icons keep a single horizontal row.
+   */
+  .ai-composer { padding-top: 0.5rem !important; }
+  .ai-composer-note {
+    font-size: 0.58rem !important;
+    line-height: 1.2;
+    margin-top: 0.25rem !important;
+  }
+  .ai-social-share {
+    padding-top: 0;
+    gap: 0.1rem;
+  }
+  .ai-social-share .social-share-icons {
+    flex-wrap: nowrap;
+    gap: 0.05rem;
+  }
+  .ai-social-share .social-share-icon {
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0.15rem;
+  }
+  .ai-social-share .social-share-copied { min-height: 0; }
 
   /* With the keyboard open every pixel belongs to the composer. */
   html[data-keyboard='open'] .ai-social-share,
