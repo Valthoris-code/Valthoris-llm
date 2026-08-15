@@ -872,7 +872,16 @@ input:focus, textarea:focus, select:focus {
   .toolbar-menu-btn { display: none; }
   /* Hide principal text on very small toolbars to save space */
   .toolbar-beta { display: none; }
-  .toolbar-signout { display: none; }
+  /*
+   * Sign out stays reachable on a phone: it is only made compact, never
+   * hidden, otherwise the user has no way to end the session on mobile.
+   */
+  .toolbar-signout {
+    font-size: 0.72rem !important;
+    padding: 0.25rem 0.5rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
   /* Card padding reduction */
   .card { padding: 1rem; }
@@ -1115,6 +1124,8 @@ html[data-reduce-motion='true'] *::after {
   .toolbar-brand { font-size: 0.92rem; gap: 0.35rem; }
   .toolbar-brand-logo { height: 26px; }
   .toolbar-brand-text {
+    /* small, proportional to the 26 px logo it sits next to */
+    font-size: 0.78rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1139,6 +1150,13 @@ html[data-reduce-motion='true'] *::after {
 }
 
 @media (max-width: 380px) {
-  /* Very small phones: the brand word gives way to the logo and the badge. */
-  .toolbar-brand-text { display: none; }
+  /*
+   * Very small phones: the brand word stays next to the logo, only smaller,
+   * and the truncated principal gives way so the sign-out button still fits.
+   */
+  .toolbar-brand-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+  .toolbar-principal { display: none; }
 }
