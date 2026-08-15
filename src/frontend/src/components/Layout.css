@@ -562,10 +562,10 @@
     word-break: break-word;
     hyphens: auto;
   }
-  /* Space reserved for the bar has to match its real height. */
+  /* Space reserved for the bar: its real height (58 px) plus a small margin. */
   .content > *,
   .content-full-height > * {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Beta banner: the notice stays, the bar stays thin. */
