@@ -105,13 +105,14 @@ const SOURCE_STATUS_STYLE: Record<AiChatSource['status'], { icon: string; color:
  * presented as if they had answered.
  */
 function SourcePanel({ sources }: { sources: AiChatSource[] }) {
+  const t = useT();
   const consulted = sources.filter(s => s.status !== 'not_configured');
   if (consulted.length === 0) return null;
 
   return (
     <details className="ai-sources">
       <summary>
-        🔗 Sources consulted ({consulted.filter(s => s.status === 'success').length}/{consulted.length})
+        🔗 {t('assistant.sources')} ({consulted.filter(s => s.status === 'success').length}/{consulted.length})
       </summary>
       <ul className="ai-sources-list">
         {consulted.map(source => {
@@ -364,13 +365,13 @@ export default function AIAssistant() {
             style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem' }}
             onClick={createConversation}
           >
-            + New Chat
+            {t('assistant.newChat')}
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
           {conversations.length === 0 ? (
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem 0.5rem' }}>
-              No conversations yet
+              {t('assistant.noConversations')}
             </p>
           ) : (
             conversations.map(conv => (
@@ -466,10 +467,10 @@ export default function AIAssistant() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
               <ValthorisShield size={72} />
               <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
-                VALTHORIS AI Assistant
+                {t('assistant.title')}
               </h2>
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, margin: 0, fontSize: '0.9rem' }}>
-                Your AI-powered cybersecurity companion. Ask about threats, scan URLs, analyze suspicious content, and stay protected.
+                {t('assistant.welcome')}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
                 {SUGGESTIONS.map(s => (
@@ -551,7 +552,7 @@ export default function AIAssistant() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask VALTHORIS AI… (Shift+Enter for new line)"
+              placeholder={t('assistant.placeholder')}
               rows={1}
               style={{
                 flex: 1,
