@@ -28,6 +28,9 @@
 // deno-lint-ignore-file no-explicit-any
 
 import { detectArtifact } from './artifacts.ts';
+import type { DetectedArtifact } from './artifacts.ts';
+import { formatEvidence, gatherIntelligence } from './intel.ts';
+import type { IntelEntity, IntelEntityKind, SourceReport } from './intel.ts';
 import {
   isPipelineConfigured,
   parseStructuredAnalysis,
@@ -53,11 +56,32 @@ interface ChatRequest {
 }
 
 const SYSTEM_PROMPT = [
-  'You are the VALTHORIS AI Security Assistant.',
+  'You are the VALTHORIS AI Security Assistant, a cybersecurity intelligence orchestrator.',
   'You help users identify phishing, scams, fraud, malware and other online threats.',
-  'Answer concisely and practically. When you are not certain, say so explicitly',
-  'and recommend verification steps. Never invent breach data, wallet balances',
-  'or scan results you have not been given.',
+  'Always answer in the language the user wrote in (Portuguese or English).',
+  'Never invent breach data, wallet balances, reputation scores or scan results:',
+  'only report values that appear in the evidence block you were given, and say',
+  'explicitly when something could not be confirmed.',
+  'Never give an empty answer such as "be careful" or "search on Google" —',
+  'analyse what you actually have.',
+].join(' ');
+
+/**
+ * Additional instructions used when real external evidence was collected for
+ * the turn: the answer must be a full intelligence report, not a chat reply.
+ */
+const INTEL_RESPONSE_FORMAT = [
+  'An intelligence evidence block is included in this turn. Structure the answer with',
+  'these sections (translated into the user\'s language):',
+  'RESUMO / SUMMARY — two or three sentences;',
+  'VEREDITO / VERDICT — one of: malicious, suspicious, inconclusive, no evidence of risk;',
+  'RISCO / RISK — low, medium, high or critical, with the reason;',
+  'EVIDÊNCIAS / EVIDENCE — bullet points, each attributed to the provider it came from;',
+  'FONTES / SOURCES — the providers that actually returned data, with the lookup timestamp;',
+  'RECOMENDAÇÕES / RECOMMENDATIONS — concrete next steps;',
+  'LIMITAÇÕES / LIMITATIONS — the providers that failed or are unavailable, and what',
+  'therefore could not be verified.',
+  'Do not list a provider under SOURCES unless it returned data in the evidence block.',
 ].join(' ');
 
 /**
@@ -323,9 +347,30 @@ export async function handleRequest(req: Request): Promise<Response> {
     return json({ error: 'At least one message is required' }, 400);
   }
 
+  // ─── Intelligence orchestration ───────────────────────────────────────────
+  // Before the model answers, the entity in the last user turn (if any) is
+  // enriched with the external providers configured for this deployment. The
+  // model then reasons over real data instead of its own recollection.
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  const artifact = lastUser ? detectArtifact(lastUser.content) : null;
+  const intel = lastUser ? await collectIntelligence(lastUser.content, artifact) : null;
+
+  const modelMessages = intel && intel.evidence
+    ? [
+        ...messages.slice(0, -1),
+        {
+          role: 'user' as const,
+          content: `${messages[messages.length - 1].content}\n\n---\n${intel.evidence}`,
+        },
+      ]
+    : messages;
+  const systemPrompt = intel && intel.evidence
+    ? `${SYSTEM_PROMPT} ${INTEL_RESPONSE_FORMAT}`
+    : SYSTEM_PROMPT;
+
   let completion: Completion;
   try {
-    completion = await complete(messages);
+    completion = await complete(modelMessages, systemPrompt);
   } catch (err) {
     console.error('[ai-chat]', err);
     // Only curated messages reach the browser; unexpected faults are generic.
@@ -341,7 +386,69 @@ export async function handleRequest(req: Request): Promise<Response> {
   // error, and it never invents a verdict.
   const analysis = await runFraudPipeline(messages, payload.principal);
 
-  return json(analysis ? { ...completion, analysis } : completion, 200);
+  return json(
+    {
+      ...completion,
+      ...(analysis ? { analysis } : {}),
+      ...(intel && intel.sources.length > 0 ? { sources: intel.sources } : {}),
+    },
+    200,
+  );
+}
+
+/** Chat turns that justify a live current-threat news lookup. */
+const NEWS_INTENT_RE =
+  /\b(latest|recent|current|news|trend|campaign|outbreak|zero[- ]day|ultim[oa]s?|recentes?|not[ií]cias?|atual(?:idade)?|amea[çc]as?|tend[êe]ncias?)\b/i;
+
+/** Maps a detected artefact to the entity kind the orchestrator understands. */
+function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
+  const kindMap: Record<string, IntelEntityKind> = {
+    url: 'url',
+    domain: 'domain',
+    email: 'email',
+    iban: 'iban',
+    phone: 'phone',
+    ip: 'ip',
+  };
+  if (artifact.kind === 'crypto') {
+    return {
+      kind: /^0x[a-fA-F0-9]{40}$/.test(artifact.value) ? 'crypto_eth' : 'crypto_btc',
+      value: artifact.value,
+    };
+  }
+  const kind = kindMap[artifact.kind];
+  return kind ? { kind, value: artifact.value } : null;
+}
+
+/**
+ * Collects external intelligence for the turn.
+ *
+ * Returns the per-provider reports (shown to the user as sources) and the
+ * evidence block handed to the model. A turn with no analysable entity and no
+ * current-threat intent produces no lookup at all.
+ */
+async function collectIntelligence(
+  userText: string,
+  artifact: DetectedArtifact | null,
+): Promise<{ sources: SourceReport[]; evidence: string | null } | null> {
+  let entity: IntelEntity | null = artifact ? intelEntityFor(artifact) : null;
+  if (!entity && NEWS_INTENT_RE.test(userText)) {
+    entity = { kind: 'topic', value: userText.slice(0, 200) };
+  }
+  if (!entity) return null;
+
+  let sources: SourceReport[];
+  try {
+    sources = await gatherIntelligence(entity);
+  } catch (err) {
+    // The orchestrator itself must never break the conversation.
+    console.error('[ai-chat] intelligence orchestration failed', err);
+    return null;
+  }
+  if (sources.length === 0) return null;
+
+  const usable = sources.some((s) => s.status !== 'not_configured');
+  return { sources, evidence: usable ? formatEvidence(entity, sources) : null };
 }
 
 (globalThis as any).Deno?.serve(handleRequest);

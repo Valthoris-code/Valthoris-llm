@@ -46,11 +46,31 @@ export interface AiChatAnalysis {
   error?: string;
 }
 
+/**
+ * One external intelligence lookup performed by the backend for this turn.
+ *
+ * Reports are rendered exactly as received: the UI never adds a provider to
+ * the list and never turns a failed lookup into a result. API keys stay in the
+ * Edge Function — a source report only carries the provider name, the lookup
+ * that was performed and what it returned.
+ */
+export interface AiChatSource {
+  provider: string;
+  endpoint: string;
+  entity: string;
+  timestamp: string;
+  status: 'success' | 'failed' | 'not_configured';
+  error?: string;
+  data?: Record<string, unknown>;
+}
+
 export interface AiChatReply {
   content: string;
   provider: string;
   model: string;
   analysis?: AiChatAnalysis;
+  /** External sources consulted for this turn, when the turn required them. */
+  sources?: AiChatSource[];
 }
 
 /** True when the browser has the configuration required to reach the backend. */

@@ -19,20 +19,7 @@ export default function TopToolbar({ onMenuToggle }: Props) {
   };
 
   return (
-    <header style={{
-      height: 56,
-      background: 'var(--bg-secondary)',
-      borderBottom: '1px solid var(--border)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 1rem',
-      gap: '0.75rem',
-      position: 'sticky',
-      top: 0,
-      zIndex: 150,
-      flexShrink: 0,
-      minWidth: 0,
-    }}>
+    <header className="top-toolbar">
       {/* Sidebar toggle — desktop only, hidden on mobile via CSS */}
       <button
         type="button"
@@ -44,24 +31,11 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       </button>
 
       {/* Brand */}
-      <NavLink
-        to="/assistant"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          textDecoration: 'none',
-          color: 'var(--accent-cyan)',
-          fontWeight: 800,
-          fontSize: '1.05rem',
-          letterSpacing: '0.08em',
-          flexShrink: 0,
-        }}
-      >
+      <NavLink to="/assistant" className="toolbar-brand">
         <img
           src="/valthoris-logo.png"
           alt="Valthoris"
-          style={{ height: 32, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+          className="toolbar-brand-logo"
         />
         <span className="toolbar-brand-text">VALTHORIS</span>
       </NavLink>
@@ -93,7 +67,7 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       <LanguageSelector compact />
 
       {/* Auth area */}
-      <div style={{ flexShrink: 0, minWidth: 0 }}>
+      <div className="toolbar-auth">
         {loading ? (
           <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>…</span>
         ) : isAuthenticated ? (

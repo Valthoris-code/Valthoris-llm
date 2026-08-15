@@ -1029,3 +1029,116 @@ html[data-reduce-motion='true'] *::after {
   .ai-messages { padding: 1rem 0.75rem; }
   .ai-chat-header { padding: 0.6rem 0.85rem; }
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   Top toolbar
+   ═════════════════════════════════════════════════════════════════ */
+.top-toolbar {
+  height: 56px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  /* never draw under a notch or a rounded corner */
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--accent-cyan);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.toolbar-brand-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.toolbar-auth { flex-shrink: 0; min-width: 0; }
+
+/* ═════════════════════════════════════════════════════════════════
+   Sign-in screen
+   ═════════════════════════════════════════════════════════════════ */
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
+  background: var(--bg-primary);
+  padding: 2rem;
+  padding-top: max(2rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  /* the card must always be reachable, even on a short viewport */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-screen-panel {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+}
+
+.auth-screen-shield { margin: 0 auto 0.5rem; }
+
+/* ═════════════════════════════════════════════════════════════════
+   Mobile corrections
+   ═════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Toolbar: fit the available width instead of overflowing it. */
+  .top-toolbar {
+    height: 52px;
+    gap: 0.45rem;
+    padding-left: max(0.6rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.6rem, env(safe-area-inset-right, 0px));
+  }
+  .toolbar-brand { font-size: 0.92rem; gap: 0.35rem; }
+  .toolbar-brand-logo { height: 26px; }
+  .toolbar-brand-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Language selector: a compact control, not a full-width panel. */
+  .lang-select-compact {
+    min-width: 0;
+    width: auto;
+    max-width: 72px;
+    padding: 0.25rem 0.3rem;
+    font-size: 0.72rem;
+  }
+
+  /* Sign-in screen on a phone. */
+  .auth-screen {
+    padding: 1rem;
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Very small phones: the brand word gives way to the logo and the badge. */
+  .toolbar-brand-text { display: none; }
+}

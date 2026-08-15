@@ -190,6 +190,25 @@ const pt: Catalogue = {
   'waiting.country': 'País',
   'waiting.reason': 'Motivo da inscrição',
   'waiting.submit': 'Entrar na Lista de Espera',
+  // ── Assistente AI ──────────────────────────────────────────────────────────
+  'assistant.title': 'Assistente AI VALTHORIS',
+  'assistant.subtitle': 'Inteligência de Cibersegurança',
+  'assistant.backendConnected': 'Backend ligado',
+  'assistant.backendMissing': 'Backend não configurado',
+  'assistant.disclaimer': 'A VALTHORIS AI pode cometer erros. Verifique informação crítica.',
+  'assistant.newChat': '+ Nova conversa',
+  'assistant.noConversations': 'Ainda não existem conversas',
+  'assistant.welcome': 'O seu companheiro de cibersegurança com IA. Pergunte sobre ameaças, analise URLs e conteúdos suspeitos e mantenha-se protegido.',
+  'assistant.placeholder': 'Pergunte à VALTHORIS AI… (Shift+Enter para nova linha)',
+  'assistant.sources': 'Fontes consultadas',
+
+  // ── Aviso de beta ──────────────────────────────────────────────────────────
+  'beta.title': 'BETA PRIVADA',
+  'beta.notice': 'Plataforma em desenvolvimento. Algumas funcionalidades ainda estão em construção.',
+
+  // ── Partilha social ────────────────────────────────────────────────────────
+  'social.share': 'Partilhar a VALTHORIS',
+  'social.copied': 'Link copiado',
 };
 
 export default pt;
