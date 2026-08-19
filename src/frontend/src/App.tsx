@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { BASE_PATH }  from './basePath';
 import Layout         from './components/Layout';
@@ -6,109 +6,136 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Existing pages (preserved)
 import Home            from './pages/Home';
-import Dashboard       from './pages/Dashboard';
-import Scanner         from './pages/Scanner';
-import Reports         from './pages/Reports';
-import SafeLocation    from './pages/SafeLocation';
-import SharedLocation  from './pages/SharedLocation';
-import SafeRoomPage    from './pages/SafeRoomPage';
-import Profile         from './pages/Profile';
-import AdminDashboard  from './pages/AdminDashboard';
-import UserManagement  from './pages/UserManagement';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Scanner = lazy(() => import('./pages/Scanner'));
+const Reports = lazy(() => import('./pages/Reports'));
+const SafeLocation = lazy(() => import('./pages/SafeLocation'));
+const SharedLocation = lazy(() => import('./pages/SharedLocation'));
+const SafeRoomPage = lazy(() => import('./pages/SafeRoomPage'));
+const Profile = lazy(() => import('./pages/Profile'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
 
 // New pages
 import AIAssistant       from './pages/AIAssistant';
-import Lookup            from './pages/Lookup';
-import RadarGlobal       from './pages/RadarGlobal';
-import CommunityReports  from './pages/CommunityReports';
-import CryptoIntelligence from './pages/CryptoIntelligence';
-import ThreatIntelligence from './pages/ThreatIntelligence';
-import Notifications     from './pages/Notifications';
-import Downloads         from './pages/Downloads';
-import LegalFramework    from './pages/LegalFramework';
-import Settings          from './pages/Settings';
-import Help              from './pages/Help';
-import AuthPage          from './pages/AuthPage';
-import WaitingList       from './pages/WaitingList';
-import Contact           from './pages/Contact';
-import ComingSoon        from './pages/ComingSoon';
+const Lookup = lazy(() => import('./pages/Lookup'));
+const RadarGlobal = lazy(() => import('./pages/RadarGlobal'));
+const CommunityReports = lazy(() => import('./pages/CommunityReports'));
+const CryptoIntelligence = lazy(() => import('./pages/CryptoIntelligence'));
+const ThreatIntelligence = lazy(() => import('./pages/ThreatIntelligence'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Downloads = lazy(() => import('./pages/Downloads'));
+const LegalFramework = lazy(() => import('./pages/LegalFramework'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Help = lazy(() => import('./pages/Help'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const WaitingList = lazy(() => import('./pages/WaitingList'));
+const Contact = lazy(() => import('./pages/Contact'));
+const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 
 // Legal pages
-import PrivacyPolicy         from './pages/legal/PrivacyPolicy';
-import Terms                 from './pages/legal/Terms';
-import CookiePolicy          from './pages/legal/CookiePolicy';
-import CookiePreferences     from './pages/legal/CookiePreferences';
-import GdprRights            from './pages/legal/GdprRights';
-import DataProcessing        from './pages/legal/DataProcessing';
-import ResponsibleDisclosure from './pages/legal/ResponsibleDisclosure';
-import SecurityPolicy        from './pages/legal/SecurityPolicy';
-import ContactDpo            from './pages/legal/ContactDpo';
-import Copyright             from './pages/legal/Copyright';
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const Terms = lazy(() => import('./pages/legal/Terms'));
+const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
+const CookiePreferences = lazy(() => import('./pages/legal/CookiePreferences'));
+const GdprRights = lazy(() => import('./pages/legal/GdprRights'));
+const DataProcessing = lazy(() => import('./pages/legal/DataProcessing'));
+const ResponsibleDisclosure = lazy(() => import('./pages/legal/ResponsibleDisclosure'));
+const SecurityPolicy = lazy(() => import('./pages/legal/SecurityPolicy'));
+const ContactDpo = lazy(() => import('./pages/legal/ContactDpo'));
+const Copyright = lazy(() => import('./pages/legal/Copyright'));
+
+/**
+ * Shown while a lazily loaded route chunk is being fetched. Deliberately
+ * minimal: on a phone the chunk usually arrives within a frame or two, so
+ * anything heavier would flash.
+ */
+function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '40vh',
+        padding: '2rem',
+        color: 'var(--text-muted)',
+        fontSize: '0.85rem',
+      }}
+    >
+      Loading…
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter basename={BASE_PATH}>
-      <Routes>
-        {/* Auth pages — outside main layout */}
-        <Route path="/auth"         element={<AuthPage />} />
-        <Route path="/waiting-list" element={<WaitingList />} />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          {/* Auth pages — outside main layout */}
+          <Route path="/auth"         element={<AuthPage />} />
+          <Route path="/waiting-list" element={<WaitingList />} />
 
-        <Route path="/" element={<Layout />}>
-          {/* Default → AI Assistant */}
-          <Route index element={<Navigate to="/assistant" replace />} />
+          <Route path="/" element={<Layout />}>
+            {/* Default → AI Assistant */}
+            <Route index element={<Navigate to="/assistant" replace />} />
 
-          {/* Public routes */}
-          <Route path="home"       element={<Home />} />
-          <Route path="assistant"  element={<AIAssistant />} />
-          <Route path="scanner"    element={<Scanner />} />
-          <Route path="reports"    element={<Reports />} />
-          <Route path="community"  element={<CommunityReports />} />
-          <Route path="radar"      element={<RadarGlobal />} />
-          <Route path="crypto-intelligence" element={<CryptoIntelligence />} />
-          <Route path="threat-intelligence" element={<ThreatIntelligence />} />
-          <Route path="downloads"  element={<Downloads />} />
-          <Route path="legal"      element={<LegalFramework />} />
-          <Route path="legal/privacy"                 element={<PrivacyPolicy />} />
-          <Route path="legal/terms"                   element={<Terms />} />
-          <Route path="legal/cookies"                 element={<CookiePolicy />} />
-          <Route path="legal/cookie-preferences"      element={<CookiePreferences />} />
-          <Route path="legal/gdpr"                    element={<GdprRights />} />
-          <Route path="legal/data-processing"         element={<DataProcessing />} />
-          <Route path="legal/responsible-disclosure"  element={<ResponsibleDisclosure />} />
-          <Route path="legal/security"                element={<SecurityPolicy />} />
-          <Route path="legal/dpo"                     element={<ContactDpo />} />
-          <Route path="legal/copyright"               element={<Copyright />} />
-          <Route path="contact"    element={<Contact />} />
-          <Route path="coming-soon" element={<ComingSoon />} />
-          <Route path="help"       element={<Help />} />
+            {/* Public routes */}
+            <Route path="home"       element={<Home />} />
+            <Route path="assistant"  element={<AIAssistant />} />
+            <Route path="scanner"    element={<Scanner />} />
+            <Route path="reports"    element={<Reports />} />
+            <Route path="community"  element={<CommunityReports />} />
+            <Route path="radar"      element={<RadarGlobal />} />
+            <Route path="crypto-intelligence" element={<CryptoIntelligence />} />
+            <Route path="threat-intelligence" element={<ThreatIntelligence />} />
+            <Route path="downloads"  element={<Downloads />} />
+            <Route path="legal"      element={<LegalFramework />} />
+            <Route path="legal/privacy"                 element={<PrivacyPolicy />} />
+            <Route path="legal/terms"                   element={<Terms />} />
+            <Route path="legal/cookies"                 element={<CookiePolicy />} />
+            <Route path="legal/cookie-preferences"      element={<CookiePreferences />} />
+            <Route path="legal/gdpr"                    element={<GdprRights />} />
+            <Route path="legal/data-processing"         element={<DataProcessing />} />
+            <Route path="legal/responsible-disclosure"  element={<ResponsibleDisclosure />} />
+            <Route path="legal/security"                element={<SecurityPolicy />} />
+            <Route path="legal/dpo"                     element={<ContactDpo />} />
+            <Route path="legal/copyright"               element={<Copyright />} />
+            <Route path="contact"    element={<Contact />} />
+            <Route path="coming-soon" element={<ComingSoon />} />
+            <Route path="help"       element={<Help />} />
 
-          {/* Public share-link resolution */}
-          <Route path="share/:token" element={<SharedLocation />} />
+            {/* Public share-link resolution */}
+            <Route path="share/:token" element={<SharedLocation />} />
 
-          {/* Safe Rooms — creation and link-based entry (guests welcome: the
-              room token plus the accepted terms are the authorisation). */}
-          <Route path="rooms"        element={<SafeRoomPage />} />
-          <Route path="room/:token"  element={<SafeRoomPage />} />
+            {/* Safe Rooms — creation and link-based entry (guests welcome: the
+                room token plus the accepted terms are the authorisation). */}
+            <Route path="rooms"        element={<SafeRoomPage />} />
+            <Route path="room/:token"  element={<SafeRoomPage />} />
 
-          {/* Lookup sub-routes */}
-          <Route path="lookup/*"   element={<Lookup />} />
+            {/* Lookup sub-routes */}
+            <Route path="lookup/*"   element={<Lookup />} />
 
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="dashboard"      element={<Dashboard />} />
-            <Route path="safe-location"  element={<SafeLocation />} />
-            <Route path="profile"        element={<Profile />} />
-            <Route path="notifications"  element={<Notifications />} />
-            <Route path="settings"       element={<Settings />} />
-            {/* Admin */}
-            <Route path="admin"          element={<AdminDashboard />} />
-            <Route path="admin/users"    element={<UserManagement />} />
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="dashboard"      element={<Dashboard />} />
+              <Route path="safe-location"  element={<SafeLocation />} />
+              <Route path="profile"        element={<Profile />} />
+              <Route path="notifications"  element={<Notifications />} />
+              <Route path="settings"       element={<Settings />} />
+              {/* Admin */}
+              <Route path="admin"          element={<AdminDashboard />} />
+              <Route path="admin/users"    element={<UserManagement />} />
+            </Route>
+
+            {/* Unknown paths inside the shell fall back to the assistant */}
+            <Route path="*" element={<Navigate to="/assistant" replace />} />
           </Route>
-
-          {/* Unknown paths inside the shell fall back to the assistant */}
-          <Route path="*" element={<Navigate to="/assistant" replace />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

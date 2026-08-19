@@ -33,7 +33,7 @@ export default function TopToolbar({ onMenuToggle }: Props) {
       {/* Brand */}
       <NavLink to="/assistant" className="toolbar-brand">
         <img
-          src="/valthoris-logo.png"
+          src="/valthoris-logo-128.png"
           alt="Valthoris"
           className="toolbar-brand-logo"
         />
