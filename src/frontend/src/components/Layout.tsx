@@ -74,7 +74,7 @@ export default function Layout() {
           right: '3%',
           width: 340,
           height: 340,
-          backgroundImage: 'url(/valthoris-shield.png)',
+          backgroundImage: 'url(/valthoris-shield-512.png)',
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',

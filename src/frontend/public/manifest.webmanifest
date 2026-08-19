@@ -9,27 +9,49 @@
   "orientation": "portrait-primary",
   "background_color": "#041426",
   "theme_color": "#041426",
-  "categories": ["security", "utilities", "productivity"],
+  "categories": [
+    "security",
+    "utilities",
+    "productivity"
+  ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/valthoris-shield-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "shortcuts": [
-    { "name": "AI Assistant", "url": "/assistant" },
-    { "name": "Scanner", "url": "/scanner" },
-    { "name": "Safe Location", "url": "/safe-location" },
-    { "name": "Radar Global", "url": "/radar" }
+    {
+      "name": "AI Assistant",
+      "url": "/assistant"
+    },
+    {
+      "name": "Scanner",
+      "url": "/scanner"
+    },
+    {
+      "name": "Safe Location",
+      "url": "/safe-location"
+    },
+    {
+      "name": "Radar Global",
+      "url": "/radar"
+    }
   ]
 }
