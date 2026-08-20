@@ -53,6 +53,9 @@ Deno.test('cache is fresh under 24 hours and stale beyond it', () => {
 
 // ─── End to end, with stubbed upstreams ──────────────────────────────────────
 
+/** Exact provider endpoint, so a stub never matches an unrelated host. */
+const NEWSDATA_ENDPOINT_PREFIX = 'https://newsdata.io/api/1/latest';
+
 interface Stub {
   cacheRows: unknown[];
   newsStatus: number;
@@ -75,7 +78,7 @@ function installFetch(stub: Stub): () => void {
       }
       return new Response(JSON.stringify(stub.cacheRows), { status: 200 });
     }
-    if (url.includes('newsdata.io')) {
+    if (url.startsWith(NEWSDATA_ENDPOINT_PREFIX)) {
       return new Response(JSON.stringify(stub.newsBody), { status: stub.newsStatus });
     }
     throw new Error(`unexpected fetch: ${url}`);
@@ -113,7 +116,7 @@ Deno.test('fresh cache is served without calling the provider', async () => {
     const result = await getNews();
     assertEquals(result.cached, true);
     assertEquals(result.items.length, 1);
-    assert(!stub.calls.some((c) => c.includes('newsdata.io')));
+    assert(!stub.calls.some((c) => c.endsWith(NEWSDATA_ENDPOINT_PREFIX)));
   } finally {
     restoreFetch();
     restoreEnv();
