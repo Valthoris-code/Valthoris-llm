@@ -7,6 +7,7 @@ import {
 import type { AiChatAnalysis, AiChatMessage, AiChatSource } from '../services/aiChatService';
 import { useAuth } from '../hooks/useAuth';
 import SocialShare from '../components/SocialShare';
+import NewsTicker from '../components/NewsTicker';
 import ValthorisShield from '../components/ValthorisShield';
 import { useT } from '../i18n/useI18n';
 
@@ -595,6 +596,8 @@ export default function AIAssistant() {
           </p>
           {/* Fills the gap between the disclaimer and the bottom navigation. */}
           <SocialShare className="ai-social-share" />
+          {/* Full-width headlines, between the share row and the bottom nav. */}
+          <NewsTicker className="ai-news-ticker" />
         </div>
       </div>
     </div>

@@ -218,6 +218,10 @@ const pt: Catalogue = {
   // ── Partilha social ────────────────────────────────────────────────────────
   'social.share': 'Partilhar a VALTHORIS',
   'social.copied': 'Link copiado',
+
+  // ── Letreiro de notícias ───────────────────────────────────────────────────
+  'news.ticker.label': 'Últimas notícias de cibersegurança e fraude',
+  'news.ticker.badge': 'NOTÍCIAS',
 };
 
 export default pt;
