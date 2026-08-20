@@ -218,6 +218,10 @@ const en: Catalogue = {
   // ── Social share ───────────────────────────────────────────────────────────
   'social.share': 'Share VALTHORIS',
   'social.copied': 'Link copied',
+
+  // ── News ticker ────────────────────────────────────────────────────────────
+  'news.ticker.label': 'Latest cybersecurity and fraud news',
+  'news.ticker.badge': 'NEWS',
 };
 
 export default en;

@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.safe-room]
 verify_jwt = false
+
+[functions.news-ticker]
+verify_jwt = false

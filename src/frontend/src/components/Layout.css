@@ -535,6 +535,118 @@
 /* The assistant row is hidden while the keyboard is open (see below). */
 .ai-social-share { padding-top: 0.15rem; }
 
+/* ─── News ticker ───────────────────────────────────────────────── */
+/*
+ * Full-width marquee shown between the social share row and the bottom
+ * navigation. The track holds two identical strips and slides by exactly -50%,
+ * so the loop is seamless; `overflow: hidden` on the viewport keeps the page
+ * free of horizontal scroll on a phone.
+ */
+.news-ticker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent-cyan);
+  border-radius: 8px;
+  background: rgba(10, 37, 64, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+.news-ticker-badge {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+}
+
+.news-ticker-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.news-ticker-track {
+  display: flex;
+  width: max-content;
+  animation-name: news-ticker-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.news-ticker:hover .news-ticker-track,
+.news-ticker:focus-within .news-ticker-track {
+  animation-play-state: paused !important;
+}
+
+.news-ticker-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0 0.75rem;
+  list-style: none;
+}
+
+.news-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.news-ticker-bullet {
+  color: var(--accent-cyan);
+  font-size: 0.6rem;
+}
+
+.news-ticker-link {
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.news-ticker-link:hover,
+.news-ticker-link:focus-visible {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+}
+
+@keyframes news-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/*
+ * Reduced motion: no automatic movement at all. The strip stays readable and
+ * the user scrolls it themselves.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .news-ticker-track {
+    animation: none !important;
+    width: auto;
+  }
+  .news-ticker-viewport {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .news-ticker-track > .news-ticker-strip:last-child {
+    display: none;
+  }
+}
+
 /* ─── Mobile refinements ────────────────────────────────────────── */
 @media (max-width: 768px) {
   /*
@@ -620,8 +732,18 @@
   }
   .ai-social-share .social-share-copied { min-height: 0; }
 
+  /* Ticker: thinner on a phone, still full width and never overflowing. */
+  .ai-news-ticker {
+    margin-top: 0.3rem;
+    padding: 0.22rem 0.4rem;
+    gap: 0.35rem;
+  }
+  .ai-news-ticker .news-ticker-badge { font-size: 0.54rem; }
+  .ai-news-ticker .news-ticker-link { font-size: 0.66rem; }
+
   /* With the keyboard open every pixel belongs to the composer. */
   html[data-keyboard='open'] .ai-social-share,
+  html[data-keyboard='open'] .ai-news-ticker,
   html[data-keyboard='open'] .beta-banner {
     display: none !important;
   }
