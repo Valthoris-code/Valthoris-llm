@@ -336,28 +336,31 @@ async function goPlusAccessToken(base: string): Promise<string> {
 
   const appKey = env('GOPLUS_APP_KEY')!;
   const appSecret = env('GOPLUS_APP_SECRET')!;
-  goPlusTokenPending = (async () => {
-    const time = Math.floor(Date.now() / 1000);
-    const sign = await sha1Hex(`${appKey}${time}${appSecret}`);
-    const data = await fetchJson(`${base}/api/v1/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ app_key: appKey, sign, time }),
-    });
-    const token = str(data?.result?.access_token, 512);
-    if (!token) throw new Error('GoPlus did not return an access token');
-    goPlusToken = { token, expiresAt: Date.now() + GOPLUS_TOKEN_TTL_MS };
-    return token;
+  // The cache is updated *inside* the request, before the promise settles, so
+  // every waiter — the caller that started the authentication and any lookup
+  // that joined it — observes the same, already-consistent state.
+  const pending = (async () => {
+    try {
+      const time = Math.floor(Date.now() / 1000);
+      const sign = await sha1Hex(`${appKey}${time}${appSecret}`);
+      const data = await fetchJson(`${base}/api/v1/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_key: appKey, sign, time }),
+      });
+      const token = str(data?.result?.access_token, 512);
+      if (!token) throw new Error('GoPlus did not return an access token');
+      goPlusToken = { token, expiresAt: Date.now() + GOPLUS_TOKEN_TTL_MS };
+      return token;
+    } catch (err) {
+      goPlusToken = undefined;
+      throw err;
+    } finally {
+      goPlusTokenPending = undefined;
+    }
   })();
-
-  try {
-    return await goPlusTokenPending;
-  } catch (err) {
-    goPlusToken = undefined;
-    throw err;
-  } finally {
-    goPlusTokenPending = undefined;
-  }
+  goPlusTokenPending = pending;
+  return await pending;
 }
 
 /** Test seam: drops the cached token so a test starts from a clean state. */
@@ -598,6 +601,10 @@ const PROVIDERS: Provider[] = [
     kinds: ['phone'],
     config: () => env('DATA_GOV_API_KEY'),
     run: async (value) => {
+      // api.ftc.gov is served by api.data.gov, which only accepts the key as
+      // the `api_key` query parameter on this endpoint — hence the same
+      // treatment as the other query-string providers: the upstream body is
+      // never echoed, only the HTTP status, so the key cannot leak in a report.
       const key = env('DATA_GOV_API_KEY')!;
       const areaCode = usAreaCode(value);
       if (!areaCode) {
