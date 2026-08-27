@@ -17,6 +17,7 @@ import {
   gatherIntelligence,
   isValidEntity,
   providersFor,
+  resetGoPlusToken,
 } from './intel.ts';
 
 const SECRET_KEYS = [
@@ -36,10 +37,14 @@ const SECRET_KEYS = [
   'OPENIBAN_API_URL',
   'CRYPTOSCAMDB_API_URL',
   'GOPLUS_API_URL',
+  'GOPLUS_APP_KEY',
+  'GOPLUS_APP_SECRET',
+  'DATA_GOV_API_KEY',
 ];
 
 function clearSecrets() {
   for (const key of SECRET_KEYS) Deno.env.delete(key);
+  resetGoPlusToken();
 }
 
 // ─── Entity validation ───────────────────────────────────────────────────────
@@ -78,6 +83,8 @@ Deno.test('each entity kind selects its real providers', () => {
   assert(names('crypto_eth').includes('Etherscan'));
   assert(names('crypto_eth').includes('CryptoScamDB'));
   assert(names('topic').includes('NewsData'));
+  assert(names('phone').includes('FTC DNC Complaints'));
+  assertEquals(names('place'), ['Nominatim']);
 });
 
 // ─── Not configured ──────────────────────────────────────────────────────────
@@ -154,6 +161,197 @@ Deno.test('an invalid entity is not sent to any provider', async () => {
     const reports = await gatherIntelligence({ kind: 'ip', value: '999.999.999.999' });
     assertEquals(reports, []);
     assert(!called);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+
+// ─── GoPlus token authentication ─────────────────────────────────────────────
+
+Deno.test('GoPlus is not configured without the app key and secret', async () => {
+  clearSecrets();
+  Deno.env.set('GOPLUS_API_URL', 'https://api.gopluslabs.io');
+  try {
+    const reports = await gatherIntelligence({
+      kind: 'crypto_eth',
+      value: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+    });
+    const goplus = reports.find((r) => r.provider === 'GoPlus');
+    assertEquals(goplus?.status, 'not_configured');
+  } finally {
+    clearSecrets();
+  }
+});
+
+Deno.test('GoPlus signs a token and reuses it for both lookups', async () => {
+  clearSecrets();
+  Deno.env.set('GOPLUS_API_URL', 'https://api.gopluslabs.io');
+  Deno.env.set('GOPLUS_APP_KEY', 'unit-test-app-key');
+  Deno.env.set('GOPLUS_APP_SECRET', 'unit-test-app-secret');
+
+  const realFetch = globalThis.fetch;
+  let tokenRequests = 0;
+  let signSeen = '';
+  let timeSeen = 0;
+  const authHeaders: string[] = [];
+
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const headers = new Headers(init?.headers);
+    if (url.endsWith('/api/v1/token')) {
+      tokenRequests += 1;
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      signSeen = body.sign;
+      timeSeen = body.time;
+      assertEquals(body.app_key, 'unit-test-app-key');
+      return Promise.resolve(
+        new Response(JSON.stringify({ result: { access_token: 'unit-test-token' } }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    authHeaders.push(headers.get('Authorization') ?? '');
+    if (url.includes('/address_security/')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ result: { honeypot_related_address: '1', cybercrime: '0' } }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const address = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+    const first = await gatherIntelligence({ kind: 'crypto_eth', value: address });
+    const goplus = first.find((r) => r.provider === 'GoPlus');
+    assertEquals(goplus?.status, 'success');
+    assertEquals(goplus?.data?.maliciousFlags, ['honeypot_related_address']);
+    assertEquals(authHeaders[0], 'Bearer ' + 'unit-test-token');
+
+    // The signature is SHA-1(app_key + time + app_secret), computed natively.
+    const expected = await sha1Hex(`unit-test-app-key${timeSeen}unit-test-app-secret`);
+    assertEquals(signSeen, expected);
+
+    // A second lookup reuses the cached token instead of authenticating again.
+    await gatherIntelligence({ kind: 'crypto_eth', value: address });
+    assertEquals(tokenRequests, 1);
+
+    // Neither the secret nor the token leaks into the reports.
+    assert(!JSON.stringify(first).includes('unit-test-app-secret'));
+    assert(!JSON.stringify(first).includes('unit-test-token'));
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+async function sha1Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ─── FTC Do Not Call complaints (US only) ────────────────────────────────────
+
+Deno.test('the FTC source answers for a US number and stays empty for a Portuguese one', async () => {
+  clearSecrets();
+  Deno.env.set('DATA_GOV_API_KEY', 'unit-test-data-gov-key');
+
+  const realFetch = globalThis.fetch;
+  const requested: string[] = [];
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    requested.push(url);
+    if (url.startsWith('https://api.ftc.gov/v0/dnc-complaints')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            meta: { count: 137 },
+            data: [
+              { attributes: { subject: 'Reducing your debt', 'recorded-message-or-robocall': 'Y' } },
+              { attributes: { subject: 'Vacation & timeshares', 'recorded-message-or-robocall': 'N' } },
+            ],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const us = await gatherIntelligence({ kind: 'phone', value: '+1 202 555 0100' });
+    const ftcUs = us.find((r) => r.provider === 'FTC DNC Complaints');
+    assertEquals(ftcUs?.status, 'success');
+    assertEquals(ftcUs?.data?.areaCode, '202');
+    assertEquals(ftcUs?.data?.complaintsInArea, 137);
+    assertEquals(ftcUs?.data?.robocallComplaints, 1);
+    assert(requested.some((u) => u.includes('area_code=202')));
+    assert(!JSON.stringify(us).includes('unit-test-data-gov-key'));
+
+    requested.length = 0;
+    const pt = await gatherIntelligence({ kind: 'phone', value: '+351 21 000 0000' });
+    const ftcPt = pt.find((r) => r.provider === 'FTC DNC Complaints');
+    // A Portuguese number is out of scope: an empty result, never an error.
+    assertEquals(ftcPt?.status, 'success');
+    assertEquals(ftcPt?.data?.applicable, false);
+    assertEquals(requested.length, 0);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+// ─── Nominatim public place search ───────────────────────────────────────────
+
+Deno.test('Nominatim returns the public location and an OpenStreetMap link', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  let userAgent = '';
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      userAgent = new Headers(init?.headers).get('User-Agent') ?? '';
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              name: 'Hospital do Espírito Santo',
+              display_name: 'Hospital do Espírito Santo, Évora, Portugal',
+              category: 'amenity',
+              type: 'hospital',
+              lat: '38.5713',
+              lon: '-7.9135',
+            },
+          ]),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({
+      kind: 'place',
+      value: 'hospital distrital de Évora',
+    });
+    const osm = reports.find((r) => r.provider === 'Nominatim');
+    assertEquals(osm?.status, 'success');
+    assertEquals(osm?.data?.found, true);
+    assertEquals(osm?.data?.name, 'Hospital do Espírito Santo');
+    assertEquals(osm?.data?.type, 'hospital');
+    assertEquals(
+      osm?.data?.link,
+      'https://www.openstreetmap.org/?mlat=38.5713&mlon=-7.9135#map=17/38.5713/-7.9135',
+    );
+    // No phone in the gazetteer means no phone in the report — nothing invented.
+    assertEquals(osm?.data?.phone, undefined);
+    assertEquals(userAgent, 'Valthoris-App/1.0 (contacto@valthoris.com)');
   } finally {
     globalThis.fetch = realFetch;
     clearSecrets();
