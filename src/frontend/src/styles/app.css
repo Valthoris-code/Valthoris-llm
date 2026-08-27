@@ -569,7 +569,7 @@ input:focus, textarea:focus, select:focus {
 .radar-chip-active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 212, 255, 0.1); }
 .radar-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -581,7 +581,7 @@ input:focus, textarea:focus, select:focus {
 .radar-timeline input[type='range'] { accent-color: var(--accent-cyan); }
 .radar-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
   gap: 0.75rem;
   margin-top: 1rem;
 }
@@ -664,7 +664,7 @@ input:focus, textarea:focus, select:focus {
 .safe-permission input { width: auto; margin-top: 3px; flex-shrink: 0; }
 .safe-inline-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
   gap: 0.75rem;
   align-items: end;
   margin-bottom: 1.25rem;
@@ -957,9 +957,23 @@ input:focus, textarea:focus, select:focus {
     max-height: calc(var(--app-height, 100vh) * 0.35);
   }
 
-  /* Prevent text overflow everywhere */
-  * { word-break: break-word; overflow-wrap: break-word; }
-  pre, code { overflow-x: auto; word-break: normal; }
+  /*
+   * Prevent long unbreakable strings (tokens, URLs, hashes) from overflowing
+   * their container.
+   *
+   * This is deliberately NOT `* { word-break: break-word }`: Chromium maps
+   * `word-break: break-word` to `overflow-wrap: anywhere`, which is taken into
+   * account when computing the *min-content* width of a box. Applied to every
+   * element, every flex/grid item collapsed to the width of a single character
+   * and each line of text was rendered one letter at a time — exactly the
+   * breakage seen in the installed PWA. `overflow-wrap: break-word` does not
+   * change intrinsic sizing, and it is applied to text containers only.
+   */
+  p, li, dd, dt, td, th, blockquote, figcaption, label, summary,
+  h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
+  pre, code { overflow-x: auto; word-break: normal; overflow-wrap: normal; }
 
   /* Hero CTA buttons */
   .hero-cta { flex-direction: column; gap: 0.75rem; }

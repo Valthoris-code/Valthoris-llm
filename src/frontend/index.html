@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!--
+      `maximum-scale=1.0, user-scalable=no` is deliberately absent: besides
+      blocking pinch-zoom (an accessibility regression), some Android WebViews
+      mis-apply the locked scale in installed (standalone) mode and lay the
+      page out at a fraction of the screen width, which broke every line of
+      text into one character per line.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Valthoris — AI Cybersecurity Platform on Internet Computer" />
     <meta name="theme-color" content="#041426" />
     <meta name="color-scheme" content="dark" />

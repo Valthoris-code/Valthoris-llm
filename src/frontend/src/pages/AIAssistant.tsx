@@ -186,6 +186,12 @@ function MessageBubble({ msg }: { msg: Message }) {
         borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
         padding: '0.65rem 1rem',
         maxWidth: '100%',
+        /*
+         * Without `minWidth: 0` a flex item cannot shrink below its
+         * min-content width, and a bubble holding a long word would push the
+         * row past the screen in the installed PWA.
+         */
+        minWidth: 0,
         lineHeight: 1.6,
         fontSize: '0.92rem',
       }}>
@@ -193,7 +199,7 @@ function MessageBubble({ msg }: { msg: Message }) {
           <TypingIndicator />
         ) : (
           <span
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+            style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
             role={msg.isError ? 'alert' : undefined}
           >
             {msg.isError ? `⚠ ${msg.content}` : msg.content}
