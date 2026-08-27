@@ -473,7 +473,7 @@
   font-family: monospace;
   font-size: 0.66rem;
   color: var(--text-muted);
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Social share row ──────────────────────────────────────────── */
@@ -671,7 +671,7 @@
     font-size: 0.58rem;
     line-height: 1.05;
     text-align: center;
-    word-break: break-word;
+    overflow-wrap: break-word;
     hyphens: auto;
   }
   /* Space reserved for the bar: its real height (58 px) plus a small margin. */
