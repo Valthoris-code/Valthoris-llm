@@ -120,12 +120,13 @@ an integration that does not exist.
 | Secret | Read by | Status |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | `supabase/functions/ai-chat` | **in use** — the assistant and the fraud analysis both call Gemini with it |
+| `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `supabase/functions/ai-chat` | **optional** — tried before Gemini; any failure (including HTTP 402) falls back to Gemini silently |
 | `ABUSEIPDB_API_KEY` | `ai-chat/intel.ts` | **in use** — IP reputation |
 | `IPINFO_API_KEY` | `ai-chat/intel.ts` | **in use** — IP geolocation / ASN |
 | `ABSTRACT_IP_API_KEY` | `ai-chat/intel.ts` | **in use** — IP intelligence |
 | `VIRUSTOTAL_API_KEY` | `ai-chat/intel.ts` | **in use** — URL / domain / IP reputation |
 | `URLSCAN_API_KEY` | `ai-chat/intel.ts` | **in use** — URL / domain scan history |
-| `GOPLUS_API_URL` | `ai-chat/intel.ts` | **in use** — phishing site and address security |
+| `GOPLUS_API_URL` + `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` | `ai-chat/intel.ts` | **in use** — phishing site and address security; the three together obtain the access token (all required, otherwise the provider reports `not_configured`) |
 | `ABSTRACT_EMAIL_API_KEY` | `ai-chat/intel.ts` | **in use** — e-mail intelligence |
 | `NUMVERIFY_API_KEY` | `ai-chat/intel.ts` | **in use** — phone validation |
 | `ABSTRACT_PHONE_API_KEY` | `ai-chat/intel.ts` | **in use** — phone intelligence |
@@ -135,7 +136,11 @@ an integration that does not exist.
 | `ETHERSCAN_API_KEY` | `ai-chat/intel.ts` | **in use** — Ethereum address activity |
 | `CRYPTOSCAMDB_API_URL` | `ai-chat/intel.ts` | **in use** — crypto scam database |
 | `COINGECKO_API_KEY` | `ai-chat/intel.ts` | **in use** — token market data |
-| `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence |
+| `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence, only on an explicit news intent |
+| `DATA_GOV_API_KEY` | `ai-chat/intel.ts` | **in use** — FTC Do Not Call complaints; **US (+1) numbers only**, no coverage for Portugal/Europe |
+
+OpenStreetMap **Nominatim** needs no secret: public place/business lookups are
+anonymous and identified only by the required `User-Agent`.
 
 The full mapping (secret → provider → module → lookup → data returned) is in
 `docs/architecture/api-integration-matrix.md`.
@@ -165,8 +170,10 @@ supabase secrets set GEMINI_API_KEY=<key>       # the assistant itself
 # ABUSEIPDB_API_KEY IPINFO_API_KEY VIRUSTOTAL_API_KEY URLSCAN_API_KEY
 # ABSTRACT_IP_API_KEY ABSTRACT_EMAIL_API_KEY ABSTRACT_PHONE_API_KEY
 # ABSTRACT_IBAN_API_KEY ABSTRACT_VAT_API_KEY NUMVERIFY_API_KEY
-# ETHERSCAN_API_KEY COINGECKO_API_KEY NEWSDATA_API_KEY
-# OPENIBAN_API_URL CRYPTOSCAMDB_API_URL GOPLUS_API_URL
+# ETHERSCAN_API_KEY COINGECKO_API_KEY NEWSDATA_API_KEY DATA_GOV_API_KEY
+# OPENIBAN_API_URL CRYPTOSCAMDB_API_URL
+# GOPLUS_API_URL GOPLUS_APP_KEY GOPLUS_APP_SECRET
+# DEEPSEEK_API_KEY (optional, silent fallback to Gemini)
 supabase functions deploy ai-chat
 ```
 

@@ -24,7 +24,12 @@
  *   ABSTRACT_IP_API_KEY, ABSTRACT_PHONE_API_KEY, ABSTRACT_EMAIL_API_KEY,
  *   ABSTRACT_IBAN_API_KEY, ABSTRACT_VAT_API_KEY, NUMVERIFY_API_KEY,
  *   OPENIBAN_API_URL, CRYPTOSCAMDB_API_URL, GOPLUS_API_URL,
- *   COINGECKO_API_KEY, ETHERSCAN_API_KEY, NEWSDATA_API_KEY
+ *   GOPLUS_APP_KEY, GOPLUS_APP_SECRET, COINGECKO_API_KEY, ETHERSCAN_API_KEY,
+ *   NEWSDATA_API_KEY, DATA_GOV_API_KEY
+ *
+ * One provider needs no credential at all: OpenStreetMap Nominatim, used for
+ * public place/business lookups, is queried anonymously with the User-Agent the
+ * Nominatim usage policy requires.
  */
 
 // deno-lint-ignore-file no-explicit-any
@@ -40,6 +45,7 @@ export type IntelEntityKind =
   | 'iban'
   | 'phone'
   | 'vat'
+  | 'place'
   | 'topic';
 
 export interface IntelEntity {
@@ -128,6 +134,8 @@ export function isValidEntity(kind: IntelEntityKind, value: string): boolean {
       return VAT_RE.test(value.replace(/\s+/g, '').toUpperCase());
     case 'url':
       return isPublicHttpUrl(value);
+    case 'place':
+      return value.trim().length > 2 && value.length <= 200;
     case 'topic':
       return value.trim().length > 2 && value.length <= 200;
   }
@@ -182,6 +190,8 @@ function normaliseEntity(kind: IntelEntityKind, value: string): string {
       return value.replace(/\s+/g, '').toUpperCase();
     case 'domain':
       return value.toLowerCase();
+    case 'place':
+      return value.replace(/\s+/g, ' ').trim();
     default:
       return value;
   }
@@ -283,6 +293,92 @@ function vtStats(attributes: any): Record<string, unknown> {
       ? new Date(Number(attributes.last_analysis_date) * 1000).toISOString()
       : undefined,
   });
+}
+
+// ─── GoPlus authentication ───────────────────────────────────────────────────
+//
+// The GoPlus Security API requires an access token for the endpoints Valthoris
+// uses. The token is obtained with the app key/secret pair:
+//
+//   POST {GOPLUS_API_URL}/api/v1/token
+//   { app_key, time (Unix seconds), sign: SHA1(app_key + time + app_secret) }
+//
+// The token is valid for about an hour, so it is cached in memory for 55
+// minutes: a warm function instance authenticates once instead of on every
+// lookup. Neither the key, the secret nor the token is ever logged or returned.
+
+const GOPLUS_TOKEN_TTL_MS = 55 * 60 * 1000;
+
+let goPlusToken: { token: string; expiresAt: number } | undefined;
+/** In-flight token request, so parallel lookups share a single authentication. */
+let goPlusTokenPending: Promise<string> | undefined;
+
+/** True when every GoPlus credential is present on this deployment. */
+function goPlusConfigured(): string | undefined {
+  const base = baseUrl('GOPLUS_API_URL');
+  if (!base || !env('GOPLUS_APP_KEY') || !env('GOPLUS_APP_SECRET')) return undefined;
+  return base;
+}
+
+/** Lowercase hex SHA-1 of `input`, computed with the Deno-native Web Crypto API. */
+async function sha1Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Returns a valid GoPlus access token, reusing the cached one while it lasts. */
+async function goPlusAccessToken(base: string): Promise<string> {
+  const now = Date.now();
+  if (goPlusToken && goPlusToken.expiresAt > now) return goPlusToken.token;
+  if (goPlusTokenPending) return await goPlusTokenPending;
+
+  const appKey = env('GOPLUS_APP_KEY')!;
+  const appSecret = env('GOPLUS_APP_SECRET')!;
+  goPlusTokenPending = (async () => {
+    const time = Math.floor(Date.now() / 1000);
+    const sign = await sha1Hex(`${appKey}${time}${appSecret}`);
+    const data = await fetchJson(`${base}/api/v1/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_key: appKey, sign, time }),
+    });
+    const token = str(data?.result?.access_token, 512);
+    if (!token) throw new Error('GoPlus did not return an access token');
+    goPlusToken = { token, expiresAt: Date.now() + GOPLUS_TOKEN_TTL_MS };
+    return token;
+  })();
+
+  try {
+    return await goPlusTokenPending;
+  } catch (err) {
+    goPlusToken = undefined;
+    throw err;
+  } finally {
+    goPlusTokenPending = undefined;
+  }
+}
+
+/** Test seam: drops the cached token so a test starts from a clean state. */
+export function resetGoPlusToken(): void {
+  goPlusToken = undefined;
+  goPlusTokenPending = undefined;
+}
+
+/**
+ * Returns the North-American area code of `phone`, or undefined when the number
+ * is not a US/NANP number.
+ *
+ * Accepted shapes (digits only, after normalisation): 10 digits, or 11 digits
+ * starting with the `1` country code. Anything else — a Portuguese `+351`
+ * number, for example — has no area code in this scheme.
+ */
+function usAreaCode(phone: string): string | undefined {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return digits.slice(0, 3);
+  if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1, 4);
+  return undefined;
 }
 
 const PROVIDERS: Provider[] = [
@@ -404,10 +500,13 @@ const PROVIDERS: Provider[] = [
     provider: 'GoPlus',
     endpoint: 'url/phishing-site',
     kinds: ['url'],
-    config: () => baseUrl('GOPLUS_API_URL'),
+    config: () => goPlusConfigured(),
     run: async (value) => {
-      const base = baseUrl('GOPLUS_API_URL')!;
-      const data = await fetchJson(`${base}/api/v1/phishing_site?url=${encodeURIComponent(value)}`);
+      const base = goPlusConfigured()!;
+      const token = await goPlusAccessToken(base);
+      const data = await fetchJson(`${base}/api/v1/phishing_site?url=${encodeURIComponent(value)}`, {
+        headers: { Authorization: 'Bearer ' + token },
+      });
       const r = data?.result ?? {};
       return clean({
         phishingSite: num(r.phishing_site),
@@ -481,6 +580,53 @@ const PROVIDERS: Provider[] = [
       });
     },
   },
+  {
+    // ── Coverage warning ────────────────────────────────────────────────────
+    // The FTC "Do Not Call" complaint database only contains complaints filed
+    // by consumers in the UNITED STATES, about numbers with the +1 country
+    // code. It has NO coverage whatsoever for Portugal or the rest of Europe:
+    // a Portuguese number returns `{ applicable: false }` (an empty, expected
+    // result — not an error). This source is only relevant for scams that run
+    // on US telephone infrastructure.
+    //
+    // The API cannot be filtered by a complete phone number: only by area
+    // code, state, city or date. The lookup therefore uses the area code, and
+    // the result is an approximation — complaints from the same area, not
+    // necessarily about this exact number. The report says so explicitly.
+    provider: 'FTC DNC Complaints',
+    endpoint: 'phone/us-robocall-complaints',
+    kinds: ['phone'],
+    config: () => env('DATA_GOV_API_KEY'),
+    run: async (value) => {
+      const key = env('DATA_GOV_API_KEY')!;
+      const areaCode = usAreaCode(value);
+      if (!areaCode) {
+        return { applicable: false, reason: 'not a US (+1) number — FTC data does not cover it' };
+      }
+      const data = await fetchJson(
+        `https://api.ftc.gov/v0/dnc-complaints?api_key=${encodeURIComponent(key)}&items_per_page=10&area_code=${encodeURIComponent(areaCode)}`,
+      );
+      const items: any[] = Array.isArray(data?.data) ? data.data : [];
+      const rows = items.map((item) => item?.attributes ?? item ?? {});
+      const robocalls = rows.filter((r: any) => {
+        const flag = r?.['recorded-message-or-robocall'] ?? r?.recorded_message_or_robocall;
+        return typeof flag === 'string' && /^(y|yes|true)$/i.test(flag.trim());
+      }).length;
+      const subjects: string[] = [];
+      for (const row of rows) {
+        const subject = str((row as any)?.subject ?? (row as any)?.['violation-type'], 80);
+        if (subject && !subjects.includes(subject)) subjects.push(subject);
+      }
+      return clean({
+        scope: `US area code ${areaCode} — complaints from the same area, not necessarily this exact number`,
+        areaCode,
+        complaintsInArea: num(data?.meta?.count) ?? rows.length,
+        complaintsReturned: rows.length,
+        robocallComplaints: robocalls,
+        commonSubjects: subjects.length > 0 ? subjects.slice(0, 5) : undefined,
+      });
+    },
+  },
 
   // ── IBAN / VAT ────────────────────────────────────────────────────────────
   {
@@ -546,15 +692,18 @@ const PROVIDERS: Provider[] = [
     config: () => env('ETHERSCAN_API_KEY'),
     run: async (value) => {
       const key = env('ETHERSCAN_API_KEY')!;
+      // Etherscan API V2: one multichain endpoint, the chain is selected with
+      // `chainid` (1 = Ethereum mainnet). The V1 host-per-chain API is retired.
+      const base = 'https://api.etherscan.io/v2/api?chainid=1';
       const balance = await fetchJson(
-        `https://api.etherscan.io/api?module=account&action=balance&address=${encodeURIComponent(value)}&tag=latest&apikey=${encodeURIComponent(key)}`,
+        `${base}&module=account&action=balance&address=${encodeURIComponent(value)}&tag=latest&apikey=${encodeURIComponent(key)}`,
       );
       if (balance?.status === '0' && balance?.message !== 'No transactions found') {
         throw new Error(str(balance?.result) ?? 'provider rejected the request');
       }
       const wei = num(balance?.result);
       const txs = await fetchJson(
-        `https://api.etherscan.io/api?module=account&action=txlist&address=${encodeURIComponent(value)}&page=1&offset=10&sort=desc&apikey=${encodeURIComponent(key)}`,
+        `${base}&module=account&action=txlist&address=${encodeURIComponent(value)}&page=1&offset=10&sort=desc&apikey=${encodeURIComponent(key)}`,
       ).catch(() => null);
       const list: any[] = Array.isArray(txs?.result) ? txs.result : [];
       return clean({
@@ -591,11 +740,13 @@ const PROVIDERS: Provider[] = [
     provider: 'GoPlus',
     endpoint: 'crypto/address-security',
     kinds: ['crypto_eth'],
-    config: () => baseUrl('GOPLUS_API_URL'),
+    config: () => goPlusConfigured(),
     run: async (value) => {
-      const base = baseUrl('GOPLUS_API_URL')!;
+      const base = goPlusConfigured()!;
+      const token = await goPlusAccessToken(base);
       const data = await fetchJson(
         `${base}/api/v1/address_security/${encodeURIComponent(value)}?chain_id=1`,
+        { headers: { Authorization: 'Bearer ' + token } },
       );
       const result = data?.result ?? {};
       const flags = Object.entries(result)
@@ -635,6 +786,43 @@ const PROVIDERS: Provider[] = [
         symbol: str(data?.symbol),
         marketCapRank: num(data?.market_cap_rank),
         priceUsd: num(data?.market_data?.current_price?.usd),
+      });
+    },
+  },
+
+  // ── Public places / businesses ────────────────────────────────────────────
+  {
+    // OpenStreetMap Nominatim: free, keyless public gazetteer. The usage policy
+    // requires an identifying User-Agent, which is sent on every call. It
+    // returns the public location of a place — never a private record — and it
+    // frequently has no phone number, in which case nothing is invented here.
+    provider: 'Nominatim',
+    endpoint: 'place/public-search',
+    kinds: ['place'],
+    config: () => 'https://nominatim.openstreetmap.org',
+    run: async (value) => {
+      const data = await fetchJson(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&limit=1`,
+        { headers: { 'User-Agent': 'Valthoris-App/1.0 (contacto@valthoris.com)' } },
+      );
+      const first: any = Array.isArray(data) ? data[0] : undefined;
+      if (!first) return { found: false };
+      const lat = str(first?.lat, 32);
+      const lon = str(first?.lon, 32);
+      const tags = first?.extratags ?? {};
+      return clean({
+        found: true,
+        name: str(first?.name) ?? str(first?.display_name, 200),
+        address: str(first?.display_name, 200),
+        category: str(first?.category ?? first?.class),
+        type: str(first?.type),
+        latitude: lat,
+        longitude: lon,
+        phone: str(tags?.phone ?? tags?.['contact:phone']),
+        website: str(tags?.website ?? tags?.['contact:website'], 200),
+        link: lat && lon
+          ? `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=17/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`
+          : undefined,
       });
     },
   },

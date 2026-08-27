@@ -28,19 +28,22 @@ Valthoris frontend (src/frontend/src/pages/AIAssistant.tsx)
 | API | Secret | Edge Function | Valthoris module | Lookup performed | Data returned | Source shown to the user | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Google Gemini | `GEMINI_API_KEY` (`GEMINI_MODEL`) | `ai-chat` | AI Assistant | `generateContent` | assistant answer, structured verdict | — (the assistant itself) | ACTIVE |
+| DeepSeek | `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `ai-chat` | AI Assistant (optional first attempt) | `chat/completions` | assistant answer | — (falls back to Gemini on any error) | OPTIONAL |
 | AbuseIPDB | `ABUSEIPDB_API_KEY` | `ai-chat` → `intel.ts` | IP / Threat Intelligence | `api/v2/check` | abuse confidence, reports, ISP, country, usage type | AbuseIPDB | ACTIVE |
 | IPinfo | `IPINFO_API_KEY` | `ai-chat` → `intel.ts` | IP Intelligence | `ipinfo.io/{ip}/json` | city, region, country, org, ASN, privacy flags | IPinfo | ACTIVE |
 | Abstract IP | `ABSTRACT_IP_API_KEY` | `ai-chat` → `intel.ts` | IP Intelligence | `ipgeolocation/v1` | country, city, connection type, VPN flag | Abstract | ACTIVE |
 | VirusTotal | `VIRUSTOTAL_API_KEY` | `ai-chat` → `intel.ts` | URL / domain / IP intelligence | `api/v3/{urls,domains,ip_addresses}` | analysis stats, reputation, categories | VirusTotal | ACTIVE |
 | URLScan | `URLSCAN_API_KEY` | `ai-chat` → `intel.ts` | URL scanner | `api/v1/search` | scan count, malicious verdicts, recent scans | URLScan | ACTIVE |
-| GoPlus | `GOPLUS_API_URL` | `ai-chat` → `intel.ts` | URL + crypto security | `phishing_site`, `address_security` | phishing flag, malicious address flags | GoPlus | ACTIVE |
+| GoPlus | `GOPLUS_API_URL` + `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` | `ai-chat` → `intel.ts` | URL + crypto security | `api/v1/token` (SHA-1 signed, cached 55 min) then `phishing_site`, `address_security` with `Authorization: Bearer` | phishing flag, malicious address flags | GoPlus | ACTIVE |
 | Abstract Email | `ABSTRACT_EMAIL_API_KEY` | `ai-chat` → `intel.ts` | Email lookup | `emailvalidation/v1` | deliverability, quality score, disposable, MX/SMTP | Abstract | ACTIVE |
 | NumVerify | `NUMVERIFY_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup | `apilayer.net/api/validate` | validity, country, carrier, line type | NumVerify | ACTIVE |
 | Abstract Phone | `ABSTRACT_PHONE_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup | `phonevalidation/v1` | validity, type, carrier, country | Abstract | ACTIVE |
+| FTC Do Not Call | `DATA_GOV_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup (**US only**) | `v0/dnc-complaints?area_code=…` | complaints in the area, robocall count, common subjects | FTC (api.ftc.gov) | ACTIVE |
+| Nominatim (OpenStreetMap) | none (keyless) | `ai-chat` → `intel.ts` | Public place / business lookup | `search?q=…&format=jsonv2` | name, address, category, coordinates, OSM link | OpenStreetMap | ACTIVE |
 | OpenIBAN | `OPENIBAN_API_URL` | `ai-chat` → `intel.ts` | IBAN | `/validate/{iban}` | validity, bank name, BIC, check results | OpenIBAN | ACTIVE |
 | Abstract IBAN | `ABSTRACT_IBAN_API_KEY` | `ai-chat` → `intel.ts` | IBAN | `ibanvalidation/v1` | validity, country, bank, BIC | Abstract | ACTIVE |
 | Abstract VAT | `ABSTRACT_VAT_API_KEY` | `ai-chat` → `intel.ts` | VAT / business intelligence | `vat/v1/validate` | validity, company name and address | Abstract | ACTIVE |
-| Etherscan | `ETHERSCAN_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | `account/balance`, `account/txlist` | balance, recent activity, first/last seen | Etherscan | ACTIVE |
+| Etherscan | `ETHERSCAN_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | API **V2** `v2/api?chainid=1` — `account/balance`, `account/txlist` | balance, recent activity, first/last seen | Etherscan | ACTIVE |
 | CryptoScamDB | `CRYPTOSCAMDB_API_URL` | `ai-chat` → `intel.ts` | Crypto Intelligence | `/v1/check/{entity}` | scam status, entry type, blocked flag | CryptoScamDB | ACTIVE |
 | CoinGecko | `COINGECKO_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | `coins/ethereum/contract/{address}` | listed token, symbol, market cap rank, price | CoinGecko | ACTIVE |
 | NewsData | `NEWSDATA_API_KEY` | `ai-chat` → `intel.ts` | Threat Intelligence (current) | `api/1/news` | headlines, sources, publication dates | NewsData | ACTIVE |
@@ -62,12 +65,13 @@ own state to the user:
 | URL | VirusTotal + URLScan + GoPlus + CryptoScamDB |
 | Domain | VirusTotal + URLScan + CryptoScamDB |
 | E-mail | Abstract Email |
-| Phone | NumVerify + Abstract Phone |
+| Phone | NumVerify + Abstract Phone + FTC Do Not Call (US numbers only) |
 | IBAN | OpenIBAN + Abstract IBAN |
 | VAT number | Abstract VAT |
 | Ethereum address | Etherscan + CryptoScamDB + GoPlus + CoinGecko |
 | Bitcoin address | CryptoScamDB |
-| Current-threat question | NewsData |
+| Public place / business question | Nominatim (only when the turn names a place **and** asks for a factual detail) |
+| Current-threat question | NewsData (only on an explicit news intent) |
 
 ## Guarantees
 

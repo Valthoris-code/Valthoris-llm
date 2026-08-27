@@ -33,7 +33,7 @@ const realServe = Deno.serve;
   return { finished: Promise.resolve(), shutdown: () => Promise.resolve() };
 };
 
-await import('./index.ts');
+const fn = await import('./index.ts');
 
 // deno-lint-ignore no-explicit-any
 (Deno as any).serve = realServe;
@@ -75,6 +75,30 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
           modelVersion: 'gemini-1.5-flash',
           candidates: [{ content: { parts: [{ text: content }] } }],
         }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+  }
+
+  if (url.startsWith('https://api.deepseek.com/')) {
+    return Promise.resolve(
+      new Response(JSON.stringify({ error: { message: 'Insufficient Balance' } }), { status: 402 }),
+    );
+  }
+
+  if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+    return Promise.resolve(
+      new Response(
+        JSON.stringify([
+          {
+            name: 'Hospital do Espírito Santo',
+            display_name: 'Hospital do Espírito Santo, Évora, Portugal',
+            category: 'amenity',
+            type: 'hospital',
+            lat: '38.5713',
+            lon: '-7.9135',
+          },
+        ]),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
@@ -253,4 +277,85 @@ Deno.test('no request is made without a message', async () => {
   const res = await handler!(post({ messages: [] }));
   assertEquals(res.status, 400);
   assertEquals(recorded.length, 0);
+});
+
+
+// ─── Public place lookups ────────────────────────────────────────────────────
+
+Deno.test('a place lookup needs both an entity and a factual request', () => {
+  // Both conditions present → the lookup runs.
+  assert(fn.isPlaceLookup('número de telefone do hospital distrital de Évora'));
+  assert(fn.isPlaceLookup('qual é a morada da farmácia central de Braga?'));
+  assert(fn.isPlaceLookup('quem é esta empresa Valthoris Lda?'));
+
+  // Only one condition → no external lookup.
+  assert(!fn.isPlaceLookup('gosto muito deste restaurante'));
+  assert(!fn.isPlaceLookup('preciso do teu contacto'));
+
+  // Greetings and small talk never trigger a lookup.
+  for (const greeting of ['Olá', 'bom dia', 'obrigado', 'como estás?', 'Hi there']) {
+    assert(!fn.isPlaceLookup(greeting), greeting);
+  }
+});
+
+Deno.test('the place query drops the question and keeps the place', () => {
+  const query = fn.placeQuery('número de telefone do hospital distrital de Évora');
+  assert(query.toLowerCase().includes('hospital distrital'), query);
+  assert(query.toLowerCase().includes('évora'), query);
+  assert(!query.toLowerCase().includes('telefone'), query);
+});
+
+Deno.test('a greeting is answered with no external source at all', async () => {
+  recorded = [];
+  providerAnswers = ['Olá! Em que posso ajudar?'];
+
+  const res = await handler!(post({ messages: [{ role: 'user', content: 'Olá' }] }));
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.sources, undefined);
+  assertEquals(body.analysis, undefined);
+  // The only outbound call is the model itself.
+  assertEquals(recorded.length, 1);
+  assert(recorded[0].url.startsWith('https://generativelanguage.googleapis.com/'));
+});
+
+Deno.test('a place question is grounded on Nominatim', async () => {
+  recorded = [];
+  providerAnswers = ['O Hospital do Espírito Santo fica em Évora (fonte: OpenStreetMap).'];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: 'número de telefone do hospital distrital de Évora' }],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  const source = body.sources.find((s: Record<string, unknown>) => s.provider === 'Nominatim');
+  assertEquals(source.status, 'success');
+  assertEquals(source.data.name, 'Hospital do Espírito Santo');
+  assert(recorded.some((r) => r.url.startsWith('https://nominatim.openstreetmap.org/search')));
+  // A place question is not a fraud event.
+  assertEquals(body.analysis, undefined);
+});
+
+// ─── DeepSeek is optional and never surfaces its own failure ─────────────────
+
+Deno.test('a DeepSeek failure falls back to Gemini without reaching the user', async () => {
+  recorded = [];
+  providerAnswers = ['Ransomware continua a dominar as ameaças atuais.'];
+  Deno.env.set('DEEPSEEK_API_KEY', 'test-deepseek-key');
+
+  try {
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Olá, tudo bem?' }],
+    }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    // DeepSeek answered 402; the user still gets the real Gemini answer.
+    assertEquals(body.provider, 'gemini');
+    assertEquals(body.content, 'Ransomware continua a dominar as ameaças atuais.');
+    assertEquals(body.error, undefined);
+    assert(recorded.some((r) => r.url.startsWith('https://api.deepseek.com/')));
+  } finally {
+    Deno.env.delete('DEEPSEEK_API_KEY');
+  }
 });

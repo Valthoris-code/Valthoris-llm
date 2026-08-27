@@ -6,9 +6,12 @@
  * The browser must never hold an LLM API key, so the assistant calls this
  * function instead.
  *
- * Google Gemini is the only provider: there is no OpenAI/Anthropic dependency
- * and no failover to another vendor. The call is a plain `fetch` against the
- * Google Generative Language REST API, so no SDK is needed under Deno.
+ * Google Gemini is the primary provider and the final fallback: the call is a
+ * plain `fetch` against the Google Generative Language REST API, so no SDK is
+ * needed under Deno. DeepSeek is optional — when `DEEPSEEK_API_KEY` is set it
+ * is tried first as a cost optimisation, and *any* failure (including HTTP 402
+ * "insufficient balance") falls back to Gemini silently: the user never sees a
+ * DeepSeek error.
  *
  * Required secret (set with `supabase secrets set …`):
  *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
@@ -19,6 +22,9 @@
  *                       tolerated: the name is normalised and, when Google
  *                       answers 404 (model retired or unknown to this key),
  *                       the call is retried on a model that is still served.
+ *   DEEPSEEK_API_KEY  — when present, DeepSeek answers first; on any error the
+ *                       turn falls back to Gemini without surfacing the failure
+ *   DEEPSEEK_MODEL    — default "deepseek-chat"
  *
  * The function never fabricates an answer: when the key is missing or the
  * upstream call fails it returns a non-2xx response with a real error message
@@ -82,6 +88,21 @@ const INTEL_RESPONSE_FORMAT = [
   'LIMITAÇÕES / LIMITATIONS — the providers that failed or are unavailable, and what',
   'therefore could not be verified.',
   'Do not list a provider under SOURCES unless it returned data in the evidence block.',
+].join(' ');
+
+/**
+ * Instructions used when the turn is a public place/business lookup rather than
+ * a threat analysis: the answer is factual information, not a verdict.
+ */
+const PLACE_RESPONSE_FORMAT = [
+  'This turn is a factual question about a real public place or business, not a threat analysis.',
+  'Answer directly with the details that are in the evidence block (name, address,',
+  'category, map link) and attribute them to OpenStreetMap / Nominatim.',
+  'The gazetteer often has no phone number. When a detail is missing from the evidence,',
+  'you may complete it from general public knowledge of the web, but you must state where',
+  'it comes from and that it was not confirmed by a consulted source. Never invent a phone',
+  'number, an address or an opening time; say it could not be confirmed instead.',
+  'Do not use the threat-report sections (VERDICT, RISK) for this kind of question.',
 ].join(' ');
 
 /**
@@ -313,11 +334,69 @@ function googleErrorMessage(body: string): string {
   return 'the Google API returned no error detail. Check the GEMINI_API_KEY secret.';
 }
 
+/**
+ * DeepSeek — optional, tried before Gemini when `DEEPSEEK_API_KEY` is set.
+ *
+ * It is a cost optimisation, never a dependency: any failure at all (network,
+ * quota, HTTP 401/402/429/5xx, empty completion) falls back silently to Gemini.
+ * The user is never shown a DeepSeek error, and the answer is never degraded.
+ */
+async function callDeepSeek(
+  messages: ChatMessage[],
+  apiKey: string,
+  systemPrompt: string,
+): Promise<Completion> {
+  const model = env('DEEPSEEK_MODEL') ?? 'deepseek-chat';
+  const res = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({ role: m.role, content: m.content })),
+      ],
+      temperature: 0.2,
+      max_tokens: 800,
+    }),
+  });
+  if (!res.ok) {
+    // Status only: the body can echo the request. Nothing here reaches the
+    // browser — the caller falls back to Gemini.
+    throw new Error(`DeepSeek request failed with HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const content = typeof data?.choices?.[0]?.message?.content === 'string'
+    ? data.choices[0].message.content.trim()
+    : '';
+  if (content.length === 0) throw new Error('DeepSeek returned an empty completion');
+  return { content, provider: 'deepseek', model: data?.model ?? model };
+}
+
 async function complete(
   messages: ChatMessage[],
   systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<Completion> {
   const geminiKey = env('GEMINI_API_KEY');
+  const deepSeekKey = env('DEEPSEEK_API_KEY');
+
+  if (deepSeekKey) {
+    try {
+      return await callDeepSeek(messages, deepSeekKey, systemPrompt);
+    } catch (err) {
+      // Logged for the operator, invisible to the user: Gemini answers instead.
+      console.warn(
+        '[ai-chat] deepseek unavailable, falling back to gemini:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   if (!geminiKey) {
     throw new AiChatError(
       'No AI provider configured. Set GEMINI_API_KEY as a Supabase function secret.',
@@ -365,7 +444,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       ]
     : messages;
   const systemPrompt = intel && intel.evidence
-    ? `${SYSTEM_PROMPT} ${INTEL_RESPONSE_FORMAT}`
+    ? `${SYSTEM_PROMPT} ${intel.kind === 'place' ? PLACE_RESPONSE_FORMAT : INTEL_RESPONSE_FORMAT}`
     : SYSTEM_PROMPT;
 
   let completion: Completion;
@@ -394,6 +473,56 @@ export async function handleRequest(req: Request): Promise<Response> {
     },
     200,
   );
+}
+
+/**
+ * Public-place lookup: the entity being asked about.
+ *
+ * Either an explicit kind of establishment, or the "X em/no/na/de Y" shape that
+ * names a place ("hospital de Évora", "clínica no Porto").
+ */
+const PLACE_ENTITY_RE =
+  /\b(restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|escola|universidade|hotel|empresa|cl[íi]nica|banco|farm[áa]cia|caf[ée]|padaria|gin[áa]sio|oficina|est[úa]dio|museu|restaurant|shop|store|clinic|pharmacy|school|company|hotel)\b/i;
+
+const PLACE_PATTERN_RE =
+  /\b\p{L}[\p{L}.'-]{2,}\s+(?:em|no|na|nos|nas|d[oa]s?|de|in|at)\s+\p{Lu}[\p{L}.'-]{2,}/u;
+
+/**
+ * Public-place lookup: the factual request being made about it.
+ *
+ * A place lookup only runs when a factual detail is actually asked for, so a
+ * greeting or generic chat never triggers an external search.
+ */
+const PLACE_REQUEST_RE =
+  /\b(contact[oa]s?|telefone|telem[óo]vel|n[úu]mero|morada|endere[çc]o|onde\s+(?:fica|é|e|está|esta)|hor[áa]rio|hor[áa]rios|localiza[çc][ãa]o|site|website|p[áa]gina|quem\s+é\s+(?:esta|essa|a)\s+empresa|phone|address|opening hours|where is|contact)\b/i;
+
+/**
+ * True when the turn is genuinely asking for a factual detail about a real
+ * place or business.
+ *
+ * Both conditions must hold at the same time: naming an entity is not enough,
+ * and asking for a contact is not enough either. "Olá", "bom dia", "obrigado"
+ * or "como estás" satisfy neither, so they never reach an external provider.
+ */
+export function isPlaceLookup(text: string): boolean {
+  const hasEntity = PLACE_ENTITY_RE.test(text) || PLACE_PATTERN_RE.test(text);
+  const hasRequest = PLACE_REQUEST_RE.test(text);
+  return hasEntity && hasRequest;
+}
+
+/** Words that describe the request rather than the place, dropped from the query. */
+const PLACE_QUERY_NOISE_RE =
+  /\b(qual\s+é|qual|quero|preciso|sabes|podes|dizer|diz-me|d[áa]-me|indica(?:-me)?|por favor|o\s+contact[oa]s?|contact[oa]s?|n[úu]mero de telefone|n[úu]mero|telefone|telem[óo]vel|morada|endere[çc]o|hor[áa]rio(?:s)?|localiza[çc][ãa]o|onde\s+(?:fica|é|e|está|esta)|what\s+is|the\s+)\b/gi;
+
+/** Builds the Nominatim query from the turn: the place, without the question. */
+export function placeQuery(text: string): string {
+  const cleaned = text
+    .replace(/[?¿!¡]/g, ' ')
+    .replace(PLACE_QUERY_NOISE_RE, ' ')
+    .replace(/^\s*(?:d[oa]s?|de|d[oa]|em|no|na)\s+/i, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return (cleaned.length >= 3 ? cleaned : text.trim()).slice(0, 200);
 }
 
 /** Chat turns that justify a live current-threat news lookup. */
@@ -430,8 +559,13 @@ function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
 async function collectIntelligence(
   userText: string,
   artifact: DetectedArtifact | null,
-): Promise<{ sources: SourceReport[]; evidence: string | null } | null> {
+): Promise<
+  { kind: IntelEntityKind; sources: SourceReport[]; evidence: string | null } | null
+> {
   let entity: IntelEntity | null = artifact ? intelEntityFor(artifact) : null;
+  if (!entity && isPlaceLookup(userText)) {
+    entity = { kind: 'place', value: placeQuery(userText) };
+  }
   if (!entity && NEWS_INTENT_RE.test(userText)) {
     entity = { kind: 'topic', value: userText.slice(0, 200) };
   }
@@ -448,7 +582,11 @@ async function collectIntelligence(
   if (sources.length === 0) return null;
 
   const usable = sources.some((s) => s.status !== 'not_configured');
-  return { sources, evidence: usable ? formatEvidence(entity, sources) : null };
+  return {
+    kind: entity.kind,
+    sources,
+    evidence: usable ? formatEvidence(entity, sources) : null,
+  };
 }
 
 (globalThis as any).Deno?.serve(handleRequest);
