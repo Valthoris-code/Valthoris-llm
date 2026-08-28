@@ -448,10 +448,18 @@ input:focus, textarea:focus, select:focus {
 .cookie-banner,
 .toast,
 .mobile-drawer {
-  max-width: 100vw;
   word-break: normal;
   overflow-wrap: break-word;
   hyphens: none;
+}
+/*
+ * `.modal-panel` keeps its own, tighter clamp declared above; the surfaces
+ * below only need the viewport as an upper bound.
+ */
+.cookie-banner,
+.toast,
+.mobile-drawer {
+  max-width: 100vw;
 }
 .cookie-banner *,
 .toast *,
