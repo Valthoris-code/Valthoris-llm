@@ -453,6 +453,32 @@ Deno.test('a model that does not serve the search tool still answers the turn', 
   }
 });
 
+Deno.test('a 400 that is not the tool is still surfaced, not silently retried away', async () => {
+  recorded = [];
+  nominatimPlace = DEFAULT_PLACE;
+  const realFetchStub = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ error: { message: 'invalid request' } }), { status: 400 }),
+      );
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Quero o contacto do hospital distrital Espírito Santo em Évora' }],
+    }));
+    assertEquals(res.status, 502);
+    const body = await res.json();
+    assertEquals(body.error, 'Gemini request failed with HTTP 400');
+  } finally {
+    globalThis.fetch = realFetchStub;
+  }
+});
+
 // ─── DeepSeek is optional and never surfaces its own failure ─────────────────
 
 Deno.test('a DeepSeek failure falls back to Gemini without reaching the user', async () => {

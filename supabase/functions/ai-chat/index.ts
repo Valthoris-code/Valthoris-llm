@@ -331,7 +331,8 @@ async function callGeminiModel(
     }
     // A 400 on a request that carries the search tool is, in practice, that
     // tool not being served for this model: retry without it instead of
-    // failing the turn.
+    // failing the turn. An unrelated 400 (malformed body, quota) simply
+    // reproduces on the retry and is surfaced then, so nothing is masked.
     if (res.status === 400 && webSearch) throw new GeminiToolUnsupported(model);
     // A 404 identifies the model, not the request: let the caller try the next
     // name in the chain before giving up.
