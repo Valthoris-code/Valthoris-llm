@@ -367,6 +367,16 @@ input:focus, textarea:focus, select:focus {
 .modal-overlay {
   position: fixed;
   inset: 0;
+  /*
+   * The overlay is sized from the viewport itself, never from an ancestor:
+   * installed as a PWA a `backdrop-filter`/`transform` ancestor can become the
+   * containing block of a fixed element, and the dialog then inherited a
+   * near-zero width, which is what rendered the consent text one letter per
+   * line.
+   */
+  width: 100vw;
+  max-width: 100vw;
+  height: var(--app-height, 100dvh);
   background: rgba(2, 10, 20, 0.78);
   backdrop-filter: blur(4px);
   display: flex;
@@ -377,15 +387,51 @@ input:focus, textarea:focus, select:focus {
   animation: fadeIn 0.2s ease;
 }
 .modal-panel {
+  /*
+   * `--modal-width` is the *preferred* width published by the component; the
+   * panel never grows past the viewport and, just as importantly, never
+   * collapses below a readable width.
+   */
   width: 100%;
-  max-height: calc(100vh - 3rem);
-  overflow-y: auto;
+  max-width: min(var(--modal-width, 560px), calc(100vw - 2.5rem));
+  min-width: min(calc(100vw - 2.5rem), 280px);
+  max-height: calc(var(--app-height, 100dvh) - 3rem);
   padding: 1.5rem;
+  /* Header and footer stay put, only the body scrolls. */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  /*
+   * Break on spaces and hyphens only. `break-all`/`anywhere` would allow a
+   * character-by-character break, the exact failure reported in standalone
+   * mode.
+   */
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
 }
-.modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-.modal-title { margin: 0; font-size: 1.15rem; flex: 1; }
-.modal-close { background: none; border: none; color: var(--text-muted); padding: 0.2rem 0.4rem; }
-.modal-footer { margin-top: 1.5rem; }
+.modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex: none; }
+.modal-title { margin: 0; font-size: 1.15rem; flex: 1; min-width: 0; }
+.modal-close { background: none; border: none; color: var(--text-muted); padding: 0.2rem 0.4rem; flex: none; }
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-footer {
+  margin-top: 1.5rem;
+  flex: none;
+  /* The accept/close actions must always stay inside the viewport. */
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card);
+}
+/* No descendant of a dialog may shrink to a single character. */
+.modal-panel * { min-width: 0; word-break: normal; overflow-wrap: break-word; }
 
 /* ═════════════════════════════════════════════════════════════════
    Toggle switch
