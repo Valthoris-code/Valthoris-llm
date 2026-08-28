@@ -8,6 +8,11 @@ interface Props {
   onClose?: () => void;
   footer?: React.ReactNode;
   children: React.ReactNode;
+  /**
+   * Preferred panel width in px. It is published as the `--modal-width` custom
+   * property and clamped against the viewport in CSS: a fixed px width is
+   * unsafe in an installed PWA, where it could exceed the standalone viewport.
+   */
   width?: number;
 }
 
@@ -73,7 +78,7 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        style={{ maxWidth: width }}
+        style={{ ['--modal-width' as string]: `${width}px` } as React.CSSProperties}
       >
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
