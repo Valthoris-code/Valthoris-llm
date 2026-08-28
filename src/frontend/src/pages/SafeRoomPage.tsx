@@ -48,6 +48,7 @@ export default function SafeRoomPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [roomName, setRoomName] = useState('Safe Room');
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [radiusEnabled, setRadiusEnabled] = useState(false);
   const [radiusMeters, setRadiusMeters] = useState(500);
   const [lastShareUrl, setLastShareUrl] = useState('');
 
@@ -93,7 +94,7 @@ export default function SafeRoomPage() {
         name: roomName,
         displayName,
         durationMinutes,
-        radiusMeters,
+        radiusMeters: radiusEnabled ? radiusMeters : 0,
         principal,
       });
       setLastShareUrl(buildRoomUrl(result.roomToken));
@@ -237,19 +238,31 @@ export default function SafeRoomPage() {
               </select>
             </label>
 
-            <label className="field">
-              <span className="field-label">
-                {t('room.radius', { radius: radiusMeters, max: SAFE_ROOM_MAX_RADIUS_METERS })}
-              </span>
-              <input
-                type="range"
-                min={50}
-                max={SAFE_ROOM_MAX_RADIUS_METERS}
-                step={50}
-                value={radiusMeters}
-                onChange={e => setRadiusMeters(Number(e.target.value))}
-              />
-            </label>
+            <div className="field">
+              <label className="safe-room-toggle-row">
+                <input
+                  type="checkbox"
+                  checked={radiusEnabled}
+                  onChange={e => setRadiusEnabled(e.target.checked)}
+                />
+                <span className="field-label">{t('room.radiusEnable')}</span>
+              </label>
+              {radiusEnabled && (
+                <label className="field" style={{ marginTop: '0.5rem' }}>
+                  <span className="field-label">
+                    {t('room.radius', { radius: radiusMeters, max: SAFE_ROOM_MAX_RADIUS_METERS })}
+                  </span>
+                  <input
+                    type="range"
+                    min={50}
+                    max={SAFE_ROOM_MAX_RADIUS_METERS}
+                    step={50}
+                    value={radiusMeters}
+                    onChange={e => setRadiusMeters(Number(e.target.value))}
+                  />
+                </label>
+              )}
+            </div>
 
             <button
               type="button"

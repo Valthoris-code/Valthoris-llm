@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Circle, MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { AttributionControl, Circle, MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -109,11 +109,12 @@ export default function MapPlaceholder({
         zoom={zoom ?? 4}
         style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
         scrollWheelZoom
-        attributionControl
+        attributionControl={false}
       >
         <MapResizer />
+        <AttributionControl position="topright" />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Valthoris'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {circle && (

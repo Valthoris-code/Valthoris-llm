@@ -51,6 +51,7 @@ const pt: Catalogue = {
   'room.duration480': '8 horas',
   'room.duration1440': '24 horas (máximo)',
   'room.radius': 'Raio de segurança: {radius} m (máx. {max} m)',
+  'room.radiusEnable': 'Ativar raio de segurança',
   'room.create': '🛰 Criar Safe Room',
   'room.creating': 'A criar…',
   'room.shareLink': 'Link da sala',

@@ -276,7 +276,7 @@ export default function SafeRoomPanel({ session, initialState, onExit }: Props) 
           <MapPlaceholder
             center={center}
             zoom={center ? 15 : 4}
-            circle={center ? { ...center, radiusMeters: state.room.radiusMeters } : undefined}
+            circle={center && state.room.radiusMeters > 0 ? { ...center, radiusMeters: state.room.radiusMeters } : undefined}
             markers={markers}
             height={340}
             caption={t('room.participants', {
