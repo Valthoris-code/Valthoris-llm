@@ -517,9 +517,10 @@ async function complete(
           `[ai-chat] ${provider.name} unavailable, falling back to ${next.name}:`,
           detail,
         );
-        continue;
+      } else {
+        // Every provider failed: the loop ends and the generic error is thrown.
+        console.error(`[ai-chat] ${provider.name} unavailable, no provider left:`, detail);
       }
-      console.error(`[ai-chat] ${provider.name} unavailable, no provider left:`, detail);
     }
   }
 
