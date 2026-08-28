@@ -17,12 +17,7 @@
 ---
 VALTHORIS
 
-""Project" (https://img.shields.io/badge/Project-Valthoris-0A0A0A)" (https://github.com/Valthoris-code/Valthoris-llm)
-""Focus" (https://img.shields.io/badge/Focus-AI%20Cybersecurity%20%26%20Fraud%20Prevention-7B61FF)" (https://github.com/Valthoris-code/Valthoris-llm)
-""Architecture" (https://img.shields.io/badge/Architecture-ICP%20%7C%20Supabase%20%7C%20AI-1F2937)" (https://github.com/Valthoris-code/Valthoris-llm)
-""Status" (https://img.shields.io/badge/Status-Active%20Development-orange)" (https://github.com/Valthoris-code/Valthoris-llm)
-
-"Valthoris" (https://github.com/Valthoris-code/Valthoris-llm/blob/main/documentos/valthoris-desktop-scene.png)
+""Project" 
 
 AI CYBERSECURITY & FRAUD PREVENTION
 
