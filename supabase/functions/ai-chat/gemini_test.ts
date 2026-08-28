@@ -167,7 +167,7 @@ Deno.test('the assistant turn is mapped to the Gemini "model" role', async () =>
   });
 });
 
-Deno.test('a Gemini failure is surfaced, never answered with a placeholder', async () => {
+Deno.test('a Gemini failure is generic, never a raw status nor a placeholder', async () => {
   await withGemini(async () => {
     httpStatus = 429;
 
@@ -175,13 +175,16 @@ Deno.test('a Gemini failure is surfaced, never answered with a placeholder', asy
 
     assertEquals(res.status, 502);
     const body = await res.json();
-    assert(String(body.error).includes('HTTP 429'), body.error);
-    // The upstream body (which can echo the request) is not leaked.
+    // With no second provider configured the turn fails — but the rate limit
+    // stays in the logs: the user sees one generic sentence and no answer.
+    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
+    assert(!String(body.error).includes('429'), body.error);
     assert(!String(body.error).includes('quota'));
+    assertEquals(body.content, undefined);
   });
 });
 
-Deno.test('an empty Gemini completion is reported with its finish reason', async () => {
+Deno.test('an empty Gemini completion is reported generically', async () => {
   await withGemini(async () => {
     answers = [''];
 
@@ -189,11 +192,12 @@ Deno.test('an empty Gemini completion is reported with its finish reason', async
 
     assertEquals(res.status, 502);
     const body = await res.json();
-    assert(String(body.error).includes('empty completion'), body.error);
+    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
+    assertEquals(body.content, undefined);
   });
 });
 
-Deno.test('a Gemini authentication failure returns Google\'s own error', async () => {
+Deno.test('a Gemini authentication failure never reaches the conversation', async () => {
   await withGemini(async () => {
     httpStatus = 403;
     errorBody = {
@@ -206,10 +210,11 @@ Deno.test('a Gemini authentication failure returns Google\'s own error', async (
 
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Verifica isto' }] }));
 
-    assertEquals(res.status, 403);
+    assertEquals(res.status, 502);
     const body = await res.json();
-    assert(String(body.error).includes('HTTP 403'), body.error);
-    assert(String(body.error).includes('API key not valid.'), body.error);
+    // Google's own diagnostic is for the operator's logs, not for the user.
+    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
+    assert(!String(body.error).includes('API key'), body.error);
   });
 });
 
@@ -222,14 +227,14 @@ Deno.test('no other provider is ever contacted', async () => {
   });
 });
 
-Deno.test('without the Gemini key the failure names the secret', async () => {
+Deno.test('with no provider configured the user still gets the generic message', async () => {
   const previous = Deno.env.get('GEMINI_API_KEY');
   Deno.env.delete('GEMINI_API_KEY');
   try {
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
     assertEquals(res.status, 502);
     const body = await res.json();
-    assert(String(body.error).includes('GEMINI_API_KEY'), body.error);
+    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
   } finally {
     if (previous) Deno.env.set('GEMINI_API_KEY', previous);
   }
@@ -279,7 +284,7 @@ Deno.test('a retired model answering 404 is retried on a supported one', async (
   });
 });
 
-Deno.test('when every model answers 404 the error names the secret to fix', async () => {
+Deno.test('when every model answers 404 the user sees the generic message', async () => {
   await withGemini(async () => {
     notFoundModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
@@ -287,7 +292,7 @@ Deno.test('when every model answers 404 the error names the secret to fix', asyn
 
     assertEquals(res.status, 502);
     const body = await res.json();
-    assert(String(body.error).includes('GEMINI_MODEL'), body.error);
-    assert(String(body.error).includes('404'), body.error);
+    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
+    assert(!String(body.error).includes('404'), body.error);
   });
 });

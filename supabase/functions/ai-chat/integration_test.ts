@@ -277,7 +277,7 @@ Deno.test('a general question is answered without creating fraud records', async
   assertEquals(restCalls('fraud_workflow_runs').length, 0);
 });
 
-Deno.test('a provider failure is surfaced, never answered with a placeholder', async () => {
+Deno.test('a provider failure is reported generically, never answered with a placeholder', async () => {
   recorded = [];
   providerAnswers = [''];
 
@@ -287,7 +287,11 @@ Deno.test('a provider failure is surfaced, never answered with a placeholder', a
 
   assertEquals(res.status, 502);
   const body = await res.json();
-  assert(String(body.error).includes('empty completion'), body.error);
+  assertEquals(
+    body.error,
+    'De momento não consigo processar o seu pedido, tente novamente em instantes.',
+  );
+  assertEquals(body.content, undefined);
   assertEquals(restCalls('fraud_events').length, 0);
 });
 
@@ -453,7 +457,7 @@ Deno.test('a model that does not serve the search tool still answers the turn', 
   }
 });
 
-Deno.test('a 400 that is not the tool is still surfaced, not silently retried away', async () => {
+Deno.test('a 400 that is not the tool never leaks its status to the user', async () => {
   recorded = [];
   nominatimPlace = DEFAULT_PLACE;
   const realFetchStub = globalThis.fetch;
@@ -473,7 +477,10 @@ Deno.test('a 400 that is not the tool is still surfaced, not silently retried aw
     }));
     assertEquals(res.status, 502);
     const body = await res.json();
-    assertEquals(body.error, 'Gemini request failed with HTTP 400');
+    assertEquals(
+      body.error,
+      'De momento não consigo processar o seu pedido, tente novamente em instantes.',
+    );
   } finally {
     globalThis.fetch = realFetchStub;
   }
@@ -498,6 +505,84 @@ Deno.test('a DeepSeek failure falls back to Gemini without reaching the user', a
     assertEquals(body.error, undefined);
     assert(recorded.some((r) => r.url.startsWith('https://api.deepseek.com/')));
   } finally {
+    Deno.env.delete('DEEPSEEK_API_KEY');
+  }
+});
+
+Deno.test('a Gemini rate limit falls back to DeepSeek without reaching the user', async () => {
+  recorded = [];
+  Deno.env.set('DEEPSEEK_API_KEY', 'test-deepseek-key');
+  const realFetchStub = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      recorded.push({ url, method: init?.method ?? 'GET', body: undefined });
+      return Promise.resolve(
+        new Response(JSON.stringify({ error: { message: 'Resource exhausted' } }), { status: 429 }),
+      );
+    }
+    if (url.startsWith('https://api.deepseek.com/')) {
+      recorded.push({ url, method: init?.method ?? 'GET', body: undefined });
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            model: 'deepseek-chat',
+            choices: [{ message: { content: 'Resposta do modelo alternativo.' } }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Quero o contacto do hospital distrital Espírito Santo em Évora' }],
+    }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    // Gemini answered 429 on the search turn; DeepSeek covered for it and the
+    // raw status never reached the conversation.
+    assertEquals(body.provider, 'deepseek');
+    assertEquals(body.content, 'Resposta do modelo alternativo.');
+    assertEquals(body.error, undefined);
+    assert(recorded.some((r) => r.url.startsWith('https://api.deepseek.com/')));
+  } finally {
+    globalThis.fetch = realFetchStub;
+    Deno.env.delete('DEEPSEEK_API_KEY');
+  }
+});
+
+Deno.test('when both models fail the user sees one generic message, never a status', async () => {
+  recorded = [];
+  Deno.env.set('DEEPSEEK_API_KEY', 'test-deepseek-key');
+  const realFetchStub = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      return Promise.resolve(new Response('{}', { status: 429 }));
+    }
+    if (url.startsWith('https://api.deepseek.com/')) {
+      return Promise.resolve(new Response('{}', { status: 402 }));
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Olá, tudo bem?' }],
+    }));
+    assertEquals(res.status, 502);
+    const body = await res.json();
+    assertEquals(
+      body.error,
+      'De momento não consigo processar o seu pedido, tente novamente em instantes.',
+    );
+    assert(!String(body.error).includes('HTTP'));
+    assertEquals(body.content, undefined);
+  } finally {
+    globalThis.fetch = realFetchStub;
     Deno.env.delete('DEEPSEEK_API_KEY');
   }
 });
