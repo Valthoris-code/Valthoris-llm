@@ -119,8 +119,8 @@ an integration that does not exist.
 
 | Secret | Read by | Status |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | `supabase/functions/ai-chat` | **in use** — the assistant and the fraud analysis both call Gemini with it |
-| `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `supabase/functions/ai-chat` | **optional** — tried before Gemini; any failure (including HTTP 402) falls back to Gemini silently |
+| `GEMINI_API_KEY` | `supabase/functions/ai-chat` | **in use** — the assistant and the fraud analysis both call Gemini with it; when DeepSeek is also configured, either model covers for the other |
+| `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `supabase/functions/ai-chat` | **optional but recommended** — tried before Gemini on an ordinary turn and used as the fallback whenever Gemini fails (HTTP 402, 429, timeout…); the failure never reaches the user, and only when *both* models fail does the assistant answer with a single generic message |
 | `ABUSEIPDB_API_KEY` | `ai-chat/intel.ts` | **in use** — IP reputation |
 | `IPINFO_API_KEY` | `ai-chat/intel.ts` | **in use** — IP geolocation / ASN |
 | `ABSTRACT_IP_API_KEY` | `ai-chat/intel.ts` | **in use** — IP intelligence |
@@ -173,7 +173,7 @@ supabase secrets set GEMINI_API_KEY=<key>       # the assistant itself
 # ETHERSCAN_API_KEY COINGECKO_API_KEY NEWSDATA_API_KEY DATA_GOV_API_KEY
 # OPENIBAN_API_URL CRYPTOSCAMDB_API_URL
 # GOPLUS_API_URL GOPLUS_APP_KEY GOPLUS_APP_SECRET
-# DEEPSEEK_API_KEY (optional, silent fallback to Gemini)
+# DEEPSEEK_API_KEY (optional, silent two-way fallback with Gemini)
 supabase functions deploy ai-chat
 ```
 

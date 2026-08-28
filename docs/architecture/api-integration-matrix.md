@@ -27,8 +27,8 @@ Valthoris frontend (src/frontend/src/pages/AIAssistant.tsx)
 
 | API | Secret | Edge Function | Valthoris module | Lookup performed | Data returned | Source shown to the user | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Google Gemini | `GEMINI_API_KEY` (`GEMINI_MODEL`) | `ai-chat` | AI Assistant | `generateContent` | assistant answer, structured verdict | — (the assistant itself) | ACTIVE |
-| DeepSeek | `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `ai-chat` | AI Assistant (optional first attempt) | `chat/completions` | assistant answer | — (falls back to Gemini on any error) | OPTIONAL |
+| Google Gemini | `GEMINI_API_KEY` (`GEMINI_MODEL`) | `ai-chat` | AI Assistant | `generateContent` | assistant answer, structured verdict | — (the assistant itself; falls back to DeepSeek on any error) | ACTIVE |
+| DeepSeek | `DEEPSEEK_API_KEY` (`DEEPSEEK_MODEL`) | `ai-chat` | AI Assistant (first attempt, and Gemini's fallback) | `chat/completions` | assistant answer | — (falls back to Gemini on any error) | OPTIONAL |
 | AbuseIPDB | `ABUSEIPDB_API_KEY` | `ai-chat` → `intel.ts` | IP / Threat Intelligence | `api/v2/check` | abuse confidence, reports, ISP, country, usage type | AbuseIPDB | ACTIVE |
 | IPinfo | `IPINFO_API_KEY` | `ai-chat` → `intel.ts` | IP Intelligence | `ipinfo.io/{ip}/json` | city, region, country, org, ASN, privacy flags | IPinfo | ACTIVE |
 | Abstract IP | `ABSTRACT_IP_API_KEY` | `ai-chat` → `intel.ts` | IP Intelligence | `ipgeolocation/v1` | country, city, connection type, VPN flag | Abstract | ACTIVE |

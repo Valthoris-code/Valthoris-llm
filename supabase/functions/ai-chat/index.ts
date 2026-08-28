@@ -6,12 +6,13 @@
  * The browser must never hold an LLM API key, so the assistant calls this
  * function instead.
  *
- * Google Gemini is the primary provider and the final fallback: the call is a
- * plain `fetch` against the Google Generative Language REST API, so no SDK is
- * needed under Deno. DeepSeek is optional — when `DEEPSEEK_API_KEY` is set it
- * is tried first as a cost optimisation, and *any* failure (including HTTP 402
- * "insufficient balance") falls back to Gemini silently: the user never sees a
- * DeepSeek error.
+ * Two providers answer the turn, and either one covers for the other: Google
+ * Gemini (a plain `fetch` against the Generative Language REST API, so no SDK
+ * is needed under Deno) and DeepSeek. Whichever is tried first, *any* failure
+ * (HTTP 402 "insufficient balance", HTTP 429 rate limit, timeout, empty
+ * completion) falls through to the other one silently — the user never sees an
+ * upstream error, and only learns of a failure when *both* models failed, and
+ * then through a single generic message.
  *
  * Required secret (set with `supabase secrets set …`):
  *   GEMINI_API_KEY    — Google AI Studio key; the only key Valthoris needs
@@ -22,13 +23,14 @@
  *                       tolerated: the name is normalised and, when Google
  *                       answers 404 (model retired or unknown to this key),
  *                       the call is retried on a model that is still served.
- *   DEEPSEEK_API_KEY  — when present, DeepSeek answers first; on any error the
- *                       turn falls back to Gemini without surfacing the failure
+ *   DEEPSEEK_API_KEY  — when present, DeepSeek answers first (except on a turn
+ *                       that needs Gemini's web search) and is also the
+ *                       fallback whenever Gemini fails, without surfacing it
  *   DEEPSEEK_MODEL    — default "deepseek-chat"
  *
- * The function never fabricates an answer: when the key is missing or the
- * upstream call fails it returns a non-2xx response with a real error message
- * so the UI can show it.
+ * The function never fabricates an answer: when no key is configured or every
+ * provider fails it returns a non-2xx response with a generic message, and the
+ * technical detail is left in the function logs for the operator.
  */
 
 // deno-lint-ignore-file no-explicit-any
@@ -245,7 +247,7 @@ function geminiModelChain(): string[] {
 }
 
 /**
- * Google Gemini — the only provider.
+ * Google Gemini — the provider that also serves the web-search tool.
  *
  * The REST API expects the key in the `key` query-string parameter of the
  * `:generateContent` endpoint.
@@ -403,11 +405,12 @@ function googleErrorMessage(body: string): string {
 }
 
 /**
- * DeepSeek — optional, tried before Gemini when `DEEPSEEK_API_KEY` is set.
+ * DeepSeek — used whenever `DEEPSEEK_API_KEY` is set: first (as a cost
+ * optimisation) on an ordinary turn, and as the fallback when Gemini fails.
  *
- * It is a cost optimisation, never a dependency: any failure at all (network,
- * quota, HTTP 401/402/429/5xx, empty completion) falls back silently to Gemini.
- * The user is never shown a DeepSeek error, and the answer is never degraded.
+ * It is never a dependency: any failure at all (network, quota, HTTP
+ * 401/402/429/5xx, empty completion) falls back silently to Gemini. The user is
+ * never shown a DeepSeek error.
  */
 async function callDeepSeek(
   messages: ChatMessage[],
@@ -446,6 +449,30 @@ async function callDeepSeek(
   return { content, provider: 'deepseek', model: data?.model ?? model };
 }
 
+/**
+ * The only model failure the user ever sees.
+ *
+ * Every upstream detail (HTTP 429 rate limit, HTTP 402 insufficient balance,
+ * timeouts, a missing secret) is an operator concern: it is logged server-side
+ * and replaced here, so a raw "… request failed with HTTP 429" never reaches
+ * the conversation.
+ */
+const PROVIDERS_UNAVAILABLE =
+  'De momento não consigo processar o seu pedido, tente novamente em instantes.';
+
+/**
+ * Answers the turn with whichever provider is available.
+ *
+ * Neither provider is a dependency of the other: the configured providers are
+ * tried in order and *any* failure (HTTP 402/429/5xx, network, timeout, empty
+ * completion) falls through to the next one silently. DeepSeek is tried first
+ * as a cost optimisation, except on a turn that needs Google's web-search tool
+ * — DeepSeek has none, and answering such a turn from the model's memory would
+ * be exactly the guess that feature exists to avoid.
+ *
+ * The user only ever learns of a failure when *every* provider failed, and
+ * then only through `PROVIDERS_UNAVAILABLE`.
+ */
 async function complete(
   messages: ChatMessage[],
   systemPrompt: string = SYSTEM_PROMPT,
@@ -454,27 +481,50 @@ async function complete(
   const geminiKey = env('GEMINI_API_KEY');
   const deepSeekKey = env('DEEPSEEK_API_KEY');
 
-  // DeepSeek has no web-search tool, so a turn that needs one goes straight to
-  // Gemini: answering it from the model's memory would be exactly the guess
-  // this feature exists to avoid.
-  if (deepSeekKey && !(webSearch && geminiKey)) {
+  const providers: { name: string; call: () => Promise<Completion> }[] = [];
+  const gemini = geminiKey
+    ? { name: 'gemini', call: () => callGemini(messages, geminiKey, systemPrompt, webSearch) }
+    : undefined;
+  const deepSeek = deepSeekKey
+    ? { name: 'deepseek', call: () => callDeepSeek(messages, deepSeekKey, systemPrompt) }
+    : undefined;
+
+  if (deepSeek && !(webSearch && gemini)) {
+    providers.push(deepSeek);
+    if (gemini) providers.push(gemini);
+  } else {
+    if (gemini) providers.push(gemini);
+    if (deepSeek) providers.push(deepSeek);
+  }
+
+  if (providers.length === 0) {
+    console.error(
+      '[ai-chat] no AI provider configured — set GEMINI_API_KEY (or DEEPSEEK_API_KEY) ' +
+        'as a Supabase function secret',
+    );
+    throw new AiChatError(PROVIDERS_UNAVAILABLE);
+  }
+
+  for (const [index, provider] of providers.entries()) {
     try {
-      return await callDeepSeek(messages, deepSeekKey, systemPrompt);
+      return await provider.call();
     } catch (err) {
-      // Logged for the operator, invisible to the user: Gemini answers instead.
-      console.warn(
-        '[ai-chat] deepseek unavailable, falling back to gemini:',
-        err instanceof Error ? err.message : String(err),
-      );
+      const detail = err instanceof Error ? err.message : String(err);
+      const next = providers[index + 1];
+      if (next) {
+        // Logged for the operator, invisible to the user: the other model answers.
+        console.warn(
+          `[ai-chat] ${provider.name} unavailable, falling back to ${next.name}:`,
+          detail,
+        );
+      } else {
+        // Every provider failed: the loop ends and the generic error is thrown.
+        console.error(`[ai-chat] ${provider.name} unavailable, no provider left:`, detail);
+      }
     }
   }
 
-  if (!geminiKey) {
-    throw new AiChatError(
-      'No AI provider configured. Set GEMINI_API_KEY as a Supabase function secret.',
-    );
-  }
-  return await callGemini(messages, geminiKey, systemPrompt, webSearch);
+  throw new AiChatError(PROVIDERS_UNAVAILABLE);
 }
 
 /** HTTP entry point. Exported so it can be exercised by the function tests. */
@@ -530,9 +580,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   } catch (err) {
     console.error('[ai-chat]', err);
     // Only curated messages reach the browser; unexpected faults are generic.
-    const message = err instanceof AiChatError
-      ? err.message
-      : 'The AI backend is unavailable. Please try again later.';
+    const message = err instanceof AiChatError ? err.message : PROVIDERS_UNAVAILABLE;
     return json({ error: message }, err instanceof AiChatError ? err.status : 502);
   }
 
