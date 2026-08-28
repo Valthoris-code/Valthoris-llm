@@ -51,6 +51,7 @@ const en: Catalogue = {
   'room.duration480': '8 hours',
   'room.duration1440': '24 hours (maximum)',
   'room.radius': 'Safety radius: {radius} m (max. {max} m)',
+  'room.radiusEnable': 'Enable safety radius',
   'room.create': '🛰 Create Safe Room',
   'room.creating': 'Creating…',
   'room.shareLink': 'Room link',
