@@ -52,6 +52,16 @@ interface Recorded {
 let recorded: Recorded[] = [];
 /** Content the stubbed provider returns, in call order. */
 let providerAnswers: string[] = [];
+/** The place the stubbed gazetteer returns. Reset by each place test. */
+const DEFAULT_PLACE: Record<string, unknown> = {
+  name: 'Hospital do Espírito Santo',
+  display_name: 'Hospital do Espírito Santo, Évora, Portugal',
+  category: 'amenity',
+  type: 'hospital',
+  lat: '38.5713',
+  lon: '-7.9135',
+};
+let nominatimPlace: Record<string, unknown> = DEFAULT_PLACE;
 
 const realFetch = globalThis.fetch;
 
@@ -69,11 +79,29 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
 
   if (url.startsWith('https://generativelanguage.googleapis.com/')) {
     const content = providerAnswers.shift() ?? '';
+    // The real API only returns grounding metadata when the search tool ran.
+    const parsed = rawBody ? JSON.parse(rawBody) : {};
+    const searched = Array.isArray(parsed?.tools) &&
+      parsed.tools.some((t: Record<string, unknown>) => t && 'google_search' in t);
     return Promise.resolve(
       new Response(
         JSON.stringify({
           modelVersion: 'gemini-1.5-flash',
-          candidates: [{ content: { parts: [{ text: content }] } }],
+          candidates: [
+            {
+              content: { parts: [{ text: content }] },
+              ...(searched
+                ? {
+                    groundingMetadata: {
+                      groundingChunks: [
+                        { web: { uri: 'https://www.hesevora.min-saude.pt/', title: 'HESE' } },
+                        { web: { uri: 'https://www.hesevora.min-saude.pt/', title: 'HESE' } },
+                      ],
+                    },
+                  }
+                : {}),
+            },
+          ],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
@@ -88,19 +116,10 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
 
   if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
     return Promise.resolve(
-      new Response(
-        JSON.stringify([
-          {
-            name: 'Hospital do Espírito Santo',
-            display_name: 'Hospital do Espírito Santo, Évora, Portugal',
-            category: 'amenity',
-            type: 'hospital',
-            lat: '38.5713',
-            lon: '-7.9135',
-          },
-        ]),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+      new Response(JSON.stringify([nominatimPlace]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
     );
   }
 
@@ -321,6 +340,7 @@ Deno.test('a greeting is answered with no external source at all', async () => {
 
 Deno.test('a place question is grounded on Nominatim', async () => {
   recorded = [];
+  nominatimPlace = DEFAULT_PLACE;
   providerAnswers = ['O Hospital do Espírito Santo fica em Évora (fonte: OpenStreetMap).'];
 
   const res = await handler!(post({
@@ -332,9 +352,105 @@ Deno.test('a place question is grounded on Nominatim', async () => {
   const source = body.sources.find((s: Record<string, unknown>) => s.provider === 'Nominatim');
   assertEquals(source.status, 'success');
   assertEquals(source.data.name, 'Hospital do Espírito Santo');
+  assertEquals(
+    source.data.link,
+    'https://www.openstreetmap.org/?mlat=38.5713&mlon=-7.9135#map=17/38.5713/-7.9135',
+  );
   assert(recorded.some((r) => r.url.startsWith('https://nominatim.openstreetmap.org/search')));
   // A place question is not a fraud event.
   assertEquals(body.analysis, undefined);
+});
+
+Deno.test('a place with no phone in the gazetteer falls back to the Gemini web search', async () => {
+  recorded = [];
+  nominatimPlace = DEFAULT_PLACE;
+  providerAnswers = ['NOME: Hospital do Espírito Santo\nCONTACTO: +351 266 740 100'];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: 'Quero o contacto do hospital distrital Espírito Santo em Évora' }],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+
+  const gemini = recorded.find((r) => r.url.startsWith('https://generativelanguage.googleapis.com/'));
+  const tools = (gemini?.body as Record<string, unknown>)?.tools as Record<string, unknown>[];
+  assert(Array.isArray(tools) && tools.some((t) => 'google_search' in t), 'search tool not enabled');
+
+  // The pages the search actually read are listed as a source, deduplicated.
+  const web = body.sources.find(
+    (s: Record<string, unknown>) => s.provider === 'Google Search (Gemini)',
+  );
+  assertEquals(web.status, 'success');
+  assertEquals(web.data.pages.length, 1);
+  assertEquals(web.data.pages[0].uri, 'https://www.hesevora.min-saude.pt/');
+  assert(typeof web.timestamp === 'string' && web.timestamp.length > 0);
+  // The internal field is not leaked into the answer payload.
+  assertEquals(body.webSources, undefined);
+});
+
+Deno.test('a place that already has a phone does not trigger the web search', async () => {
+  recorded = [];
+  nominatimPlace = {
+    name: 'Óptica Havaneza',
+    display_name: 'Óptica Havaneza, Praça do Giraldo, Évora, Portugal',
+    category: 'shop',
+    type: 'optician',
+    lat: '38.5717',
+    lon: '-7.9089',
+    extratags: { phone: '+351 266 702 297', website: 'https://opticahavaneza.test' },
+  };
+  providerAnswers = ['NOME: Óptica Havaneza\nCONTACTO: +351 266 702 297'];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: 'número de telefone da Óptica Havaneza em Évora' }],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  const source = body.sources.find((s: Record<string, unknown>) => s.provider === 'Nominatim');
+  assertEquals(source.data.phone, '+351 266 702 297');
+  assertEquals(source.data.website, 'https://opticahavaneza.test');
+
+  const gemini = recorded.find((r) => r.url.startsWith('https://generativelanguage.googleapis.com/'));
+  assertEquals((gemini?.body as Record<string, unknown>)?.tools, undefined);
+  assertEquals(
+    body.sources.find((s: Record<string, unknown>) => s.provider === 'Google Search (Gemini)'),
+    undefined,
+  );
+  nominatimPlace = DEFAULT_PLACE;
+});
+
+Deno.test('a model that does not serve the search tool still answers the turn', async () => {
+  recorded = [];
+  nominatimPlace = DEFAULT_PLACE;
+  const realFetchStub = globalThis.fetch;
+  let toolCalls = 0;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const rawBody = typeof init?.body === 'string' ? init.body : undefined;
+    if (url.startsWith('https://generativelanguage.googleapis.com/') && rawBody?.includes('google_search')) {
+      toolCalls += 1;
+      return Promise.resolve(
+        new Response(JSON.stringify({ error: { message: 'tool not supported' } }), { status: 400 }),
+      );
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    providerAnswers = ['NOME: Hospital do Espírito Santo\nCONTACTO: não confirmado'];
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Quero o contacto do hospital distrital Espírito Santo em Évora' }],
+    }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(toolCalls, 1);
+    assertEquals(body.content, 'NOME: Hospital do Espírito Santo\nCONTACTO: não confirmado');
+    assertEquals(body.error, undefined);
+  } finally {
+    globalThis.fetch = realFetchStub;
+  }
 });
 
 // ─── DeepSeek is optional and never surfaces its own failure ─────────────────

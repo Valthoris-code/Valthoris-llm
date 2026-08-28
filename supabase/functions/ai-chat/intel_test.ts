@@ -16,6 +16,8 @@ import {
   formatEvidence,
   gatherIntelligence,
   isValidEntity,
+  placeContactMissing,
+  placeMapLink,
   providersFor,
   resetGoPlusToken,
 } from './intel.ts';
@@ -356,4 +358,78 @@ Deno.test('Nominatim returns the public location and an OpenStreetMap link', asy
     globalThis.fetch = realFetch;
     clearSecrets();
   }
+});
+
+Deno.test('Nominatim asks for the contact tags and reports the ones it gets', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  let requested = '';
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      requested = url;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              name: 'Óptica Havaneza',
+              display_name: 'Óptica Havaneza, Praça do Giraldo, Évora, Portugal',
+              category: 'shop',
+              type: 'optician',
+              lat: '38.5717',
+              lon: '-7.9089',
+              extratags: {
+                'contact:phone': '+351 266 702 297',
+                website: 'https://opticahavaneza.test',
+                opening_hours: 'Mo-Fr 09:00-19:00',
+              },
+            },
+          ]),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'place', value: 'Óptica Havaneza Évora' });
+    const osm = reports.find((r) => r.provider === 'Nominatim');
+    // Without `extratags` the gazetteer never returns a contact at all.
+    assert(requested.includes('extratags=1'), requested);
+    assertEquals(osm?.data?.phone, '+351 266 702 297');
+    assertEquals(osm?.data?.website, 'https://opticahavaneza.test');
+    assertEquals(osm?.data?.openingHours, 'Mo-Fr 09:00-19:00');
+    assertEquals(osm?.data?.address, 'Óptica Havaneza, Praça do Giraldo, Évora, Portugal');
+    assertEquals(placeContactMissing(reports), false);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('a missing phone is reported as missing, never filled in', () => {
+  assertEquals(
+    placeContactMissing([
+      {
+        provider: 'Nominatim',
+        endpoint: 'place/public-search',
+        entity: 'x',
+        timestamp: new Date().toISOString(),
+        status: 'success',
+        data: { found: true, name: 'X' },
+      },
+    ]),
+    true,
+  );
+});
+
+Deno.test('the map link is only built from real coordinates', () => {
+  assertEquals(
+    placeMapLink('38.5713', '-7.9135'),
+    'https://www.openstreetmap.org/?mlat=38.5713&mlon=-7.9135#map=17/38.5713/-7.9135',
+  );
+  assertEquals(placeMapLink('38.5713', undefined), undefined);
+  assertEquals(placeMapLink('38.5713', '-7.9135; DROP'), undefined);
+  assertEquals(placeMapLink('not-a-number', '-7.9135'), undefined);
 });
