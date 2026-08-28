@@ -35,7 +35,7 @@
 
 import { detectArtifact } from './artifacts.ts';
 import type { DetectedArtifact } from './artifacts.ts';
-import { formatEvidence, gatherIntelligence } from './intel.ts';
+import { formatEvidence, gatherIntelligence, placeContactMissing } from './intel.ts';
 import type { IntelEntity, IntelEntityKind, SourceReport } from './intel.ts';
 import {
   isPipelineConfigured,
@@ -96,12 +96,18 @@ const INTEL_RESPONSE_FORMAT = [
  */
 const PLACE_RESPONSE_FORMAT = [
   'This turn is a factual question about a real public place or business, not a threat analysis.',
-  'Answer directly with the details that are in the evidence block (name, address,',
-  'category, map link) and attribute them to OpenStreetMap / Nominatim.',
-  'The gazetteer often has no phone number. When a detail is missing from the evidence,',
-  'you may complete it from general public knowledge of the web, but you must state where',
-  'it comes from and that it was not confirmed by a consulted source. Never invent a phone',
-  'number, an address or an opening time; say it could not be confirmed instead.',
+  'Answer with these fields, in the user\'s language, one per line, and never leave one out:',
+  'NOME / NAME — the official name of the place;',
+  'MORADA / ADDRESS — the full postal address;',
+  'CONTACTO / CONTACT — the phone number;',
+  'SITE / WEBSITE — the official site, when there is one;',
+  'MAPA / MAP — the OpenStreetMap link from the evidence, written in full so it is clickable;',
+  'FONTES / SOURCES — every source that actually answered, each with its lookup date and time.',
+  'The gazetteer often has no phone number. When a detail is missing from the evidence block,',
+  'use the web search results available in this turn and cite the page you took it from.',
+  'If it is still not available, write "não confirmado" / "not confirmed" on that line.',
+  'Never invent a phone number, an address, a website or an opening time, and never present a',
+  'value as confirmed by a source that did not return it.',
   'Do not use the threat-report sections (VERDICT, RISK) for this kind of question.',
 ].join(' ');
 
@@ -162,6 +168,13 @@ interface Completion {
   content: string;
   provider: string;
   model: string;
+  /** Public web pages the model's search tool actually consulted, when used. */
+  webSources?: WebSource[];
+}
+
+interface WebSource {
+  title?: string;
+  uri: string;
 }
 
 /**
@@ -183,6 +196,12 @@ class AiChatError extends Error {
 
 /** Raised when Google answers 404 for one model name, so the next can be tried. */
 class GeminiModelNotFound extends Error {}
+
+/**
+ * Raised when Google rejects the request *because of the search tool*, so the
+ * turn can be retried without it instead of failing.
+ */
+class GeminiToolUnsupported extends Error {}
 
 /** Model used when `GEMINI_MODEL` is unset, blank or unusable. */
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
@@ -235,13 +254,21 @@ async function callGemini(
   messages: ChatMessage[],
   apiKey: string,
   systemPrompt: string = SYSTEM_PROMPT,
+  webSearch = false,
 ): Promise<Completion> {
   const chain = geminiModelChain();
   let lastNotFound: AiChatError | undefined;
   for (const model of chain) {
     try {
-      return await callGeminiModel(messages, apiKey, systemPrompt, model);
+      return await callGeminiModel(messages, apiKey, systemPrompt, model, webSearch);
     } catch (err) {
+      if (err instanceof GeminiToolUnsupported) {
+        // The deployment's model or API version does not serve the search tool.
+        // The Nominatim evidence is still in the turn, so it is retried without
+        // the tool rather than lost.
+        console.warn('[ai-chat] gemini google_search unavailable — retrying without it');
+        return await callGeminiModel(messages, apiKey, systemPrompt, model, false);
+      }
       if (err instanceof GeminiModelNotFound) {
         lastNotFound = new AiChatError(
           `Gemini model "${model}" is not available for this API key (HTTP 404). ` +
@@ -261,6 +288,7 @@ async function callGeminiModel(
   apiKey: string,
   systemPrompt: string,
   model: string,
+  webSearch = false,
 ): Promise<Completion> {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -278,6 +306,11 @@ async function callGeminiModel(
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content }],
           })),
+        // Google's own web search, enabled only for the turns that need a
+        // detail the configured providers do not carry (a business phone
+        // number, typically). It is what makes the answer a real lookup rather
+        // than a recollection.
+        ...(webSearch ? { tools: [{ google_search: {} }] } : {}),
         generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
       }),
     },
@@ -296,6 +329,11 @@ async function callGeminiModel(
         res.status,
       );
     }
+    // A 400 on a request that carries the search tool is, in practice, that
+    // tool not being served for this model: retry without it instead of
+    // failing the turn. An unrelated 400 (malformed body, quota) simply
+    // reproduces on the retry and is surfaced then, so nothing is masked.
+    if (res.status === 400 && webSearch) throw new GeminiToolUnsupported(model);
     // A 404 identifies the model, not the request: let the caller try the next
     // name in the chain before giving up.
     if (res.status === 404) throw new GeminiModelNotFound(model);
@@ -315,7 +353,37 @@ async function callGeminiModel(
         : 'Gemini returned an empty completion',
     );
   }
-  return { content, provider: 'gemini', model: data?.modelVersion ?? model };
+  const webSources = groundingSources(data);
+  return {
+    content,
+    provider: 'gemini',
+    model: data?.modelVersion ?? model,
+    ...(webSources.length > 0 ? { webSources } : {}),
+  };
+}
+
+/**
+ * The pages the search tool actually consulted, taken from Google's grounding
+ * metadata. Nothing is inferred: an answer with no grounding chunks lists no
+ * web source.
+ */
+function groundingSources(data: any): WebSource[] {
+  const chunks = data?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+  if (!Array.isArray(chunks)) return [];
+  const seen = new Set<string>();
+  const sources: WebSource[] = [];
+  for (const chunk of chunks) {
+    const uri = chunk?.web?.uri;
+    if (typeof uri !== 'string' || uri.length === 0 || seen.has(uri)) continue;
+    seen.add(uri);
+    const title = chunk?.web?.title;
+    sources.push({
+      uri: uri.slice(0, 500),
+      ...(typeof title === 'string' && title.length > 0 ? { title: title.slice(0, 200) } : {}),
+    });
+    if (sources.length >= 8) break;
+  }
+  return sources;
 }
 
 /** Extracts the native `error.message` Google returns, falling back to its status text. */
@@ -381,11 +449,15 @@ async function callDeepSeek(
 async function complete(
   messages: ChatMessage[],
   systemPrompt: string = SYSTEM_PROMPT,
+  webSearch = false,
 ): Promise<Completion> {
   const geminiKey = env('GEMINI_API_KEY');
   const deepSeekKey = env('DEEPSEEK_API_KEY');
 
-  if (deepSeekKey) {
+  // DeepSeek has no web-search tool, so a turn that needs one goes straight to
+  // Gemini: answering it from the model's memory would be exactly the guess
+  // this feature exists to avoid.
+  if (deepSeekKey && !(webSearch && geminiKey)) {
     try {
       return await callDeepSeek(messages, deepSeekKey, systemPrompt);
     } catch (err) {
@@ -402,7 +474,7 @@ async function complete(
       'No AI provider configured. Set GEMINI_API_KEY as a Supabase function secret.',
     );
   }
-  return await callGemini(messages, geminiKey, systemPrompt);
+  return await callGemini(messages, geminiKey, systemPrompt, webSearch);
 }
 
 /** HTTP entry point. Exported so it can be exercised by the function tests. */
@@ -447,9 +519,14 @@ export async function handleRequest(req: Request): Promise<Response> {
     ? `${SYSTEM_PROMPT} ${intel.kind === 'place' ? PLACE_RESPONSE_FORMAT : INTEL_RESPONSE_FORMAT}`
     : SYSTEM_PROMPT;
 
+  // Nominatim locates a business but frequently carries no phone number. When
+  // that happens on a place turn, Google's own web search is enabled so the
+  // contact comes from a real page instead of the model's memory.
+  const webSearch = intel?.kind === 'place' && placeContactMissing(intel.sources);
+
   let completion: Completion;
   try {
-    completion = await complete(modelMessages, systemPrompt);
+    completion = await complete(modelMessages, systemPrompt, webSearch);
   } catch (err) {
     console.error('[ai-chat]', err);
     // Only curated messages reach the browser; unexpected faults are generic.
@@ -465,11 +542,26 @@ export async function handleRequest(req: Request): Promise<Response> {
   // error, and it never invents a verdict.
   const analysis = await runFraudPipeline(messages, payload.principal);
 
+  // The web search, when it ran and actually consulted pages, is a source like
+  // any other: it is listed with its own timestamp and the pages it read.
+  const sources = [...(intel?.sources ?? [])];
+  if (completion.webSources && completion.webSources.length > 0) {
+    sources.push({
+      provider: 'Google Search (Gemini)',
+      endpoint: 'web/search',
+      entity: intel?.entity ?? '',
+      timestamp: new Date().toISOString(),
+      status: 'success',
+      data: { pages: completion.webSources },
+    });
+  }
+
+  const { webSources: _webSources, ...answer } = completion;
   return json(
     {
-      ...completion,
+      ...answer,
       ...(analysis ? { analysis } : {}),
-      ...(intel && intel.sources.length > 0 ? { sources: intel.sources } : {}),
+      ...(sources.length > 0 ? { sources } : {}),
     },
     200,
   );
@@ -560,7 +652,7 @@ async function collectIntelligence(
   userText: string,
   artifact: DetectedArtifact | null,
 ): Promise<
-  { kind: IntelEntityKind; sources: SourceReport[]; evidence: string | null } | null
+  { kind: IntelEntityKind; entity: string; sources: SourceReport[]; evidence: string | null } | null
 > {
   let entity: IntelEntity | null = artifact ? intelEntityFor(artifact) : null;
   if (!entity && isPlaceLookup(userText)) {
@@ -584,6 +676,7 @@ async function collectIntelligence(
   const usable = sources.some((s) => s.status !== 'not_configured');
   return {
     kind: entity.kind,
+    entity: entity.value,
     sources,
     evidence: usable ? formatEvidence(entity, sources) : null,
   };

@@ -144,6 +144,41 @@ function SourcePanel({ sources }: { sources: AiChatSource[] }) {
   );
 }
 
+/** Absolute http(s) links inside an answer, so a map or site link is clickable. */
+const URL_RE = /https?:\/\/[^\s<>"')\]]+/g;
+
+/**
+ * Renders the assistant text with its links as real anchors.
+ *
+ * The answer carries a map link and, often, the official site of a place; as
+ * plain text they cannot be opened. Only absolute `http(s)` URLs are turned
+ * into anchors and they are never rendered as HTML, so nothing in the model
+ * output can inject markup. Trailing punctuation is left in the text.
+ */
+function AssistantText({ text }: { text: string }) {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  URL_RE.lastIndex = 0;
+  for (let match = URL_RE.exec(text); match; match = URL_RE.exec(text)) {
+    const raw = match[0].replace(/[.,;:!?]+$/, '');
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    nodes.push(
+      <a
+        key={`${match.index}-${raw}`}
+        href={raw}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        style={{ color: 'var(--accent-blue, #00d4ff)', wordBreak: 'break-all' }}
+      >
+        {raw}
+      </a>,
+    );
+    last = match.index + raw.length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return <>{nodes}</>;
+}
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
   return (
@@ -202,7 +237,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
             role={msg.isError ? 'alert' : undefined}
           >
-            {msg.isError ? `⚠ ${msg.content}` : msg.content}
+            {msg.isError ? `⚠ ${msg.content}` : <AssistantText text={msg.content} />}
           </span>
         )}
         {msg.analysis && !msg.isStreaming && <AnalysisBadge analysis={msg.analysis} />}

@@ -253,6 +253,38 @@ function clean(data: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+// ─── Public places ───────────────────────────────────────────────────────────
+
+const COORD_RE = /^-?\d{1,3}(?:\.\d{1,10})?$/;
+
+/**
+ * Builds the clickable OpenStreetMap link for a pair of coordinates.
+ *
+ * Both values come from a provider response, so they are validated as plain
+ * decimal numbers before being interpolated: a malformed value produces no link
+ * instead of a broken (or attacker-shaped) URL.
+ */
+export function placeMapLink(lat?: string, lon?: string): string | undefined {
+  if (!lat || !lon || !COORD_RE.test(lat) || !COORD_RE.test(lon)) return undefined;
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=17/${lat}/${lon}`;
+}
+
+/**
+ * True when the place evidence has no contact detail (phone or website).
+ *
+ * Nominatim is a gazetteer, not a directory: it very often locates a business
+ * without carrying its phone number. That is exactly when the answer needs a
+ * second, web-wide source instead of a gap.
+ */
+export function placeContactMissing(reports: SourceReport[]): boolean {
+  return !reports.some(
+    (r) =>
+      r.status === 'success' &&
+      typeof r.data?.phone === 'string' &&
+      (r.data.phone as string).length > 0,
+  );
+}
+
 // ─── Provider registry ───────────────────────────────────────────────────────
 
 interface Provider {
@@ -808,8 +840,11 @@ const PROVIDERS: Provider[] = [
     kinds: ['place'],
     config: () => 'https://nominatim.openstreetmap.org',
     run: async (value) => {
+      // `extratags` is what carries the contact details (phone, website,
+      // opening hours); without it Nominatim answers with the location only,
+      // so the answer could never contain a real contact.
       const data = await fetchJson(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&limit=1`,
         { headers: { 'User-Agent': 'Valthoris-App/1.0 (contacto@valthoris.com)' } },
       );
       const first: any = Array.isArray(data) ? data[0] : undefined;
@@ -819,17 +854,17 @@ const PROVIDERS: Provider[] = [
       const tags = first?.extratags ?? {};
       return clean({
         found: true,
-        name: str(first?.name) ?? str(first?.display_name, 200),
+        name: str(first?.name) ?? str(first?.namedetails?.name) ?? str(first?.display_name, 200),
         address: str(first?.display_name, 200),
         category: str(first?.category ?? first?.class),
         type: str(first?.type),
         latitude: lat,
         longitude: lon,
-        phone: str(tags?.phone ?? tags?.['contact:phone']),
-        website: str(tags?.website ?? tags?.['contact:website'], 200),
-        link: lat && lon
-          ? `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=17/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`
-          : undefined,
+        phone: str(tags?.phone ?? tags?.['contact:phone'] ?? tags?.['contact:mobile']),
+        website: str(tags?.website ?? tags?.['contact:website'] ?? tags?.url, 200),
+        email: str(tags?.email ?? tags?.['contact:email'], 200),
+        openingHours: str(tags?.opening_hours, 200),
+        link: placeMapLink(lat, lon),
       });
     },
   },
