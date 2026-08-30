@@ -702,6 +702,22 @@
   .ai-chat-header-subtitle { font-size: 0.65rem; }
   .ai-chat-header-shield { width: 24px !important; height: 24px !important; }
 
+  /*
+   * Assistant welcome screen: with only two quick suggestions, each wrapping
+   * onto two lines, the block [shield + title + subtitle + suggestions] has to
+   * stay above the fold on a ~700px tall viewport. The shield shrinks and the
+   * vertical rhythm tightens; larger screens keep the roomier spacing.
+   */
+  .ai-welcome {
+    gap: 0.6rem !important;
+    justify-content: flex-start !important;
+    padding-top: 0.5rem;
+  }
+  .ai-welcome-shield { width: 48px !important; height: 48px !important; }
+  .ai-welcome-title { font-size: 1.15rem !important; }
+  .ai-welcome-subtitle { font-size: 0.8rem !important; line-height: 1.35; }
+  .ai-welcome-suggestions { gap: 0.4rem !important; }
+
   /* Social share: slightly tighter, still a comfortable touch target. */
   .social-share-icon { min-width: 36px; min-height: 36px; padding: 0.25rem; }
   .social-share-label { font-size: 0.6rem; }

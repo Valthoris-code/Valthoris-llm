@@ -205,12 +205,8 @@ const pt: Catalogue = {
   'assistant.sourceUnavailable': 'indisponível',
   'assistant.sourceNoAnswer': 'sem resposta',
   'assistant.newConversation': 'Nova conversa',
-  'assistant.suggestion.url': 'Analisar ameaças neste URL',
-  'assistant.suggestion.email': 'Verificar se este e-mail é uma tentativa de phishing',
-  'assistant.suggestion.threats': 'Quais são as ameaças de cibersegurança mais recentes?',
-  'assistant.suggestion.wallet': 'Esta carteira de criptomoedas é segura?',
-  'assistant.suggestion.phone': 'Consultar denúncias de burla sobre este número de telefone',
-  'assistant.suggestion.domain': 'Analisar este domínio à procura de malware',
+  'assistant.suggestion.fraudAlerts': 'Alertas de fraude: O que estão a inventar esta semana?',
+  'assistant.suggestion.investigate': 'Analisar uma suspeita: Fala comigo, vamos desmascarar isto.',
 
   // ── Aviso de beta ──────────────────────────────────────────────────────────
   'beta.title': 'BETA PRIVADA',
