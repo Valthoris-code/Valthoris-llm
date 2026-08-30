@@ -37,12 +37,8 @@ interface Conversation {
 }
 
 const SUGGESTIONS = [
-  { icon: '🔍', key: 'assistant.suggestion.url' },
-  { icon: '📧', key: 'assistant.suggestion.email' },
-  { icon: '🛡', key: 'assistant.suggestion.threats' },
-  { icon: '₿', key: 'assistant.suggestion.wallet' },
-  { icon: '📞', key: 'assistant.suggestion.phone' },
-  { icon: '🌐', key: 'assistant.suggestion.domain' },
+  { icon: '🚨', key: 'assistant.suggestion.fraudAlerts' },
+  { icon: '🕵️', key: 'assistant.suggestion.investigate' },
 ];
 
 function TypingIndicator() {
@@ -506,15 +502,15 @@ export default function AIAssistant() {
 
           {!activeConv || activeConv.messages.length === 0 ? (
             /* Welcome screen */
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
-              <ValthorisShield size={72} />
-              <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
+            <div className="ai-welcome" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+              <ValthorisShield size={72} className="ai-welcome-shield" />
+              <h2 className="ai-welcome-title" style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
                 {t('assistant.title')}
               </h2>
-              <p style={{ color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, margin: 0, fontSize: '0.9rem' }}>
+              <p className="ai-welcome-subtitle" style={{ color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, margin: 0, fontSize: '0.9rem' }}>
                 {t('assistant.welcome')}
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
+              <div className="ai-welcome-suggestions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', width: '100%', maxWidth: 520 }}>
                 {SUGGESTIONS.map(s => (
                   <button
                     key={s.key}

@@ -702,6 +702,36 @@
   .ai-chat-header-subtitle { font-size: 0.65rem; }
   .ai-chat-header-shield { width: 24px !important; height: 24px !important; }
 
+  /*
+   * Assistant welcome screen: with only two quick suggestions, each wrapping
+   * onto two lines, the block [shield + title + subtitle + suggestions] has to
+   * stay above the fold on a ~700px tall viewport. The shield shrinks and the
+   * vertical rhythm tightens; larger screens keep the roomier spacing.
+   */
+  .ai-welcome {
+    gap: 0.5rem !important;
+    /*
+     * Stay centred while there is room, but fall back to top alignment when
+     * the block is taller than the viewport, so the shield is never pushed
+     * out of reach above the scroll area.
+     */
+    justify-content: center !important;
+    justify-content: safe center !important;
+  }
+  .ai-welcome-shield { width: 48px !important; height: 48px !important; }
+  .ai-welcome-title { font-size: 1.15rem !important; }
+  .ai-welcome-subtitle { font-size: 0.8rem !important; line-height: 1.35; }
+  .ai-welcome-suggestions { gap: 0.4rem !important; }
+
+  /*
+   * Only the welcome state trades away the scroll padding; an ongoing
+   * conversation keeps its original breathing room around the bubbles.
+   */
+  .ai-messages:has(.ai-welcome) {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
   /* Social share: slightly tighter, still a comfortable touch target. */
   .social-share-icon { min-width: 36px; min-height: 36px; padding: 0.25rem; }
   .social-share-label { font-size: 0.6rem; }
@@ -758,4 +788,16 @@
   word-break: keep-all;
   overflow-wrap: normal;
   flex-shrink: 0;
+}
+
+/*
+ * Short phones (roughly 640-700 CSS px tall) need one more notch of
+ * compaction so the welcome block still clears the fold. Taller devices are
+ * unaffected, and an ongoing conversation is never touched.
+ */
+@media (max-width: 768px) and (max-height: 700px) {
+  .ai-welcome { gap: 0.4rem !important; }
+  .ai-welcome-shield { width: 40px !important; height: 40px !important; }
+  .ai-welcome-title { font-size: 1.05rem !important; }
+  .ai-welcome-subtitle { font-size: 0.75rem !important; }
 }

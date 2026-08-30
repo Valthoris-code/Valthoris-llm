@@ -205,12 +205,8 @@ const en: Catalogue = {
   'assistant.sourceUnavailable': 'unavailable',
   'assistant.sourceNoAnswer': 'no answer',
   'assistant.newConversation': 'New conversation',
-  'assistant.suggestion.url': 'Analyze this URL for threats',
-  'assistant.suggestion.email': 'Check if this email is a phishing attempt',
-  'assistant.suggestion.threats': 'What are the latest cybersecurity threats?',
-  'assistant.suggestion.wallet': 'Is this crypto wallet address safe?',
-  'assistant.suggestion.phone': 'Lookup this phone number for scam reports',
-  'assistant.suggestion.domain': 'Scan this domain for malware',
+  'assistant.suggestion.fraudAlerts': 'Fraud alerts: what are they making up this week?',
+  'assistant.suggestion.investigate': 'Analyse something suspicious: talk to me, let’s unmask it.',
 
   // ── Beta banner ────────────────────────────────────────────────────────────
   'beta.title': 'BETA PRIVATE',
