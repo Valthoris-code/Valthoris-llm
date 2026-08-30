@@ -709,14 +709,22 @@
    * vertical rhythm tightens; larger screens keep the roomier spacing.
    */
   .ai-welcome {
-    gap: 0.6rem !important;
+    gap: 0.5rem !important;
     justify-content: flex-start !important;
-    padding-top: 0.5rem;
   }
   .ai-welcome-shield { width: 48px !important; height: 48px !important; }
   .ai-welcome-title { font-size: 1.15rem !important; }
   .ai-welcome-subtitle { font-size: 0.8rem !important; line-height: 1.35; }
   .ai-welcome-suggestions { gap: 0.4rem !important; }
+
+  /*
+   * Only the welcome state trades away the scroll padding; an ongoing
+   * conversation keeps its original breathing room around the bubbles.
+   */
+  .ai-messages:has(.ai-welcome) {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
 
   /* Social share: slightly tighter, still a comfortable touch target. */
   .social-share-icon { min-width: 36px; min-height: 36px; padding: 0.25rem; }
@@ -774,4 +782,16 @@
   word-break: keep-all;
   overflow-wrap: normal;
   flex-shrink: 0;
+}
+
+/*
+ * Short phones (roughly 640-700 CSS px tall) need one more notch of
+ * compaction so the welcome block still clears the fold. Taller devices are
+ * unaffected, and an ongoing conversation is never touched.
+ */
+@media (max-width: 768px) and (max-height: 700px) {
+  .ai-welcome { gap: 0.4rem !important; }
+  .ai-welcome-shield { width: 40px !important; height: 40px !important; }
+  .ai-welcome-title { font-size: 1.05rem !important; }
+  .ai-welcome-subtitle { font-size: 0.75rem !important; }
 }

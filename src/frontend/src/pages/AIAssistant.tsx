@@ -502,8 +502,8 @@ export default function AIAssistant() {
 
           {!activeConv || activeConv.messages.length === 0 ? (
             /* Welcome screen */
-            <div className="ai-welcome" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-              <ValthorisShield size={64} className="ai-welcome-shield" />
+            <div className="ai-welcome" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+              <ValthorisShield size={72} className="ai-welcome-shield" />
               <h2 className="ai-welcome-title" style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
                 {t('assistant.title')}
               </h2>
