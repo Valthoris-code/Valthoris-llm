@@ -710,7 +710,13 @@
    */
   .ai-welcome {
     gap: 0.5rem !important;
-    justify-content: flex-start !important;
+    /*
+     * Stay centred while there is room, but fall back to top alignment when
+     * the block is taller than the viewport, so the shield is never pushed
+     * out of reach above the scroll area.
+     */
+    justify-content: center !important;
+    justify-content: safe center !important;
   }
   .ai-welcome-shield { width: 48px !important; height: 48px !important; }
   .ai-welcome-title { font-size: 1.15rem !important; }
