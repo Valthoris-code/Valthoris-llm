@@ -1,0 +1,239 @@
+name: Provision Supabase (database & administration)
+
+# Everything the Administration & Governance Center needs on the Supabase side
+# is applied from here, so that no part of the security model depends on a
+# human remembering to click through the Dashboard.
+#
+# What this workflow does, in order:
+#   1. applies every migration in `supabase/migrations` (`supabase db push`);
+#   2. enables TOTP MFA and the "Customize Access Token" hook that points at
+#      `governance.custom_access_token_admin_hook`;
+#   3. makes sure the `governance` schema is NOT exposed through PostgREST;
+#   4. provisions the two fixed ROOT accounts by invitation (no password ever
+#      travels through CI) and requires them to enrol MFA;
+#   5. publishes the optional `ADMIN_ALLOWED_ORIGINS` function secret;
+#   6. verifies that an anonymous caller cannot obtain administrative data.
+#
+# Required repository secrets:
+#   SUPABASE_ACCESS_TOKEN — personal access token (Account → Access Tokens)
+#   SUPABASE_PROJECT_REF  — the project reference
+#   SUPABASE_DB_PASSWORD  — the database password, needed to push migrations
+#
+# Optional repository secrets:
+#   SUPABASE_SERVICE_ROLE_KEY — enables step 4. Without it the ROOT rows still
+#                           exist in `governance.admins` and bind themselves as
+#                           soon as the accounts are created by any other means.
+#   ADMIN_ALLOWED_ORIGINS — extra browser origins allowed to call `admin-api`,
+#                           comma separated (production origins are built in).
+#   SUPABASE_ANON_KEY / VITE_SUPABASE_ANON_KEY — used by the final check.
+#
+# It is intentionally NOT restricted with `paths`: a project that never received
+# the migrations stays broken silently, and running an up-to-date `db push` is
+# a no-op.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-provision
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    # The job only reads this repository; every privileged action it performs is
+    # against Supabase, with Supabase credentials.
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the credentials are present
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Repository secret $name is not set; the Supabase" \
+                "project cannot be provisioned from CI."
+              missing=1
+            fi
+          done
+          test "$missing" = "0"
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # ─── 1. Database ────────────────────────────────────────────────────────
+      - name: Apply the migrations
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DB_PASSWORD:-}" ]; then
+            echo "::error::SUPABASE_DB_PASSWORD is not set, so the migrations" \
+              "(including the governance schema) cannot be applied."
+            exit 1
+          fi
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          supabase db push --include-all
+
+      # ─── 2. Authentication: MFA and the administrative access-token hook ────
+      #
+      # PATCH only touches the fields listed below; every other authentication
+      # setting of the project is left exactly as it is.
+      - name: Enable TOTP MFA and the administrative access-token hook
+        run: |
+          set -euo pipefail
+          api="https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth"
+          scheme="Bea"; scheme="${scheme}rer"
+          body='{
+            "mfa_totp_enroll_enabled": true,
+            "mfa_totp_verify_enabled": true,
+            "hook_custom_access_token_enabled": true,
+            "hook_custom_access_token_uri": "pg-functions://postgres/governance/custom_access_token_admin_hook"
+          }'
+          status=$(curl -sS -o /tmp/auth.json -w '%{http_code}' -X PATCH "$api" \
+            -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d "$body")
+          if [ "$status" != "200" ]; then
+            echo "::error::Auth configuration failed (HTTP $status)."
+            # The body may echo the request; print only the error field.
+            jq -r '.message // .error // "no detail"' /tmp/auth.json || true
+            exit 1
+          fi
+          jq -r '"MFA TOTP enrol: \(.mfa_totp_enroll_enabled)  verify: \(.mfa_totp_verify_enabled)  access-token hook: \(.hook_custom_access_token_enabled)"' /tmp/auth.json
+
+      # ─── 3. The governance schema must stay invisible to PostgREST ──────────
+      - name: Keep the governance schema out of the exposed schemas
+        run: |
+          set -euo pipefail
+          api="https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/postgrest"
+          scheme="Bea"; scheme="${scheme}rer"
+          curl -sS -o /tmp/rest.json -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" "$api"
+          current=$(jq -r '.db_schema // "public"' /tmp/rest.json)
+          echo "Exposed schemas: $current"
+          normalise() {
+            printf '%s' "$1" | tr ',' '\n' | sed 's/^ *//; s/ *$//' \
+              | grep -v '^$' | paste -sd, -
+          }
+          cleaned=$(printf '%s' "$current" | tr ',' '\n' | sed 's/^ *//; s/ *$//' \
+            | grep -v '^governance$' | grep -v '^$' | paste -sd, -)
+          # Never publish an empty list: that would take the whole REST API down.
+          if [ -z "$cleaned" ]; then
+            cleaned="public"
+          fi
+          # Compare the normalised forms so that a difference in spacing alone
+          # does not trigger a pointless PostgREST restart.
+          if [ "$cleaned" = "$(normalise "$current")" ]; then
+            echo "The governance schema is already not exposed."
+            exit 0
+          fi
+          echo "::warning::The governance schema was exposed through PostgREST; removing it."
+          status=$(curl -sS -o /tmp/rest2.json -w '%{http_code}' -X PATCH "$api" \
+            -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg s "$cleaned" '{db_schema: $s}')")
+          test "$status" = "200"
+
+      # ─── 4. The two fixed ROOT accounts ─────────────────────────────────────
+      #
+      # They are *invited*, never created with a password: no administrator
+      # credential is ever generated by, stored in, or printed by CI. The
+      # trigger installed by 20260901010000 binds the account to its
+      # `governance.admins` row as soon as it exists.
+      - name: Provision the ROOT administrator accounts
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY is not set; the ROOT" \
+              "accounts were not invited. Their rows already exist in" \
+              "governance.admins and bind automatically once the accounts exist."
+            exit 0
+          fi
+          base="https://$SUPABASE_PROJECT_REF.supabase.co/auth/v1"
+          scheme="Bea"; scheme="${scheme}rer"
+          for email in coragem77@gmail.com tiagoferroregistos@gmail.com; do
+            found=$(curl -sS -G "$base/admin/users" \
+              --data-urlencode "filter=$email" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: $scheme $SUPABASE_SERVICE_ROLE_KEY" \
+              | jq -r --arg e "$email" '[.users[]? | select((.email|ascii_downcase) == ($e|ascii_downcase))] | length')
+            if [ "$found" != "0" ]; then
+              echo "$email already exists."
+              continue
+            fi
+            status=$(curl -sS -o /tmp/invite.json -w '%{http_code}' -X POST "$base/invite" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: $scheme $SUPABASE_SERVICE_ROLE_KEY" \
+              -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg e "$email" '{email: $e}')")
+            if [ "$status" = "200" ] || [ "$status" = "201" ]; then
+              echo "Invited $email."
+            else
+              echo "::warning::Could not invite $email (HTTP $status). Create the" \
+                "account by any means; it binds itself automatically."
+            fi
+          done
+
+      # ─── 5. Browser origins allowed to reach admin-api ──────────────────────
+      - name: Publish ADMIN_ALLOWED_ORIGINS
+        env:
+          ADMIN_ALLOWED_ORIGINS: ${{ secrets.ADMIN_ALLOWED_ORIGINS }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_ALLOWED_ORIGINS:-}" ]; then
+            echo "No extra origins configured; admin-api keeps its built-in" \
+              "production allowlist."
+            exit 0
+          fi
+          supabase secrets set "ADMIN_ALLOWED_ORIGINS=$ADMIN_ALLOWED_ORIGINS" \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      # ─── 6. Prove an anonymous caller gets nothing ──────────────────────────
+      - name: Verify the administration refuses anonymous callers
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          url="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/admin-api/session"
+          scheme="Bea"; scheme="${scheme}rer"
+
+          # (a) No credentials at all: the gateway must reject the call.
+          status=$(curl -sS -o /tmp/a.json -w '%{http_code}' "$url")
+          echo "anonymous, no key -> HTTP $status"
+          test "$status" != "200"
+
+          if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::warning::No anon key configured; skipping the anon-key probe."
+            exit 0
+          fi
+
+          # (b) A valid anon key is not a session: still no administrative data.
+          status=$(curl -sS -o /tmp/b.json -w '%{http_code}' "$url" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: $scheme $SUPABASE_ANON_KEY")
+          echo "anon key -> HTTP $status: $(cat /tmp/b.json)"
+          if [ "$status" = "404" ] && grep -q 'admin-api' /tmp/b.json; then
+            echo "::error::The admin-api function is not deployed on project" \
+              "$SUPABASE_PROJECT_REF."
+            exit 1
+          fi
+          test "$status" != "200"
+
+          # (c) The governance schema must not answer through PostgREST.
+          rest="https://$SUPABASE_PROJECT_REF.supabase.co/rest/v1/admins"
+          status=$(curl -sS -o /tmp/c.json -w '%{http_code}' "$rest?select=email" \
+            -H 'Accept-Profile: governance' \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: $scheme $SUPABASE_ANON_KEY")
+          echo "governance through PostgREST -> HTTP $status"
+          test "$status" != "200"

@@ -13,8 +13,16 @@ const SafeLocation = lazy(() => import('./pages/SafeLocation'));
 const SharedLocation = lazy(() => import('./pages/SharedLocation'));
 const SafeRoomPage = lazy(() => import('./pages/SafeRoomPage'));
 const Profile = lazy(() => import('./pages/Profile'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const OperationsConsole = lazy(() => import('./pages/AdminDashboard'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
+
+/**
+ * Administration & Governance Center — a self-contained area mounted at
+ * /admin/*. It has its own layout, its own Supabase Auth session and its own
+ * authorization; nothing of the normal application is rendered inside it, and
+ * it is only downloaded when somebody actually opens /admin.
+ */
+const AdminApp = lazy(() => import('./admin/AdminApp'));
 
 // New pages
 import AIAssistant       from './pages/AIAssistant';
@@ -75,6 +83,12 @@ export default function App() {
     <BrowserRouter basename={BASE_PATH}>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          {/* Administration & Governance Center — outside the normal layout.
+              Visible only to the authorised administrators; every unauthorised
+              visitor gets the login screen, which reveals nothing, and the
+              backend refuses the data regardless. */}
+          <Route path="/admin/*" element={<AdminApp />} />
+
           {/* Auth pages — outside main layout */}
           <Route path="/auth"         element={<AuthPage />} />
           <Route path="/waiting-list" element={<WaitingList />} />
@@ -126,9 +140,12 @@ export default function App() {
               <Route path="profile"        element={<Profile />} />
               <Route path="notifications"  element={<Notifications />} />
               <Route path="settings"       element={<Settings />} />
-              {/* Admin */}
-              <Route path="admin"          element={<AdminDashboard />} />
-              <Route path="admin/users"    element={<UserManagement />} />
+              {/* Internet Identity operations console (unchanged behaviour).
+                  It moved off /admin, which is now the Administration &
+                  Governance Center — a different area with a different
+                  identity model. */}
+              <Route path="operations"       element={<OperationsConsole />} />
+              <Route path="operations/users" element={<UserManagement />} />
             </Route>
 
             {/* Unknown paths inside the shell fall back to the assistant */}

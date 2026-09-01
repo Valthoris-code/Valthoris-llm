@@ -26,3 +26,40 @@ verify_jwt = false
 
 [functions.news-ticker]
 verify_jwt = false
+
+# ─── Administration & Governance Center ──────────────────────────────────────
+#
+# `admin-api` is the opposite case of the functions above: it is only ever
+# called by an authenticated administrator holding a real Supabase Auth JWT, so
+# gateway verification is left ON as a first barrier. The function then repeats
+# the check itself (token verified against the Auth server, AAL2, administrator
+# identity, RBAC) — the gateway is never the only thing standing in the way.
+[functions.admin-api]
+verify_jwt = true
+
+# ─── Administration: authentication settings ─────────────────────────────────
+#
+# These are applied to the hosted project by
+# `.github/workflows/provision-supabase.yml` through the Management API, and
+# are declared here so that a local `supabase start` behaves like production
+# and so that the intent is reviewable in code.
+
+# The two ROOT administrators have `mfa_required = true` in
+# `governance.admins`, and `governance.current_admin_id()` returns NULL for a
+# session that is not AAL2 — without TOTP the administration is simply empty.
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+# Adds `is_admin` / `admin_id` to the access token. It carries no secret and it
+# is never the authorization by itself: `admin-api` re-checks every request
+# against `governance.admins`.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/governance/custom_access_token_admin_hook"
+
+# `governance` is deliberately absent: the administrative tables must never be
+# reachable through PostgREST. `admin-api` reaches them with the service role
+# through the `public.governance_*` SECURITY DEFINER wrappers instead.
+[api]
+schemas = ["public", "graphql_public"]
