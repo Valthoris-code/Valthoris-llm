@@ -556,7 +556,7 @@ async function wikipediaSearch(query: string): Promise<WebResult[]> {
     try {
       const data = await fetchJson(
         `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&list=search&srlimit=3&srsearch=${encodeURIComponent(query)}`,
-        { headers: { 'User-Agent': NOMINATIM_USER_AGENT } },
+        { headers: { 'User-Agent': WEB_SEARCH_USER_AGENT } },
       );
       const hits: any[] = Array.isArray(data?.query?.search) ? data.query.search : [];
       for (const hit of hits) {
