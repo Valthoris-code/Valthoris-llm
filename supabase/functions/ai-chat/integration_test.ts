@@ -13,7 +13,11 @@
  * Run with:  deno test --allow-net --allow-env supabase/functions/ai-chat
  */
 
-import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 // ─── Environment (read by the function at call time) ─────────────────────────
 
@@ -321,6 +325,55 @@ Deno.test('a place lookup needs both an entity and a factual request', () => {
   }
 });
 
+Deno.test('the evidence alone answers a place turn when no model can', () => {
+  const answer = fn.answerFromEvidence('place', [
+    {
+      provider: 'Nominatim',
+      endpoint: 'place/public-search',
+      entity: 'Hospital Évora',
+      timestamp: '2026-09-01T10:00:00.000Z',
+      status: 'success',
+      data: {
+        found: true,
+        name: 'Hospital do Espírito Santo',
+        address: 'Largo Senhor da Pobreza, Évora',
+        link: 'https://www.openstreetmap.org/?mlat=38.57&mlon=-7.91#map=17/38.57/-7.91',
+      },
+    },
+  ]);
+  assert(answer);
+  // The data that exists is reported…
+  assertStringIncludes(answer!, 'MORADA / ADDRESS: Largo Senhor da Pobreza, Évora');
+  assertStringIncludes(answer!, 'MAPA / MAP: https://www.openstreetmap.org/?mlat=38.57');
+  assertStringIncludes(answer!, 'Nominatim (place/public-search) — 2026-09-01T10:00:00.000Z');
+  // …and what the source did not carry is never invented.
+  assertStringIncludes(answer!, 'CONTACTO / CONTACT: não confirmado / not confirmed');
+});
+
+Deno.test('failed and empty sources produce no evidence answer', () => {
+  assertEquals(
+    fn.answerFromEvidence('place', [
+      {
+        provider: 'Nominatim',
+        endpoint: 'place/public-search',
+        entity: 'x',
+        timestamp: '2026-09-01T10:00:00.000Z',
+        status: 'failed',
+        error: 'HTTP 403 — access denied by the provider',
+      },
+      {
+        provider: 'Nominatim',
+        endpoint: 'place/public-search',
+        entity: 'x',
+        timestamp: '2026-09-01T10:00:00.000Z',
+        status: 'success',
+        data: { found: false },
+      },
+    ]),
+    null,
+  );
+});
+
 Deno.test('a practical need reaches the map without any keyword question', () => {
   // The turn that exposed the problem: it names a place and states a need, but
   // asks no "morada / contacto / onde fica" question. It must still be looked
@@ -496,6 +549,37 @@ Deno.test('a 400 that is not the tool never leaks its status to the user', async
   try {
     const res = await handler!(post({
       messages: [{ role: 'user', content: 'Quero o contacto do hospital distrital Espírito Santo em Évora' }],
+    }));
+    // The model failed, but Nominatim answered: the lookup is reported instead
+    // of being thrown away, and the upstream status never appears in it.
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.provider, 'valthoris/evidence');
+    assertEquals(body.grounded, true);
+    assertEquals(body.error, undefined);
+    assertStringIncludes(body.content, 'Hospital do Espírito Santo');
+    assertEquals(body.content.includes('400'), false);
+  } finally {
+    globalThis.fetch = realFetchStub;
+  }
+});
+
+Deno.test('with no evidence at all, a model failure stays generic', async () => {
+  recorded = [];
+  const realFetchStub = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ error: { message: 'invalid request' } }), { status: 400 }),
+      );
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    const res = await handler!(post({
+      messages: [{ role: 'user', content: 'Olá, tudo bem?' }],
     }));
     assertEquals(res.status, 502);
     const body = await res.json();

@@ -242,6 +242,32 @@ class GeminiModelNotFound extends Error {}
  */
 class GeminiToolUnsupported extends Error {}
 
+/**
+ * Hard ceiling for a single model call.
+ *
+ * A provider that never answers is worse than one that fails: without a
+ * deadline the turn hangs until the platform kills the whole invocation, so the
+ * other provider is never tried and the user waits for an error. A grounded
+ * (web-search) turn is the slowest case, hence the generous value.
+ */
+const MODEL_TIMEOUT_MS = 25_000;
+
+/** `fetch` with a deadline; an expired one is a normal provider failure. */
+async function fetchWithTimeout(url: string, init: RequestInit, label: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`${label} timed out after ${MODEL_TIMEOUT_MS} ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Model used when `GEMINI_MODEL` is unset, blank or unusable. */
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -331,7 +357,7 @@ async function callGeminiModel(
 ): Promise<Completion> {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     url,
     {
       method: 'POST',
@@ -353,6 +379,7 @@ async function callGeminiModel(
         generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
       }),
     },
+    'Gemini',
   );
 
   if (!res.ok) {
@@ -455,7 +482,7 @@ async function callDeepSeek(
   systemPrompt: string,
 ): Promise<Completion> {
   const model = env('DEEPSEEK_MODEL') ?? 'deepseek-chat';
-  const res = await fetch('https://api.deepseek.com/chat/completions', {
+  const res = await fetchWithTimeout('https://api.deepseek.com/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -472,7 +499,7 @@ async function callDeepSeek(
       temperature: 0.2,
       max_tokens: 800,
     }),
-  });
+  }, 'DeepSeek');
   if (!res.ok) {
     // Status only: the body can echo the request. Nothing here reaches the
     // browser — the caller falls back to Gemini.
@@ -558,6 +585,17 @@ async function complete(
         // Every provider failed: the loop ends and the generic error is thrown.
         console.error(`[ai-chat] ${provider.name} unavailable, no provider left:`, detail);
       }
+      // The user keeps seeing one generic sentence, but the operator must be
+      // able to tell an exhausted quota from a revoked key without reading raw
+      // function logs, so every model failure lands in `governance.error_logs`
+      // exactly like an intelligence-source failure does.
+      void writeErrorLog({
+        source: 'ai-chat/model',
+        severity: next ? 'WARNING' : 'ERROR',
+        message: `Model provider ${provider.name} failed`,
+        detail,
+        context: { provider: provider.name, webSearch, fallbackAvailable: Boolean(next) },
+      });
     }
   }
 
@@ -683,6 +721,22 @@ export async function handleRequest(req: Request): Promise<Response> {
     completion = await complete(modelMessages, systemPrompt, webSearch);
   } catch (err) {
     console.error('[ai-chat]', err);
+    // The providers actually answered: their data is the answer, and losing it
+    // because a language model is out of quota would be throwing away the very
+    // lookup the user asked for. The evidence is reported as it stands.
+    const fallback = intel ? answerFromEvidence(intel.kind, intel.sources) : null;
+    if (fallback) {
+      return json(
+        {
+          content: fallback,
+          provider: 'valthoris/evidence',
+          model: 'evidence-only',
+          grounded: true,
+          sources: intel!.sources,
+        },
+        200,
+      );
+    }
     // Only curated messages reach the browser; unexpected faults are generic.
     const message = err instanceof AiChatError ? err.message : PROVIDERS_UNAVAILABLE;
     return json({ error: message }, err instanceof AiChatError ? err.status : 502);
@@ -720,6 +774,92 @@ export async function handleRequest(req: Request): Promise<Response> {
     },
     200,
   );
+}
+
+/**
+ * The answer built from the evidence alone, when no language model could write it.
+ *
+ * Asking for an address is a lookup, not a conversation: once Nominatim (or any
+ * other provider) has answered, the information exists and the user is entitled
+ * to it. Returning "de momento não consigo processar o seu pedido" because
+ * Gemini and DeepSeek both refused the turn throws away a successful lookup and
+ * makes a working data source look broken. This renders exactly what the
+ * providers returned — nothing is inferred, nothing is completed from memory —
+ * and says plainly that the model did not take part.
+ *
+ * Returns `null` when there is nothing real to show, in which case the caller
+ * keeps the generic error.
+ */
+export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[]): string | null {
+  const answered = sources.filter(
+    (s) => s.status === 'success' && s.data && Object.keys(s.data).length > 0 && s.data.found !== false,
+  );
+  if (answered.length === 0) return null;
+
+  const lines: string[] = [
+    'Resposta composta diretamente pelas fontes consultadas (o modelo de linguagem ' +
+      'não está disponível neste momento). / Answer composed directly from the sources ' +
+      'consulted (the language model is unavailable).',
+    '',
+  ];
+
+  if (kind === 'place') {
+    const place = answered[0].data as Record<string, unknown>;
+    for (const [field, label] of PLACE_FIELD_LABELS) {
+      const value = evidenceValue(place[field]);
+      lines.push(`${label}: ${value ?? 'não confirmado / not confirmed'}`);
+    }
+  } else {
+    for (const report of answered) {
+      const details = Object.entries(report.data as Record<string, unknown>)
+        .map(([key, value]) => {
+          const rendered = evidenceValue(value);
+          return rendered ? `${key}: ${rendered}` : null;
+        })
+        .filter((entry): entry is string => entry !== null);
+      if (details.length > 0) {
+        lines.push(`${report.provider} (${report.endpoint}) — ${details.join('; ')}`);
+      }
+    }
+  }
+
+  lines.push('');
+  lines.push('FONTES / SOURCES:');
+  for (const report of answered) {
+    lines.push(`- ${report.provider} (${report.endpoint}) — ${report.timestamp}`);
+  }
+
+  const unavailable = sources.filter((s) => s.status !== 'success');
+  if (unavailable.length > 0) {
+    lines.push('');
+    lines.push('LIMITAÇÕES / LIMITATIONS:');
+    for (const report of unavailable) {
+      lines.push(`- ${report.provider}: ${report.error ?? report.status}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/** The place fields rendered, in order, by the evidence-only answer. */
+const PLACE_FIELD_LABELS: [string, string][] = [
+  ['name', 'NOME / NAME'],
+  ['address', 'MORADA / ADDRESS'],
+  ['phone', 'CONTACTO / CONTACT'],
+  ['website', 'SITE / WEBSITE'],
+  ['openingHours', 'HORÁRIO / OPENING HOURS'],
+  ['link', 'MAPA / MAP'],
+];
+
+/** Renders one evidence value, or nothing at all when it carries no information. */
+function evidenceValue(value: unknown): string | null {
+  if (typeof value === 'string') return value.length > 0 ? value : null;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    const parts = value.map((item) => evidenceValue(item)).filter((item) => item !== null);
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+  return null;
 }
 
 /**

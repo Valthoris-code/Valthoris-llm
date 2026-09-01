@@ -179,6 +179,28 @@ the volume ever outgrows the public service, the next step is a self-hosted
 Nominatim or a commercial geocoder — only `NOMINATIM_BASE_URL` in `intel.ts`
 would change.
 
+### When the language model fails, the lookup is not lost
+
+`ai-chat` used to answer *"De momento não consigo processar o seu pedido"*
+whenever both language models refused the turn — including turns where the
+external sources had already answered. Asking for an address is a lookup, not a
+conversation: the address existed, and the message hid it behind what looked
+like a broken assistant.
+
+Now, when Gemini and DeepSeek both fail on a turn that collected real evidence,
+the answer is composed directly from what the providers returned (name, address,
+contact, opening hours, map link, sources and the lookup timestamp), stating
+plainly that the language model did not take part. Nothing is inferred: a field
+the source did not carry is reported as *não confirmado / not confirmed*. The
+generic message remains only for a turn where there is genuinely nothing to
+show.
+
+Each model call also has a hard 25 s deadline, so a provider that never answers
+falls back to the other one instead of hanging until the platform kills the
+invocation, and every model failure is recorded in `governance.error_logs`
+(`ai-chat/model`) with its real cause — an exhausted quota and a revoked key are
+no longer indistinguishable.
+
 ### State of the sources (administration)
 
 `/admin/intel-sources` (permission `system_health.read`) lists every configured
