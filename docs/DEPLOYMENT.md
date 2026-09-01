@@ -158,6 +158,44 @@ an integration that does not exist.
 | `COINGECKO_API_KEY` | `ai-chat/intel.ts` | **in use** — token market data |
 | `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence, only on an explicit news intent |
 | `DATA_GOV_API_KEY` | `ai-chat/intel.ts` | **in use** — FTC Do Not Call complaints; **US (+1) numbers only**, no coverage for Portugal/Europe |
+| `BRAVE_SEARCH_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search; when present it is used in addition to the keyless engines, with fresher and cleaner results |
+| `TAVILY_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search built for AI answers |
+| `SERPER_API_KEY` | `ai-chat/intel.ts` | **optional** — Google results (including the knowledge panel's phone, site and address) |
+| `GEMINI_SEARCH_MODEL` | `ai-chat/intel.ts` | **optional** — the model used for the web search only; defaults to `GEMINI_MODEL` and then to `gemini-2.5-flash` |
+
+### The web search runs on the Gemini key you already have
+
+Every turn that is a real question — any subject, not only security — is
+searched on the web **before** the model writes the answer, and the pages that
+were read are listed as sources under it.
+
+The primary engine is **Google Search through Gemini**: `ai-chat/intel.ts`
+calls `generateContent` with the `google_search` tool as a *search source*, not
+as an answer, keeps the pages from the grounding metadata and hands them to the
+turn as evidence. That is what makes the search stable — it is a contracted API
+served against `GEMINI_API_KEY`, so it does not depend on a public endpoint
+tolerating requests from a datacentre address. If the configured model does not
+serve the tool, the next model in the chain is tried (`GEMINI_SEARCH_MODEL` →
+`GEMINI_MODEL` → `gemini-2.5-flash` → `gemini-2.5-flash-lite`).
+
+Two more engines need no credential at all and run alongside it, so the answer
+never rests on a single provider:
+
+* **DuckDuckGo**, through its no-JavaScript result page (with the Instant Answer
+  API as the fallback when that page throttles the datacentre address);
+* **Wikipedia**, searched in Portuguese and English.
+
+The optional keys above are added on top: when they are configured, their
+engines answer alongside the others and every source is listed individually, so
+a throttled engine is visible instead of silently narrowing the answer.
+
+When **no** engine returned a page, the answer call itself is made with
+Google's search tool enabled, so the model searches instead of recalling; the
+pages it grounded on are reported as the `Google Search (Gemini)` source with
+the `web/grounding` endpoint. When a search source already answered, that second
+search is skipped, so a question never spends the search quota twice.
+
+Only small talk (a greeting, a thank-you, "ok") skips the search entirely.
 
 OpenStreetMap **Nominatim** needs no secret: public place/business lookups are
 anonymous and identified only by the required `User-Agent`. The public service
@@ -178,6 +216,13 @@ works again" behaviour: it was the OpenStreetMap block, not a missing key. If
 the volume ever outgrows the public service, the next step is a self-hosted
 Nominatim or a commercial geocoder — only `NOMINATIM_BASE_URL` in `intel.ts`
 would change.
+
+A place is looked up in **two** keyless gazetteers, Nominatim and **Photon**
+(Komoot), and the candidates they return are ranked before one is chosen: a bus
+stop, a road or an administrative boundary that merely shares a word never
+outranks the hospital, shop or office the question is about. When a query finds
+nothing it is reformulated ("Óptica Havaneza em Évora" → "Óptica Havaneza,
+Évora" → "Havaneza, Évora") instead of being answered with "não encontrado".
 
 ### When the language model fails, the lookup is not lost
 

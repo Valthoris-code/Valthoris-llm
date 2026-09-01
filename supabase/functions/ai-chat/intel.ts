@@ -25,11 +25,17 @@
  *   ABSTRACT_IBAN_API_KEY, ABSTRACT_VAT_API_KEY, NUMVERIFY_API_KEY,
  *   OPENIBAN_API_URL, CRYPTOSCAMDB_API_URL, GOPLUS_API_URL,
  *   GOPLUS_APP_KEY, GOPLUS_APP_SECRET, COINGECKO_API_KEY, ETHERSCAN_API_KEY,
- *   NEWSDATA_API_KEY, DATA_GOV_API_KEY
+ *   NEWSDATA_API_KEY, DATA_GOV_API_KEY,
+ *   GEMINI_API_KEY (+ GEMINI_SEARCH_MODEL) — Google Search through Gemini,
+ *   BRAVE_SEARCH_API_KEY, TAVILY_API_KEY, SERPER_API_KEY (web search, optional)
  *
- * One provider needs no credential at all: OpenStreetMap Nominatim, used for
- * public place/business lookups, is queried anonymously with the User-Agent the
- * Nominatim usage policy requires.
+ * The primary web search is Google's own, reached through the Gemini key the
+ * deployment already has: it is a contracted API, so it does not depend on a
+ * public endpoint tolerating a datacentre address. Four more providers need no
+ * credential at all and run alongside it: OpenStreetMap Nominatim and Photon
+ * (public gazetteers, queried with the User-Agent their usage policy requires),
+ * DuckDuckGo (its no-JavaScript result page) and Wikipedia. The commercial
+ * search APIs above are used in addition whenever their key is configured.
  */
 
 // deno-lint-ignore-file no-explicit-any
@@ -46,7 +52,9 @@ export type IntelEntityKind =
   | 'phone'
   | 'vat'
   | 'place'
-  | 'topic';
+  | 'topic'
+  /** Free-text question answered by a real public web search. */
+  | 'web';
 
 export interface IntelEntity {
   kind: IntelEntityKind;
@@ -143,6 +151,8 @@ export function isValidEntity(kind: IntelEntityKind, value: string): boolean {
       return value.trim().length > 2 && value.length <= 200;
     case 'topic':
       return value.trim().length > 2 && value.length <= 200;
+    case 'web':
+      return value.trim().length > 2 && value.length <= 300;
   }
 }
 
@@ -196,6 +206,8 @@ function normaliseEntity(kind: IntelEntityKind, value: string): string {
     case 'domain':
       return value.toLowerCase();
     case 'place':
+      return value.replace(/\s+/g, ' ').trim();
+    case 'web':
       return value.replace(/\s+/g, ' ').trim();
     default:
       return value;
@@ -277,6 +289,37 @@ export class HttpStatusError extends Error {
   }
 }
 
+/**
+ * GET/POST returning the raw body, for the sources that answer with HTML.
+ *
+ * A search engine without an API answers with a page, not with JSON; refusing
+ * to read it would mean having no keyless web search at all.
+ */
+async function fetchText(url: string, options: FetchOptions = {}): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: options.method ?? 'GET',
+      headers: { Accept: 'text/html,application/xhtml+xml', ...(options.headers ?? {}) },
+      body: options.body,
+      signal: controller.signal,
+      redirect: 'follow',
+    });
+    if (!res.ok) throw new HttpStatusError(res.status);
+    // A search page is large and only the first results are used: reading it
+    // whole would spend the function's memory on markup nobody looks at.
+    return (await res.text()).slice(0, 400_000);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`timed out after ${TIMEOUT_MS} ms (provider slow or unreachable)`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Truncates a provider string so a report stays small and printable. */
 function str(value: unknown, max = 160): string | undefined {
   if (typeof value === 'string' && value.length > 0) return value.slice(0, max);
@@ -297,7 +340,352 @@ function clean(data: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
-// ─── Public places ───────────────────────────────────────────────────────────
+// ─── Public web search ───────────────────────────────────────────────────────
+//
+// The assistant must be able to look something up on the open web — any
+// subject, not only a security artefact — instead of answering from the
+// language model's memory. Two of the engines below need no credential at all,
+// so a deployment with no extra secret still searches for real; the commercial
+// APIs are used first when their key is present, because they answer with a
+// cleaner result set.
+
+/** One public page returned by a search engine. */
+export interface WebResult {
+  title: string;
+  url: string;
+  snippet?: string;
+  /** Publication date, when the engine reports one. */
+  published?: string;
+}
+
+/** Minimal HTML-entity decoding, enough for a search result title. */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&(#\d{1,6}|#x[0-9a-fA-F]{1,5}|[a-zA-Z]{2,8});/g, (match, code: string) => {
+      if (code.startsWith('#x') || code.startsWith('#X')) {
+        const point = Number.parseInt(code.slice(2), 16);
+        return Number.isFinite(point) && point > 0 && point <= 0x10ffff
+          ? String.fromCodePoint(point)
+          : match;
+      }
+      if (code.startsWith('#')) {
+        const point = Number.parseInt(code.slice(1), 10);
+        return Number.isFinite(point) && point > 0 && point <= 0x10ffff
+          ? String.fromCodePoint(point)
+          : match;
+      }
+      const named: Record<string, string> = {
+        amp: '&',
+        lt: '<',
+        gt: '>',
+        quot: '"',
+        apos: "'",
+        nbsp: ' ',
+        hellip: '…',
+        mdash: '—',
+        ndash: '–',
+        rsquo: '’',
+        lsquo: '‘',
+        ldquo: '“',
+        rdquo: '”',
+        euro: '€',
+        deg: '°',
+      };
+      if (named[code]) return named[code];
+      // The accented letters a Portuguese page is full of (&iacute;, &ccedil;,
+      // &atilde;) are composed from the letter and the accent they name, so a
+      // title comes out readable instead of littered with entity codes.
+      const accents: Record<string, string> = {
+        acute: '\u0301',
+        grave: '\u0300',
+        circ: '\u0302',
+        tilde: '\u0303',
+        uml: '\u0308',
+        ring: '\u030a',
+        cedil: '\u0327',
+      };
+      const letter = /^([A-Za-z])(acute|grave|circ|tilde|uml|ring|cedil)$/.exec(code);
+      if (letter) return (letter[1] + accents[letter[2]]).normalize('NFC');
+      return match;
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Plain text of an HTML fragment: markup is removed, never executed. */
+function stripTags(html: string): string {
+  return decodeEntities(html.replace(/<[^>]*>/g, ' '));
+}
+
+/**
+ * Accepts a result URL only when it is a public http(s) address.
+ *
+ * The link is shown to the user and handed to the model, so a `javascript:`
+ * href or an address inside the deployment must never survive parsing.
+ */
+function safeResultUrl(raw: string): string | undefined {
+  const value = decodeEntities(raw);
+  // DuckDuckGo wraps every result in its own redirect: the real target is the
+  // `uddg` parameter, and it is what must be reported as the source.
+  try {
+    const parsed = new URL(value, 'https://duckduckgo.com');
+    const wrapped = parsed.searchParams.get('uddg');
+    const target = wrapped ? new URL(wrapped) : parsed;
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') return undefined;
+    if (!isPublicHost(target.hostname)) return undefined;
+    return target.href.slice(0, 400);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Drops duplicate pages and caps how many results a source reports. */
+function dedupeResults(results: WebResult[], max = 6): WebResult[] {
+  const seen = new Set<string>();
+  const out: WebResult[] = [];
+  for (const result of results) {
+    if (!result.url || !result.title) continue;
+    const key = result.url.replace(/[#?].*$/, '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      title: result.title.slice(0, 200),
+      url: result.url,
+      ...(result.snippet ? { snippet: result.snippet.slice(0, 400) } : {}),
+      ...(result.published ? { published: result.published.slice(0, 40) } : {}),
+    });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Browser-shaped identification: a search page refuses an anonymous client. */
+const WEB_SEARCH_USER_AGENT =
+  'Mozilla/5.0 (compatible; Valthoris-App/1.0; +https://valthoris.com)';
+
+/** DuckDuckGo's no-JavaScript result page: keyless, and stable for years. */
+const DUCKDUCKGO_ENDPOINT = 'https://html.duckduckgo.com/html/';
+
+/**
+ * The normalised payload every web-search source reports.
+ *
+ * `results` is what the user sees under "Fontes" and what the model is allowed
+ * to quote; `answer` and `place` only exist when the engine itself returned
+ * them. A search that found nothing says so — it never returns an empty shape
+ * that reads like a result.
+ */
+function webSearchResult(
+  results: WebResult[],
+  answer?: string,
+  place?: Record<string, unknown>,
+): Record<string, unknown> {
+  if (results.length === 0 && !answer && (!place || Object.keys(place).length === 0)) {
+    return { found: false, results: 0 };
+  }
+  return clean({
+    found: true,
+    results: results.length,
+    ...(answer ? { answer } : {}),
+    ...(place && Object.keys(place).length > 0 ? place : {}),
+    pages: results,
+  });
+}
+
+/**
+ * DuckDuckGo's no-JavaScript endpoint, parsed into results.
+ *
+ * It needs no key and no account, which is what makes a real web search
+ * available to every deployment. The HTML is only ever read: tags are stripped,
+ * and each link is validated before it is reported.
+ */
+export function parseDuckDuckGoHtml(html: string): WebResult[] {
+  const results: WebResult[] = [];
+  // The lite and html endpoints differ only in the class name of the anchor.
+  const anchor = /<a[^>]+class="[^"]*result(?:__a|-link)[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  const snippet = /<(?:a|td)[^>]+class="[^"]*result(?:__snippet|-snippet)[^"]*"[^>]*>([\s\S]*?)<\/(?:a|td)>/gi;
+  const snippets: string[] = [];
+  for (const match of html.matchAll(snippet)) snippets.push(stripTags(match[1]));
+  let index = 0;
+  for (const match of html.matchAll(anchor)) {
+    const url = safeResultUrl(match[1]);
+    const title = stripTags(match[2]);
+    if (url && title.length > 0) {
+      results.push({ title, url, ...(snippets[index] ? { snippet: snippets[index] } : {}) });
+    }
+    index += 1;
+    if (results.length >= 8) break;
+  }
+  return dedupeResults(results);
+}
+
+/** DuckDuckGo's Instant Answer API: a definition, when it has one. */
+async function duckDuckGoInstantAnswer(query: string): Promise<WebResult[]> {
+  const data = await fetchJson(
+    `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&no_redirect=1&skip_disambig=1&t=valthoris`,
+    { headers: { 'User-Agent': WEB_SEARCH_USER_AGENT } },
+  );
+  const results: WebResult[] = [];
+  const abstract = str(data?.AbstractText, 400);
+  const abstractUrl = typeof data?.AbstractURL === 'string' ? safeResultUrl(data.AbstractURL) : undefined;
+  if (abstract && abstractUrl) {
+    results.push({
+      title: str(data?.Heading, 200) ?? query,
+      url: abstractUrl,
+      snippet: abstract,
+    });
+  }
+  const related: any[] = Array.isArray(data?.RelatedTopics) ? data.RelatedTopics : [];
+  for (const topic of related) {
+    const url = typeof topic?.FirstURL === 'string' ? safeResultUrl(topic.FirstURL) : undefined;
+    const text = str(topic?.Text, 300);
+    if (url && text) results.push({ title: text.slice(0, 120), url, snippet: text });
+  }
+  return dedupeResults(results);
+}
+
+/** Language editions searched by the keyless encyclopedia source. */
+const WIKIPEDIA_LANGS = ['pt', 'en'];
+
+/**
+ * Wikipedia, searched for real (not recalled).
+ *
+ * It is keyless, it answers about virtually any subject, and every fact it
+ * gives comes with the article it came from — which is exactly the property a
+ * verifiable answer needs.
+ */
+async function wikipediaSearch(query: string): Promise<WebResult[]> {
+  const results: WebResult[] = [];
+  for (const lang of WIKIPEDIA_LANGS) {
+    try {
+      const data = await fetchJson(
+        `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&list=search&srlimit=3&srsearch=${encodeURIComponent(query)}`,
+        { headers: { 'User-Agent': WEB_SEARCH_USER_AGENT } },
+      );
+      const hits: any[] = Array.isArray(data?.query?.search) ? data.query.search : [];
+      for (const hit of hits) {
+        const title = str(hit?.title, 200);
+        if (!title) continue;
+        const url = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
+        results.push({
+          title,
+          url,
+          ...(hit?.snippet ? { snippet: stripTags(String(hit.snippet)) } : {}),
+        });
+      }
+    } catch {
+      // One language edition failing must not lose the other one.
+    }
+    if (results.length >= 3) break;
+  }
+  return dedupeResults(results, 4);
+}
+
+/**
+ * Google Search through Gemini — the search that does not depend on scraping.
+ *
+ * Every keyless engine wired above is a public endpoint that may throttle a
+ * datacentre address, and the answer then silently narrows to whatever is left.
+ * Gemini's `google_search` tool is a contracted API served against the key the
+ * deployment already has, so it is the source that makes the web search
+ * *stable*: it runs before the answer is written, its result is evidence like
+ * any other, and the pages it consulted are reported with their links.
+ */
+export const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/** Models tried, in order, for a search call. */
+const GEMINI_SEARCH_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+/**
+ * The model names to try for a search.
+ *
+ * `GEMINI_SEARCH_MODEL` overrides `GEMINI_MODEL` for search only, so an
+ * operator whose main model does not serve the tool can point the search at one
+ * that does without changing the model that writes the answers.
+ */
+export function geminiSearchModels(): string[] {
+  const chain: string[] = [];
+  for (const name of [env('GEMINI_SEARCH_MODEL'), env('GEMINI_MODEL')]) {
+    if (!name) continue;
+    const cleaned = name.replace(/^\/+|\/+$/g, '').replace(/^models\//, '').trim();
+    if (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(cleaned) && !chain.includes(cleaned)) chain.push(cleaned);
+  }
+  for (const fallback of GEMINI_SEARCH_FALLBACK_MODELS) {
+    if (!chain.includes(fallback)) chain.push(fallback);
+  }
+  return chain;
+}
+
+/** The instruction the search model receives: find, do not recall. */
+const GEMINI_SEARCH_INSTRUCTION =
+  'Pesquisa AGORA na Web com a ferramenta de pesquisa e responde apenas com o que as ' +
+  'páginas encontradas dizem. Para locais ou empresas indica morada completa, telefone, ' +
+  'site oficial e horário quando existirem. Se a pesquisa não encontrar o assunto, ' +
+  'responde exatamente "SEM RESULTADOS". Nunca respondas de memória. Pergunta: ';
+
+/**
+ * Reads Gemini's grounding metadata into result pages.
+ *
+ * Only chunks that carry a real, public URL are reported: an answer with no
+ * grounding chunks consulted no page and must not be presented as a search.
+ */
+export function geminiGroundingResults(data: any): WebResult[] {
+  const candidate = data?.candidates?.[0];
+  const chunks: any[] = Array.isArray(candidate?.groundingMetadata?.groundingChunks)
+    ? candidate.groundingMetadata.groundingChunks
+    : [];
+  const results: WebResult[] = [];
+  for (const chunk of chunks) {
+    const raw = chunk?.web?.uri;
+    if (typeof raw !== 'string') continue;
+    const url = safeResultUrl(raw);
+    if (!url) continue;
+    const title = str(chunk?.web?.title, 200) ?? str(chunk?.web?.domain, 200);
+    if (!title) continue;
+    results.push({ title, url });
+  }
+  return dedupeResults(results, 8);
+}
+
+/** The text of a Gemini candidate, concatenated across its parts. */
+export function geminiAnswerText(data: any): string {
+  const parts: any[] = Array.isArray(data?.candidates?.[0]?.content?.parts)
+    ? data.candidates[0].content.parts
+    : [];
+  return parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('').trim();
+}
+
+async function geminiWebSearch(query: string): Promise<{ results: WebResult[]; answer?: string }> {
+  const key = env('GEMINI_API_KEY');
+  if (!key) throw new Error('GEMINI_API_KEY is not configured');
+  let lastError: Error | undefined;
+  for (const model of geminiSearchModels()) {
+    try {
+      const data = await fetchJson(
+        `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: GEMINI_SEARCH_INSTRUCTION + query }] }],
+            tools: [{ google_search: {} }],
+            generationConfig: { temperature: 0, maxOutputTokens: 600 },
+          }),
+        },
+      );
+      const results = geminiGroundingResults(data);
+      const text = geminiAnswerText(data);
+      const answer = /^SEM RESULTADOS/i.test(text) ? undefined : str(text, 900);
+      return { results, ...(answer ? { answer } : {}) };
+    } catch (err) {
+      // A model that does not exist for this key, or does not serve the search
+      // tool, answers 404/400: try the next name before giving up, so a single
+      // misconfigured `GEMINI_MODEL` never costs the deployment its search.
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+  throw lastError ?? new Error('Gemini search failed');
+}
+
 
 const COORD_RE = /^-?\d{1,3}(?:\.\d{1,10})?$/;
 
@@ -324,6 +712,35 @@ export const NOMINATIM_REFERER = 'https://valthoris.com';
 const NOMINATIM_MIN_INTERVAL_MS = 1_000;
 const NOMINATIM_CACHE_TTL_MS = 24 * 60 * 60 * 1_000;
 const NOMINATIM_CACHE_MAX_ENTRIES = 200;
+
+/**
+ * Photon (Komoot) — a second keyless geocoder over the same OpenStreetMap data.
+ *
+ * Nominatim answers a strict gazetteer lookup; Photon answers a fuzzy one, so
+ * a business whose name is spelled slightly differently is still found instead
+ * of being declared non-existent.
+ */
+export const PHOTON_BASE_URL = 'https://photon.komoot.io';
+const PHOTON_LANG = 'default';
+
+/** The postal address of a Photon feature, assembled from its own fields. */
+function photonAddress(properties: any): string | undefined {
+  const parts = [
+    [properties?.name, properties?.street && properties?.name !== properties?.street ? properties?.street : undefined]
+      .filter(Boolean)
+      .join(', '),
+    properties?.housenumber,
+    properties?.postcode,
+    properties?.city ?? properties?.district,
+    properties?.county,
+    properties?.state,
+    properties?.country,
+  ]
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
+    .filter((part) => part.length > 0);
+  const address = [...new Set(parts)].join(', ');
+  return address.length > 0 ? address : undefined;
+}
 
 /** Tail of the request queue: every call chains onto the previous one. */
 let nominatimQueue: Promise<void> = Promise.resolve();
@@ -406,6 +823,128 @@ export function placeContactMissing(reports: SourceReport[]): boolean {
       (r.data.phone as string).length > 0,
   );
 }
+
+/**
+ * OSM categories that describe street furniture rather than the place asked
+ * about. "Hospital de Setúbal" used to be answered with a *bus stop* named
+ * "Hospital", because the first Nominatim hit wins by relevance alone: a stop,
+ * a road or an administrative boundary matches the word without being the
+ * establishment. They are still usable when nothing better exists, but they
+ * never outrank a real building or business.
+ */
+const WEAK_PLACE_CATEGORIES = new Set([
+  'highway',
+  'railway',
+  'waterway',
+  'boundary',
+  'landuse',
+  'route',
+  'barrier',
+  'man_made',
+]);
+
+/** Categories that really are a place someone can visit. */
+const STRONG_PLACE_CATEGORIES = new Set([
+  'amenity',
+  'shop',
+  'tourism',
+  'healthcare',
+  'office',
+  'leisure',
+  'craft',
+  'building',
+  'historic',
+  'club',
+  'emergency',
+]);
+
+/** Words that carry no distinguishing power when matching a candidate name. */
+const PLACE_STOPWORDS = new Set([
+  'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas', 'a', 'o', 'as', 'os',
+  'the', 'of', 'in', 'at', 'and', 'e',
+]);
+
+/** Lowercased, accent-free tokens of a name, for comparison. */
+function placeTokens(value: string): string[] {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 2 && !PLACE_STOPWORDS.has(token));
+}
+
+/**
+ * Scores one Nominatim candidate against the query.
+ *
+ * What is rewarded is being the *kind* of thing a person asks about (a shop, a
+ * hospital, an office) and carrying the words the person typed; what is
+ * penalised is a bus stop or a road that merely shares a word. Nothing here
+ * invents data: it only chooses which of the provider's own answers is
+ * reported.
+ */
+export function scorePlaceCandidate(candidate: any, query: string): number {
+  const category = String(candidate?.category ?? candidate?.class ?? '');
+  const type = String(candidate?.type ?? '');
+  let score = 0;
+  if (STRONG_PLACE_CATEGORIES.has(category)) score += 6;
+  if (WEAK_PLACE_CATEGORIES.has(category)) score -= 6;
+  if (type === 'bus_stop' || type === 'stop_position' || type === 'platform') score -= 4;
+
+  const wanted = placeTokens(query);
+  const name = String(candidate?.name ?? candidate?.namedetails?.name ?? '');
+  const nameTokens = new Set(placeTokens(name));
+  const addressTokens = new Set(placeTokens(String(candidate?.display_name ?? '')));
+  for (const token of wanted) {
+    if (nameTokens.has(token)) score += 3;
+    else if (addressTokens.has(token)) score += 1;
+  }
+  const importance = Number(candidate?.importance);
+  if (Number.isFinite(importance)) score += importance * 2;
+  const tags = candidate?.extratags ?? {};
+  if (tags?.phone || tags?.['contact:phone'] || tags?.website || tags?.['contact:website']) score += 2;
+  return score;
+}
+
+/** The best of the candidates the geocoder returned, or nothing at all. */
+export function pickPlaceCandidate(candidates: any[], query: string): any | undefined {
+  let best: any | undefined;
+  let bestScore = -Infinity;
+  for (const candidate of candidates) {
+    const score = scorePlaceCandidate(candidate, query);
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * Simplified forms of a place query, tried in order until one is found.
+ *
+ * Nominatim searches a gazetteer: "Óptica Havaneza em Évora" finds nothing
+ * while "Óptica Havaneza, Évora" and then "Havaneza, Évora" do. Reformulating
+ * the same question is what a person would do, and it is the difference
+ * between an answer and "não encontrado".
+ */
+export function placeQueryVariants(query: string): string[] {
+  const variants: string[] = [];
+  const push = (value: string) => {
+    const cleaned = value.replace(/\s*,\s*/g, ', ').replace(/\s+/g, ' ').trim();
+    if (cleaned.length > 2 && !variants.includes(cleaned)) variants.push(cleaned);
+  };
+  push(query);
+  // "X em Y" is a location, and the gazetteer understands it as "X, Y".
+  const commaForm = query.replace(/\s+(?:em|no|na|nos|nas|in|at)\s+/gi, ', ');
+  push(commaForm);
+  const words = commaForm.split(' ');
+  // Drop the leading generic word ("Restaurante", "Óptica") — the proper name
+  // plus the town is usually what the gazetteer indexes.
+  if (words.length > 2) push(words.slice(1).join(' '));
+  return variants.slice(0, 3);
+}
+
 
 // ─── Provider registry ───────────────────────────────────────────────────────
 
@@ -1011,19 +1550,24 @@ const PROVIDERS: Provider[] = [
       // `extratags` is what carries the contact details (phone, website,
       // opening hours); without it Nominatim answers with the location only,
       // so the answer could never contain a real contact.
-      const data = await nominatimThrottle(() =>
-        fetchJson(
-          `${NOMINATIM_BASE_URL}/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&limit=1`,
-          {
-            headers: {
-              'User-Agent': NOMINATIM_USER_AGENT,
-              Referer: NOMINATIM_REFERER,
-              'Accept-Language': 'pt,en',
+      let first: any | undefined;
+      for (const variant of placeQueryVariants(value)) {
+        const data = await nominatimThrottle(() =>
+          fetchJson(
+            `${NOMINATIM_BASE_URL}/search?q=${encodeURIComponent(variant)}&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&limit=5`,
+            {
+              headers: {
+                'User-Agent': NOMINATIM_USER_AGENT,
+                Referer: NOMINATIM_REFERER,
+                'Accept-Language': 'pt,en',
+              },
             },
-          },
-        )
-      );
-      const first: any = Array.isArray(data) ? data[0] : undefined;
+          )
+        );
+        const candidates: any[] = Array.isArray(data) ? data : [];
+        first = pickPlaceCandidate(candidates, value);
+        if (first) break;
+      }
       if (!first) {
         const empty = { found: false };
         nominatimStore(query, empty);
@@ -1049,6 +1593,208 @@ const PROVIDERS: Provider[] = [
       nominatimStore(query, result);
       return result;
     },
+  },
+
+  {
+    // Photon (Komoot): a second keyless geocoder, built on the same
+    // OpenStreetMap data but with a different search engine behind it. It finds
+    // businesses Nominatim's strict gazetteer misses, so a place is not
+    // declared "not found" on the word of a single index.
+    provider: 'Photon',
+    endpoint: 'place/geocode',
+    kinds: ['place'],
+    probeValue: 'Lisboa',
+    config: () => PHOTON_BASE_URL,
+    run: async (value) => {
+      let feature: any | undefined;
+      for (const variant of placeQueryVariants(value)) {
+        const data = await fetchJson(
+          `${PHOTON_BASE_URL}/api/?q=${encodeURIComponent(variant)}&limit=5&lang=${PHOTON_LANG}`,
+          { headers: { 'User-Agent': NOMINATIM_USER_AGENT } },
+        );
+        const features: any[] = Array.isArray(data?.features) ? data.features : [];
+        feature = pickPlaceCandidate(
+          features.map((f) => ({
+            ...f?.properties,
+            category: f?.properties?.osm_key,
+            type: f?.properties?.osm_value,
+            display_name: photonAddress(f?.properties),
+            coordinates: f?.geometry?.coordinates,
+          })),
+          value,
+        );
+        if (feature) break;
+      }
+      if (!feature) return { found: false };
+      const coordinates: any[] = Array.isArray(feature.coordinates) ? feature.coordinates : [];
+      const lon = str(coordinates[0] !== undefined ? String(coordinates[0]) : undefined, 32);
+      const lat = str(coordinates[1] !== undefined ? String(coordinates[1]) : undefined, 32);
+      return clean({
+        found: true,
+        name: str(feature?.name) ?? str(photonAddress(feature), 200),
+        address: str(photonAddress(feature), 200),
+        category: str(feature?.category),
+        type: str(feature?.type),
+        latitude: lat,
+        longitude: lon,
+        link: placeMapLink(lat, lon),
+      });
+    },
+  },
+
+  // ── Public web search (any subject) ───────────────────────────────────────
+  {
+    // Google Search, served through the Gemini key the deployment already has.
+    // It is listed first because it is the only search here that is a
+    // contracted API rather than a public endpoint that may throttle us.
+    provider: 'Google Search (Gemini)',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => env('GEMINI_API_KEY'),
+    run: async (value) => {
+      const { results, answer } = await geminiWebSearch(value);
+      return webSearchResult(results, answer);
+    },
+  },
+  {
+    // Brave Search API — used when a key is configured, because it returns the
+    // cleanest, freshest result set of the engines wired here.
+    provider: 'Brave Search',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => env('BRAVE_SEARCH_API_KEY'),
+    run: async (value) => {
+      const key = env('BRAVE_SEARCH_API_KEY')!;
+      const data = await fetchJson(
+        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(value)}&count=6`,
+        { headers: { Accept: 'application/json', 'X-Subscription-Token': key } },
+      );
+      const rows: any[] = Array.isArray(data?.web?.results) ? data.web.results : [];
+      const results = dedupeResults(
+        rows.flatMap((row) => {
+          const url = typeof row?.url === 'string' ? safeResultUrl(row.url) : undefined;
+          const title = str(row?.title, 200);
+          if (!url || !title) return [];
+          return [{
+            title,
+            url,
+            ...(row?.description ? { snippet: stripTags(String(row.description)) } : {}),
+            ...(row?.page_age ? { published: str(row.page_age, 40) } : {}),
+          }];
+        }),
+      );
+      return webSearchResult(results);
+    },
+  },
+  {
+    // Tavily — a search API built for AI answers; optional, key-based.
+    provider: 'Tavily',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => env('TAVILY_API_KEY'),
+    run: async (value) => {
+      const key = env('TAVILY_API_KEY')!;
+      const data = await fetchJson('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+        body: JSON.stringify({ query: value, max_results: 6, search_depth: 'basic' }),
+      });
+      const rows: any[] = Array.isArray(data?.results) ? data.results : [];
+      const results = dedupeResults(
+        rows.flatMap((row) => {
+          const url = typeof row?.url === 'string' ? safeResultUrl(row.url) : undefined;
+          const title = str(row?.title, 200);
+          if (!url || !title) return [];
+          return [{ title, url, ...(row?.content ? { snippet: stripTags(String(row.content)) } : {}) }];
+        }),
+      );
+      return webSearchResult(results, str(data?.answer, 400));
+    },
+  },
+  {
+    // Serper (Google Search API) — optional, key-based.
+    provider: 'Serper (Google)',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => env('SERPER_API_KEY'),
+    run: async (value) => {
+      const key = env('SERPER_API_KEY')!;
+      const data = await fetchJson('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': key },
+        body: JSON.stringify({ q: value, num: 6, hl: 'pt' }),
+      });
+      const rows: any[] = Array.isArray(data?.organic) ? data.organic : [];
+      const results = dedupeResults(
+        rows.flatMap((row) => {
+          const url = typeof row?.link === 'string' ? safeResultUrl(row.link) : undefined;
+          const title = str(row?.title, 200);
+          if (!url || !title) return [];
+          return [{
+            title,
+            url,
+            ...(row?.snippet ? { snippet: stripTags(String(row.snippet)) } : {}),
+            ...(row?.date ? { published: str(row.date, 40) } : {}),
+          }];
+        }),
+      );
+      const knowledge = data?.knowledgeGraph;
+      return webSearchResult(
+        results,
+        str(data?.answerBox?.answer ?? data?.answerBox?.snippet, 400),
+        clean({
+          title: str(knowledge?.title, 200),
+          phone: str(knowledge?.attributes?.Phone ?? knowledge?.phoneNumber),
+          website: str(knowledge?.website, 200),
+          address: str(knowledge?.address, 200),
+        }),
+      );
+    },
+  },
+  {
+    // DuckDuckGo — no key, no account, no quota to configure: this is the
+    // source that guarantees every deployment really searches the web.
+    provider: 'DuckDuckGo',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => DUCKDUCKGO_ENDPOINT,
+    run: async (value) => {
+      let results: WebResult[] = [];
+      try {
+        const html = await fetchText(DUCKDUCKGO_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': WEB_SEARCH_USER_AGENT,
+            'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+          },
+          body: `q=${encodeURIComponent(value)}&kl=pt-pt`,
+        });
+        results = parseDuckDuckGoHtml(html);
+      } catch (err) {
+        // The HTML endpoint throttles datacentre addresses; the Instant Answer
+        // API is the documented, stable fallback and needs no key either.
+        console.warn('[ai-chat] duckduckgo html search unavailable:', String(err).slice(0, 200));
+      }
+      if (results.length === 0) results = await duckDuckGoInstantAnswer(value);
+      return webSearchResult(results);
+    },
+  },
+  {
+    // Wikipedia — keyless, encyclopaedic and always attributable. It is what
+    // lets a general question ("o que aconteceu em…", "quem foi…") be answered
+    // from a source instead of from the model's memory.
+    provider: 'Wikipedia',
+    endpoint: 'web/encyclopedia',
+    kinds: ['web', 'topic'],
+    probeValue: 'Lisboa',
+    config: () => 'https://wikipedia.org',
+    run: async (value) => webSearchResult(await wikipediaSearch(value)),
   },
 
   // ── Current threat intelligence ───────────────────────────────────────────
@@ -1095,6 +1841,26 @@ export async function gatherIntelligence(entity: IntelEntity): Promise<SourceRep
 
   const selected = providersFor(entity.kind).slice(0, MAX_CONCURRENT);
   return await Promise.all(selected.map((provider) => runProvider(provider, entity.kind, value)));
+}
+
+/**
+ * Runs the lookups for several entities at once — for instance the gazetteer
+ * for a place *and* a web search for its contact details.
+ *
+ * The reports are merged, and a provider that would answer twice for the same
+ * value is only queried once, so the "Fontes" list never shows a duplicate.
+ */
+export async function gatherAllIntelligence(entities: IntelEntity[]): Promise<SourceReport[]> {
+  const batches = await Promise.all(entities.map((entity) => gatherIntelligence(entity)));
+  const seen = new Set<string>();
+  const merged: SourceReport[] = [];
+  for (const report of batches.flat()) {
+    const key = `${sourceId(report.provider, report.endpoint)}|${report.entity}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(report);
+  }
+  return merged;
 }
 
 async function runProvider(
@@ -1233,6 +1999,13 @@ const PROVIDER_SECRETS: Record<string, string[]> = {
   CryptoScamDB: ['CRYPTOSCAMDB_API_URL'],
   CoinGecko: ['COINGECKO_API_KEY'],
   Nominatim: [],
+  Photon: [],
+  'Google Search (Gemini)': ['GEMINI_API_KEY'],
+  'Brave Search': ['BRAVE_SEARCH_API_KEY'],
+  Tavily: ['TAVILY_API_KEY'],
+  'Serper (Google)': ['SERPER_API_KEY'],
+  DuckDuckGo: [],
+  Wikipedia: [],
   NewsData: ['NEWSDATA_API_KEY'],
 };
 
