@@ -84,6 +84,7 @@ const en: Catalogue = {
   'nav.profile': 'Profile',
   'nav.comingSoon': 'Coming Soon',
   'nav.more': 'More',
+  'nav.conversations': 'Chats',
 
   // ── Toolbar ────────────────────────────────────────────────────────────────
   'toolbar.quickScan': 'Quick scan…',
@@ -204,6 +205,8 @@ const en: Catalogue = {
   'assistant.sources': 'Sources consulted',
   'assistant.sourceUnavailable': 'unavailable',
   'assistant.sourceNoAnswer': 'no answer',
+  'assistant.fullAnalysis': 'See the full analysis',
+  'assistant.conversationsTitle': 'Your conversations',
   'assistant.newConversation': 'New conversation',
   'assistant.suggestion.fraudAlerts': 'Fraud alerts: what are they making up this week?',
   'assistant.suggestion.investigate': 'Analyse something suspicious: talk to me, let’s unmask it.',

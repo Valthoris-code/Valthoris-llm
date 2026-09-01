@@ -1163,10 +1163,44 @@ html[data-reduce-motion='true'] *::after {
  */
 .ai-assistant-shell { width: 100%; min-width: 0; max-width: 100%; }
 
+/*
+ * The plain-language answer is what the user reads; the technical analysis is
+ * one tap away and never in the way. The expander is styled like the source
+ * list so both read as the same kind of "more, if you want it".
+ */
+.ai-answer-detail { margin-top: 0.55rem; }
+.ai-answer-detail > summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+  list-style: none;
+}
+.ai-answer-detail > summary::marker { content: ''; }
+.ai-answer-detail > summary::before { content: '▸ '; }
+.ai-answer-detail[open] > summary::before { content: '▾ '; }
+.ai-answer-detail > div {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.86rem;
+}
+
 /* Hide conversation sidebar on mobile; show full chat area */
 @media (max-width: 768px) {
   .ai-conv-list { display: none !important; }
   .ai-assistant-shell { flex-direction: column; }
+  /*
+   * …except on the "Conversas" entry of the bottom bar, which exists precisely
+   * to reach the saved conversations: there the list takes the whole screen and
+   * the chat itself steps aside until one is chosen.
+   */
+  .ai-shell-conversations .ai-conv-list {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-right: none;
+  }
+  .ai-shell-conversations .ai-chat-column { display: none !important; }
   /* The composer keeps its own safe-area padding; no extra room needed. */
   .ai-composer { padding-left: 0.75rem; padding-right: 0.75rem; }
   .ai-messages { padding: 1rem 0.75rem; }

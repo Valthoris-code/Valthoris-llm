@@ -100,6 +100,12 @@ export default function App() {
             {/* Public routes */}
             <Route path="home"       element={<Home />} />
             <Route path="assistant"  element={<AIAssistant />} />
+            {/*
+              The saved conversations, reachable from the mobile bottom bar:
+              the same assistant, opened on its conversation list, which the
+              narrow layout otherwise hides.
+            */}
+            <Route path="assistant/conversas" element={<AIAssistant />} />
             <Route path="scanner"    element={<Scanner />} />
             <Route path="reports"    element={<Reports />} />
             <Route path="community"  element={<CommunityReports />} />

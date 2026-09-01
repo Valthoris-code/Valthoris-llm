@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AI_BACKEND_CONFIG_ERROR,
   isAiBackendConfigured,
@@ -12,6 +13,12 @@ import ValthorisShield from '../components/ValthorisShield';
 import PlaceMap from '../components/PlaceMap';
 import type { PlaceLocation } from '../components/PlaceMap';
 import { useT } from '../i18n/useI18n';
+import {
+  MAX_CONVERSATIONS,
+  loadConversations,
+  saveConversations,
+} from '../services/chatHistory';
+import type { StoredConversation } from '../services/chatHistory';
 
 interface Message {
   id: string;
@@ -286,6 +293,50 @@ function AssistantText({ text }: { text: string }) {
   return <>{nodes}</>;
 }
 
+/**
+ * Marker the backend puts between the plain-language summary and the technical
+ * detail of an analysis. Everything after it is folded away by default.
+ */
+const DETAIL_MARKER = '[DETALHE]';
+
+/** Splits an answer into what is shown and what is kept behind the expander. */
+export function splitAnswer(text: string): { summary: string; detail: string | null } {
+  const at = text.indexOf(DETAIL_MARKER);
+  if (at < 0) return { summary: text, detail: null };
+  const summary = text.slice(0, at).trim();
+  const detail = text.slice(at + DETAIL_MARKER.length).trim();
+  // A marker with nothing on one of its sides is not a two-part answer.
+  if (summary.length === 0 || detail.length === 0) {
+    return { summary: text.replace(DETAIL_MARKER, '').trim(), detail: null };
+  }
+  return { summary, detail };
+}
+
+/**
+ * The assistant answer as the user meets it: a verdict and one sentence.
+ *
+ * Valthoris is used by people who do not read HTTP statuses, provider names or
+ * markdown: the analysis is not hidden — it is one tap away — but nothing
+ * technical is put in front of someone who did not ask for it.
+ */
+function AssistantAnswer({ text }: { text: string }) {
+  const t = useT();
+  const { summary, detail } = splitAnswer(text);
+  return (
+    <>
+      <AssistantText text={summary} />
+      {detail && (
+        <details className="ai-answer-detail">
+          <summary>{t('assistant.fullAnalysis')}</summary>
+          <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+            <AssistantText text={detail} />
+          </div>
+        </details>
+      )}
+    </>
+  );
+}
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
   const place = !isUser && msg.sources ? locatedPlace(msg.sources) : null;
@@ -345,7 +396,11 @@ function MessageBubble({ msg }: { msg: Message }) {
             style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
             role={msg.isError ? 'alert' : undefined}
           >
-            {msg.isError ? `⚠ ${msg.content}` : <AssistantText text={msg.content} />}
+            {msg.isError
+              ? `⚠ ${msg.content}`
+              : isUser
+                ? <AssistantText text={msg.content} />
+                : <AssistantAnswer text={msg.content} />}
           </span>
         )}
         {!isUser && !msg.isStreaming && !msg.isError && place && <PlaceMap place={place} />}
@@ -362,11 +417,56 @@ function MessageBubble({ msg }: { msg: Message }) {
   );
 }
 
+/**
+ * A conversation as it is written to the store.
+ *
+ * Only what the two sides said is kept: the evidence of a lookup belongs to the
+ * moment it was made, and showing it again days later as if it were fresh would
+ * be exactly the kind of stale "verified" answer the assistant avoids.
+ */
+function toStored(conversation: Conversation): StoredConversation {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    createdAt: conversation.createdAt.toISOString(),
+    messages: conversation.messages
+      .filter(m => !m.isStreaming && !m.isError && m.content.length > 0)
+      .map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+        ...(m.grounded !== undefined ? { grounded: m.grounded } : {}),
+      })),
+  };
+}
+
+/** A stored conversation, back in the shape the page renders. */
+function fromStored(conversation: StoredConversation): Conversation {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    createdAt: new Date(conversation.createdAt),
+    messages: conversation.messages.map(m => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: new Date(m.timestamp),
+      ...(m.grounded !== undefined ? { grounded: m.grounded } : {}),
+    })),
+  };
+}
+
 export default function AIAssistant() {
   const { principal } = useAuth();
   const t = useT();
+  const location = useLocation();
+  const navigate = useNavigate();
+  /** The mobile "Conversas" entry opens the assistant on its saved list. */
+  const conversationsView = location.pathname.endsWith('/conversas');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -375,6 +475,26 @@ export default function AIAssistant() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeConv = conversations.find(c => c.id === activeId) ?? null;
+
+  /**
+   * The conversations of this account, reloaded whenever the account changes.
+   *
+   * Signing in or out switches history: what one account wrote is never shown
+   * to another, and nothing is written back until the restore has happened, so
+   * an empty first render cannot erase what is stored.
+   */
+  useEffect(() => {
+    setRestored(false);
+    const stored = loadConversations(principal);
+    setConversations(stored.map(fromStored));
+    setActiveId(stored.length > 0 ? stored[0].id : null);
+    setRestored(true);
+  }, [principal]);
+
+  useEffect(() => {
+    if (!restored) return;
+    saveConversations(principal, conversations.map(toStored));
+  }, [conversations, principal, restored]);
 
   const autoGrow = useCallback(() => {
     const el = textareaRef.current;
@@ -410,10 +530,18 @@ export default function AIAssistant() {
   const createConversation = useCallback(() => {
     const id = Date.now().toString();
     const conv: Conversation = { id, title: t('assistant.newConversation'), messages: [], createdAt: new Date() };
-    setConversations(prev => [conv, ...prev]);
+    // The account keeps the most recent conversations; the oldest one falls off
+    // the end rather than the list growing without limit.
+    setConversations(prev => [conv, ...prev].slice(0, MAX_CONVERSATIONS));
     setActiveId(id);
     return id;
   }, [t]);
+
+  /** Opens a saved conversation — and, on mobile, leaves the list for it. */
+  const openConversation = useCallback((id: string) => {
+    setActiveId(id);
+    if (conversationsView) navigate('/assistant');
+  }, [conversationsView, navigate]);
 
   const sendMessage = useCallback(async (text: string) => {
     const content = text.trim();
@@ -515,7 +643,9 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="ai-assistant-shell" style={{ display: 'flex', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
+    <div
+      className={`ai-assistant-shell${conversationsView ? ' ai-shell-conversations' : ''}`}
+      style={{ display: 'flex', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Conversation list — hidden on mobile via CSS */}
       <div className="ai-conv-list" style={{
         width: 220,
@@ -544,7 +674,7 @@ export default function AIAssistant() {
             conversations.map(conv => (
               <button
                 key={conv.id}
-                onClick={() => setActiveId(conv.id)}
+                onClick={() => openConversation(conv.id)}
                 style={{
                   width: '100%',
                   background: conv.id === activeId ? 'rgba(0,212,255,0.1)' : 'none',

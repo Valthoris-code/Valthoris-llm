@@ -183,7 +183,11 @@ never rests on a single provider:
 
 * **DuckDuckGo**, through its no-JavaScript result page (with the Instant Answer
   API as the fallback when that page throttles the datacentre address);
-* **Wikipedia**, searched in Portuguese and English.
+* **Wikipedia**, searched in Portuguese and English — and only for a genuinely
+  encyclopaedic question ("o que é…", "quem foi…", "história de…"). It is never
+  consulted for a phone number, an e-mail, a URL, an IBAN, a place, a news or
+  alert request, or ordinary conversation, where it can only return something
+  unrelated that would then appear in the answer as a cited source.
 
 The optional keys above are added on top: when they are configured, their
 engines answer alongside the others and every source is listed individually, so
@@ -194,6 +198,48 @@ Google's search tool enabled, so the model searches instead of recalling; the
 pages it grounded on are reported as the `Google Search (Gemini)` source with
 the `web/grounding` endpoint. When a search source already answered, that second
 search is skipped, so a question never spends the search quota twice.
+
+### What is searched, and what is simply answered
+
+`ai-chat/index.ts` decides *once per turn*, in `classifyTurn()`, what the turn
+is, and everything else follows from that single decision:
+
+| Intent | What runs |
+| --- | --- |
+| `social` | nothing at all — no provider is contacted and no source is listed |
+| `artifact` | the threat-intelligence providers for the number, e-mail, URL, IBAN, IP or wallet |
+| `news` | the news feeds and the web search, never the encyclopaedia |
+| `place` | the gazetteers (Nominatim, Photon) and the web search |
+| `encyclopaedic` | the web search **and** Wikipedia |
+| `factual` | the web search |
+
+A turn is conversation when it neither names a subject (a proper noun, a
+number, an address, a handle) nor asks something a source could answer — which
+is what keeps "preciso de ajuda" or "posso ser teu amigo" from being searched
+literally and answered with whatever album or film happens to share the name.
+
+### Continuity between turns
+
+The browser sends the whole conversation, and `conversationSubject()` resolves
+a follow-up that does not repeat the name of its subject ("e a morada?", "o
+contacto?", "onde fica isso?") against the most recent earlier turn that named
+one. The resolved reference is looked up *and* stated in the turn handed to the
+model, so the assistant answers about the place discussed two messages earlier
+instead of asking for its full name again.
+
+The conversations themselves are kept in the browser, per account
+(`src/frontend/src/services/chatHistory.ts`): at most 20 conversations, at most
+40 messages each, reopenable from the sidebar and — on mobile — from the
+"Conversas" entry of the bottom bar.
+
+### The shape of an answer
+
+An analysis answers twice: a verdict line in plain language ("✅ Seguro",
+"⚠️ Suspeito", "❌ Perigoso", "❔ Não foi possível confirmar",
+"ℹ️ Conhecido/legítimo") plus one sentence anybody understands, then the marker
+`[DETALHE]`, and only after it the full technical detail. The interface folds
+everything after the marker behind "Ver análise completa", so a user who is not
+technical is never met with provider names, timestamps and coordinates.
 
 Only small talk (a greeting, a thank-you, "ok") skips the search entirely.
 
