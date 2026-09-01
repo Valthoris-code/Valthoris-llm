@@ -936,8 +936,8 @@ export function placeQueryVariants(query: string): string[] {
   };
   push(query);
   // "X em Y" is a location, and the gazetteer understands it as "X, Y".
-  push(query.replace(/\s+(?:em|no|na|nos|nas|in|at)\s+/gi, ', '));
   const commaForm = query.replace(/\s+(?:em|no|na|nos|nas|in|at)\s+/gi, ', ');
+  push(commaForm);
   const words = commaForm.split(' ');
   // Drop the leading generic word ("Restaurante", "Óptica") — the proper name
   // plus the town is usually what the gazetteer indexes.
