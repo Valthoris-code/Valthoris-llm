@@ -144,10 +144,10 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       setStage('anonymous');
       if (err instanceof AdminAccessDenied) {
         await supabase.auth.signOut();
-        setError(GENERIC_SIGN_IN_ERROR);
-      } else {
-        setError(err instanceof Error ? err.message : GENERIC_SIGN_IN_ERROR);
       }
+      // The message is the same in both cases: technical detail never reaches
+      // the browser, and the reason for a refusal is never disclosed.
+      setError(GENERIC_SIGN_IN_ERROR);
     }
   }, []);
 

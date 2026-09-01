@@ -19,6 +19,7 @@ import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.t
 import {
   ACTION_PERMISSIONS,
   GENERIC_ERROR,
+  corsHeaders,
   handleRequest,
   hasPermission,
   readAal,
@@ -252,4 +253,22 @@ Deno.test('every exposed action declares the permission it requires', () => {
   for (const [action, permission] of Object.entries(ACTION_PERMISSIONS)) {
     assert(permission.length > 0, action + ' has no permission');
   }
+});
+
+// ─── CORS ────────────────────────────────────────────────────────────────────
+
+Deno.test('only known origins are granted cross-origin access', () => {
+  const granted = corsHeaders(
+    new Request('https://project.supabase.co/functions/v1/admin-api/session', {
+      headers: { Origin: 'https://valthoris.com' },
+    }),
+  );
+  assertEquals(granted['Access-Control-Allow-Origin'], 'https://valthoris.com');
+
+  const refused = corsHeaders(
+    new Request('https://project.supabase.co/functions/v1/admin-api/session', {
+      headers: { Origin: 'https://atacante.example' },
+    }),
+  );
+  assertEquals(refused['Access-Control-Allow-Origin'], undefined);
 });

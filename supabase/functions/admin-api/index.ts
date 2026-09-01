@@ -29,11 +29,42 @@
 
 // deno-lint-ignore-file no-explicit-any
 
-const CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
+/**
+ * Origins allowed to call the administration.
+ *
+ * Unlike the public functions, this one is not answered with a wildcard: an
+ * arbitrary page must not be able to script requests to the administrative API
+ * from an administrator's browser. Additional origins (a preview deployment,
+ * a local `vite preview`) are declared in the `ADMIN_ALLOWED_ORIGINS` secret as
+ * a comma-separated list.
+ */
+const DEFAULT_ALLOWED_ORIGINS = ['https://valthoris.com', 'https://www.valthoris.com'];
+
+export function allowedOrigins(): string[] {
+  const extra = (env('ADMIN_ALLOWED_ORIGINS') ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => value.length > 0);
+  return [...DEFAULT_ALLOWED_ORIGINS, ...extra];
+}
+
+/**
+ * CORS headers for one request. An unknown origin is simply not granted
+ * access; the request is still processed and still authorised normally, because
+ * CORS is a browser rule and never the thing that protects this endpoint.
+ */
+export function corsHeaders(request: Request): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    Vary: 'Origin',
+  };
+  const origin = request.headers.get('Origin');
+  if (origin && allowedOrigins().includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  return headers;
+}
 
 /** The only message a failed administrative call ever shows to a human. */
 export const GENERIC_ERROR =
@@ -72,10 +103,10 @@ function env(name: string): string | undefined {
   return value && value.length > 0 ? value : undefined;
 }
 
-function json(body: unknown, status: number): Response {
+function json(body: unknown, status: number, cors: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' },
   });
 }
 
@@ -329,8 +360,9 @@ async function runAction(action: string, admin: AdminIdentity, url: URL): Promis
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 export async function handleRequest(request: Request): Promise<Response> {
+  const cors = corsHeaders(request);
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS_HEADERS });
+    return new Response('ok', { headers: cors });
   }
 
   const requestId = newRequestId();
@@ -341,10 +373,10 @@ export async function handleRequest(request: Request): Promise<Response> {
 
   try {
     const action = readAction(url.pathname);
-    if (!action) return json(NOT_FOUND_BODY, 404);
+    if (!action) return json(NOT_FOUND_BODY, 404, cors);
 
     const user = await authenticate(request);
-    if (!user) return json(NOT_FOUND_BODY, 404);
+    if (!user) return json(NOT_FOUND_BODY, 404, cors);
     email = user.email;
 
     const admin = await resolveAdmin(user);
@@ -362,7 +394,7 @@ export async function handleRequest(request: Request): Promise<Response> {
         ip,
         userAgent,
       });
-      return json(NOT_FOUND_BODY, 404);
+      return json(NOT_FOUND_BODY, 404, cors);
     }
 
     const permission = ACTION_PERMISSIONS[action];
@@ -378,7 +410,7 @@ export async function handleRequest(request: Request): Promise<Response> {
         ip,
         userAgent,
       });
-      return json({ error: 'Forbidden' }, 403);
+      return json({ error: 'Forbidden' }, 403, cors);
     }
 
     const data = await runAction(action, admin, url);
@@ -393,7 +425,7 @@ export async function handleRequest(request: Request): Promise<Response> {
       ip,
       userAgent,
     });
-    return json({ requestId, data }, 200);
+    return json({ requestId, data }, 200, cors);
   } catch (error) {
     const detail =
       error instanceof Error ? error.message + '\n' + (error.stack ?? '') : String(error);
@@ -401,7 +433,7 @@ export async function handleRequest(request: Request): Promise<Response> {
       path: url.pathname,
       method: request.method,
     });
-    return json({ error: GENERIC_ERROR, requestId }, 503);
+    return json({ error: GENERIC_ERROR, requestId }, 503, cors);
   }
 }
 

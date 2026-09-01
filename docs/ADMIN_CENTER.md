@@ -1,4 +1,4 @@
-# Valthoris — Administration &amp; Governance Center
+# Valthoris — Administration & Governance Center
 
 The administration is a **separate area** of Valthoris, served at `/admin`. It has
 its own layout, its own authentication (Supabase Auth + TOTP MFA), its own
@@ -143,6 +143,15 @@ Automatic on every push to `main`
 
 ```
 supabase functions deploy admin-api --project-ref <ref>
+```
+
+The function answers CORS only to `https://valthoris.com` and
+`https://www.valthoris.com`. Any additional origin (a preview deployment, a
+local `vite preview`) must be declared in the optional function secret
+`ADMIN_ALLOWED_ORIGINS` as a comma-separated list:
+
+```
+supabase secrets set ADMIN_ALLOWED_ORIGINS="http://localhost:4173"
 ```
 
 ### 5.6 Do **not** expose the `governance` schema
