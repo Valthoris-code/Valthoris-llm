@@ -47,6 +47,12 @@ Valthoris frontend (src/frontend/src/pages/AIAssistant.tsx)
 | CryptoScamDB | `CRYPTOSCAMDB_API_URL` | `ai-chat` → `intel.ts` | Crypto Intelligence | `/v1/check/{entity}` — answers HTTP 404 for every entity | — | CryptoScamDB | **DISABLED** (service discontinued; candidate replacements: Chainabuse, ScamSniffer) |
 | CoinGecko | `COINGECKO_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | `coins/ethereum/contract/{address}` | listed token, symbol, market cap rank, price | CoinGecko | ACTIVE |
 | NewsData | `NEWSDATA_API_KEY` | `ai-chat` → `intel.ts` | Threat Intelligence (current) | `api/1/news` | headlines, sources, publication dates | NewsData | ACTIVE |
+| Photon (Komoot) | none (keyless) | `ai-chat` → `intel.ts` | Public place / business lookup | `api?q=…&lang=pt&limit=5` | name, address, category, coordinates | Photon / OpenStreetMap | ACTIVE |
+| DuckDuckGo | none (keyless) | `ai-chat` → `intel.ts` | Public web search (any subject) | `html.duckduckgo.com/html/` result page, `api.duckduckgo.com` Instant Answer as fallback | page titles, links, snippets | DuckDuckGo | ACTIVE |
+| Wikipedia | none (keyless) | `ai-chat` → `intel.ts` | Public web search (any subject) | `pt`/`en` `w/api.php?action=query&list=search` | article titles, extracts, links | Wikipedia | ACTIVE |
+| Brave Search | `BRAVE_SEARCH_API_KEY` | `ai-chat` → `intel.ts` | Public web search (any subject) | `res/v1/web/search` | page titles, links, snippets, publication dates | Brave | ACTIVE (optional key) |
+| Tavily | `TAVILY_API_KEY` | `ai-chat` → `intel.ts` | Public web search (any subject) | `search` | direct answer, page titles, links, extracts | Tavily | ACTIVE (optional key) |
+| Serper (Google) | `SERPER_API_KEY` | `ai-chat` → `intel.ts` | Public web search (any subject) | `search` | knowledge panel (phone, site, address), organic results | Google via Serper | ACTIVE (optional key) |
 
 `ACTIVE` here means *implemented and wired*. At runtime each lookup reports its
 own state to the user:
@@ -71,8 +77,9 @@ own state to the user:
 | VAT number | Abstract VAT |
 | Ethereum address | Etherscan + GoPlus + CoinGecko |
 | Bitcoin address | — (CryptoScamDB disabled; no replacement contracted yet) |
-| Public place / business question | Nominatim (whenever the turn names a place **and** either asks for a factual detail **or** expresses a practical need — "tenho fome", "perto de mim", "como chego lá") |
-| Current-threat question | NewsData (only on an explicit news intent) |
+| Public place / business question | Nominatim + Photon (whenever the turn names a place **and** either asks for a factual detail **or** expresses a practical need — "tenho fome", "perto de mim", "como chego lá"), plus the web-search engines |
+| Any other real question, on any subject | DuckDuckGo + Wikipedia (keyless) and Brave / Tavily / Serper when their key is configured, plus Google's own search tool on the Gemini call; only small talk is answered without searching |
+| Current-threat question | NewsData (only on an explicit news intent) + the web-search engines |
 
 ## Guarantees
 

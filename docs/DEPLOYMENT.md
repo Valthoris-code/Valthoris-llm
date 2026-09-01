@@ -158,6 +158,29 @@ an integration that does not exist.
 | `COINGECKO_API_KEY` | `ai-chat/intel.ts` | **in use** — token market data |
 | `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence, only on an explicit news intent |
 | `DATA_GOV_API_KEY` | `ai-chat/intel.ts` | **in use** — FTC Do Not Call complaints; **US (+1) numbers only**, no coverage for Portugal/Europe |
+| `BRAVE_SEARCH_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search; when present it is used in addition to the keyless engines, with fresher and cleaner results |
+| `TAVILY_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search built for AI answers |
+| `SERPER_API_KEY` | `ai-chat/intel.ts` | **optional** — Google results (including the knowledge panel's phone, site and address) |
+
+### Web search works without any of those keys
+
+Every turn that is a real question — any subject, not only security — is
+searched on the open web before the model answers, and the pages that were read
+are listed as sources under the answer. Two engines need no credential at all,
+so a deployment with only `GEMINI_API_KEY` still searches for real:
+
+* **DuckDuckGo**, through its no-JavaScript result page (with the Instant Answer
+  API as the fallback when that page throttles the datacentre address);
+* **Wikipedia**, searched in Portuguese and English.
+
+The optional keys above are added on top: when they are configured, their
+engines answer alongside the keyless ones and every source is listed
+individually, so a throttled engine is visible instead of silently narrowing the
+answer. Google's own search tool is enabled on the Gemini call for the same
+turns, and the pages it grounded on are reported as the
+`Google Search (Gemini)` source.
+
+Only small talk (a greeting, a thank-you, "ok") skips the search entirely.
 
 OpenStreetMap **Nominatim** needs no secret: public place/business lookups are
 anonymous and identified only by the required `User-Agent`. The public service
@@ -178,6 +201,13 @@ works again" behaviour: it was the OpenStreetMap block, not a missing key. If
 the volume ever outgrows the public service, the next step is a self-hosted
 Nominatim or a commercial geocoder — only `NOMINATIM_BASE_URL` in `intel.ts`
 would change.
+
+A place is looked up in **two** keyless gazetteers, Nominatim and **Photon**
+(Komoot), and the candidates they return are ranked before one is chosen: a bus
+stop, a road or an administrative boundary that merely shares a word never
+outranks the hospital, shop or office the question is about. When a query finds
+nothing it is reformulated ("Óptica Havaneza em Évora" → "Óptica Havaneza,
+Évora" → "Havaneza, Évora") instead of being answered with "não encontrado".
 
 ### When the language model fails, the lookup is not lost
 

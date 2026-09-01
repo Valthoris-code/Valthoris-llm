@@ -386,17 +386,27 @@ O Valthoris suporta também um caminho de informação factual para locais e org
 ```mermaid
 flowchart TD
     A[Pedido de local do utilizador] --> B[Deteção de local]
-    B --> C[Nominatim / OpenStreetMap]
-    C --> D{Falta informação?}
-    D -- Não --> E[Construir resultado]
-    D -- Sim --> F[Fallback Web]
+    B --> C[Nominatim + Photon / OpenStreetMap]
+    B --> F[Pesquisa web: DuckDuckGo, Wikipedia, Brave/Tavily/Serper]
+    C --> D[Seleção do melhor candidato<br/>paragem de autocarro nunca vence o estabelecimento]
+    D --> E[Coordenadas + mapa GPS]
     F --> G[Telefone]
     F --> H[Site oficial]
     F --> I[Morada adicional]
-    F --> J[Fontes de suporte]
-    G & H & I & J --> K[Resposta estruturada]
-    E --> K
+    F --> J[Fontes citadas com link]
+    E & G & H & I & J --> K[Resposta estruturada com mapa e fontes]
 ```
+
+## Pesquisa na Internet
+
+Qualquer pergunta real — moradas, empresas, notícias, saúde, direito, desporto,
+tecnologia, o que for — é **pesquisada na Internet** antes de o modelo responder,
+e a resposta mostra as páginas que foram efetivamente lidas, com link. Duas das
+fontes não precisam de chave nenhuma (DuckDuckGo e Wikipédia), por isso a
+pesquisa funciona em qualquer instalação; `BRAVE_SEARCH_API_KEY`,
+`TAVILY_API_KEY` e `SERPER_API_KEY` acrescentam motores comerciais quando
+existirem. Só conversa social ("olá", "obrigado") é respondida sem pesquisa, e a
+badge por baixo de cada resposta diz sempre qual dos dois casos aconteceu.
 
 O resultado alvo deve fornecer, quando disponível: **nome oficial/reconhecido**, **morada**, **telefone**, **website**, **localização no mapa**, **fontes de suporte**, **contexto relevante** e **timestamp da recolha**.
 

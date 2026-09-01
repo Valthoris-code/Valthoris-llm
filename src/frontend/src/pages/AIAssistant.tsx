@@ -147,6 +147,61 @@ function GroundingBadge({ grounded }: { grounded: boolean }) {
 }
 
 /**
+ * One page a search engine actually returned, as reported by the backend.
+ * The UI only ever renders what is here; it never resolves a link itself.
+ */
+interface SourcePage {
+  title?: string;
+  url?: string;
+  uri?: string;
+  snippet?: string;
+}
+
+/** The pages of a source report, when that source was a web search. */
+function sourcePages(data: Record<string, unknown> | undefined): SourcePage[] {
+  const pages = data?.pages;
+  if (!Array.isArray(pages)) return [];
+  return pages.filter((page): page is SourcePage => Boolean(page) && typeof page === 'object');
+}
+
+/** An absolute http(s) address, or nothing: a link is never rendered blindly. */
+function safeHref(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  return /^https?:\/\//i.test(value) ? value : undefined;
+}
+
+/**
+ * The pages a web search read, rendered as the links they are.
+ *
+ * A search result is only useful if the user can open it and check it, so the
+ * page list is shown as anchors with the engine's own extract underneath —
+ * never as a JSON blob.
+ */
+function SearchResults({ pages }: { pages: SourcePage[] }) {
+  const links = pages
+    .map(page => ({ page, href: safeHref(page.url ?? page.uri) }))
+    .filter((entry): entry is { page: SourcePage; href: string } => Boolean(entry.href));
+  if (links.length === 0) return null;
+  return (
+    <ul className="ai-sources-pages">
+      {links.map(({ page, href }) => (
+        <li key={href}>
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            style={{ color: 'var(--accent-blue, #00d4ff)' }}
+          >
+            {page.title && page.title.length > 0 ? page.title : href}
+          </a>
+          {page.snippet && <div className="ai-sources-meta">{page.snippet}</div>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
  * Sources actually consulted for the answer.
  *
  * Every provider is shown with the outcome of its own lookup, so a partial
@@ -167,8 +222,10 @@ function SourcePanel({ sources }: { sources: AiChatSource[] }) {
       <ul className="ai-sources-list">
         {consulted.map(source => {
           const style = SOURCE_STATUS_STYLE[source.status];
+          const pages = source.status === 'success' ? sourcePages(source.data) : [];
+          const scalars = Object.entries(source.data ?? {}).filter(([key]) => key !== 'pages');
           return (
-            <li key={`${source.provider}-${source.endpoint}`}>
+            <li key={`${source.provider}-${source.endpoint}-${source.entity}`}>
               <span style={{ color: style.color }}>{style.icon}</span>{' '}
               <strong>{source.provider}</strong>
               <span className="text-muted"> · {source.endpoint}</span>
@@ -176,15 +233,16 @@ function SourcePanel({ sources }: { sources: AiChatSource[] }) {
                 {new Date(source.timestamp).toLocaleString()}
                 {source.status === 'failed' && ` · ${t('assistant.sourceUnavailable')}: ${source.error ?? t('assistant.sourceNoAnswer')}`}
               </div>
-              {source.status === 'success' && source.data && Object.keys(source.data).length > 0 && (
+              {source.status === 'success' && scalars.length > 0 && (
                 <div className="ai-sources-data">
-                  {Object.entries(source.data).map(([key, value]) => (
+                  {scalars.map(([key, value]) => (
                     <span key={key}>
                       {key}: {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                     </span>
                   ))}
                 </div>
               )}
+              <SearchResults pages={pages} />
             </li>
           );
         })}

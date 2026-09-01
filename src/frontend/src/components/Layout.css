@@ -527,6 +527,15 @@
   color: var(--text-muted);
   overflow-wrap: break-word;
 }
+/* Pages a web search actually read, listed as links the user can open. */
+.ai-sources-pages {
+  margin: 0.25rem 0 0;
+  padding-left: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-wrap: anywhere;
+}
 
 /* ─── Social share row ──────────────────────────────────────────── */
 .social-share {
