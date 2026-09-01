@@ -21,12 +21,19 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import Administrators from './pages/Administrators';
 import RolesPage from './pages/RolesPage';
 import AuditLogPage from './pages/AuditLogPage';
+import IntelSourcesPage from './pages/IntelSourcesPage';
 import AdminPlaceholder from './pages/AdminPlaceholder';
 import { ADMIN_NAV_ITEMS } from './adminNav';
 import './admin.css';
 
 /** Sections already delivered; everything else is mounted as a placeholder. */
-const IMPLEMENTED = new Set(['/admin', '/admin/administrators', '/admin/roles', '/admin/audit']);
+const IMPLEMENTED = new Set([
+  '/admin',
+  '/admin/administrators',
+  '/admin/roles',
+  '/admin/audit',
+  '/admin/intel-sources',
+]);
 
 export default function AdminApp() {
   return (
@@ -50,6 +57,14 @@ export default function AdminApp() {
               element={
                 <PermissionGuard permission="roles.read">
                   <RolesPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="intel-sources"
+              element={
+                <PermissionGuard permission="system_health.read">
+                  <IntelSourcesPage />
                 </PermissionGuard>
               }
             />

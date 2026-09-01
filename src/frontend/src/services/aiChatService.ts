@@ -59,7 +59,8 @@ export interface AiChatSource {
   endpoint: string;
   entity: string;
   timestamp: string;
-  status: 'success' | 'failed' | 'not_configured';
+  /** `disabled` marks a source deliberately switched off (retired upstream). */
+  status: 'success' | 'failed' | 'not_configured' | 'disabled';
   error?: string;
   data?: Record<string, unknown>;
 }
@@ -69,6 +70,13 @@ export interface AiChatReply {
   provider: string;
   model: string;
   analysis?: AiChatAnalysis;
+  /**
+   * True when the answer stands on evidence collected in this very turn.
+   * False means the model answered from its own knowledge — which the UI says
+   * out loud, so a lucky-but-unverified answer is never mistaken for a
+   * verified one.
+   */
+  grounded?: boolean;
   /** External sources consulted for this turn, when the turn required them. */
   sources?: AiChatSource[];
 }

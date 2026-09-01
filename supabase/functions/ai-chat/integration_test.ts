@@ -321,6 +321,28 @@ Deno.test('a place lookup needs both an entity and a factual request', () => {
   }
 });
 
+Deno.test('a practical need reaches the map without any keyword question', () => {
+  // The turn that exposed the problem: it names a place and states a need, but
+  // asks no "morada / contacto / onde fica" question. It must still be looked
+  // up instead of answered from the model's memory.
+  assert(fn.isPlaceLookup("McDonald's em Évora, estou com fome, preciso de comer"));
+  assert(fn.isPlaceLookup('qual é o hospital mais próximo?'));
+  assert(fn.isPlaceLookup('como chego ao Hotel Estoril?'));
+  assert(fn.isPlaceLookup('a pharmacy in Lisboa, I need directions'));
+
+  // A need with no place named is still not a lookup.
+  assert(!fn.isPlaceLookup('estou com fome'));
+  assert(!fn.isPlaceLookup('preciso de ajuda'));
+});
+
+Deno.test('the place query keeps the place and drops the need', () => {
+  const query = fn.placeQuery("McDonald's em Évora, estou com fome, preciso de comer");
+  assert(query.toLowerCase().includes("mcdonald"), query);
+  assert(query.toLowerCase().includes('évora'), query);
+  assert(!query.toLowerCase().includes('fome'), query);
+  assert(!query.toLowerCase().includes('comer'), query);
+});
+
 Deno.test('the place query drops the question and keeps the place', () => {
   const query = fn.placeQuery('número de telefone do hospital distrital de Évora');
   assert(query.toLowerCase().includes('hospital distrital'), query);
@@ -585,4 +607,98 @@ Deno.test('when both models fail the user sees one generic message, never a stat
     globalThis.fetch = realFetchStub;
     Deno.env.delete('DEEPSEEK_API_KEY');
   }
+});
+
+// ─── Intelligence source health (administration) ─────────────────────────────
+
+function healthRequest(body: unknown, serviceKey?: string): Request {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (serviceKey) headers['x-valthoris-service-key'] = serviceKey;
+  return new Request('https://stub.functions.test/ai-chat', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
+Deno.test('the source health endpoint is invisible without the service key', async () => {
+  recorded = [];
+  const res = await handler!(healthRequest({ action: 'intel-health' }));
+  assertEquals(res.status, 404);
+  const body = await res.json();
+  assertEquals(body.error, 'Not found');
+  // A browser probing it must not make the function contact any provider.
+  assertEquals(recorded.length, 0);
+});
+
+Deno.test('a wrong service key is refused exactly like no key at all', async () => {
+  const res = await handler!(healthRequest({ action: 'intel-health' }, 'not-the-service-key'));
+  assertEquals(res.status, 404);
+});
+
+Deno.test('the source health endpoint lists every source without probing them', async () => {
+  recorded = [];
+  const res = await handler!(healthRequest({ action: 'intel-health' }, 'test-service-role-key'));
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.probedAt, null);
+  assert(Array.isArray(body.sources) && body.sources.length > 10);
+  assert(body.sources.every((s: Record<string, unknown>) => s.probed === false));
+
+  // The retired CryptoScamDB endpoint is switched off explicitly, with its
+  // reason — never left failing silently as if a key were missing.
+  const scamdb = body.sources.find((s: Record<string, unknown>) => s.provider === 'CryptoScamDB');
+  assertEquals(scamdb?.status, 'disabled');
+  assert(String(scamdb?.error).includes('discontinued'));
+
+  // Listing is a local operation: nothing was asked of any provider.
+  assertEquals(recorded.length, 0);
+  // Secrets are named, never valued.
+  assert(!JSON.stringify(body).includes('test-gemini-key'));
+});
+
+Deno.test('a real probe reports the exact failure of one source', async () => {
+  recorded = [];
+  Deno.env.set('ABUSEIPDB_API_KEY', 'test-abuseipdb-key');
+  const realFetchStub = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://api.abuseipdb.com/')) {
+      return Promise.resolve(new Response('unauthorized', { status: 401 }));
+    }
+    return realFetchStub(input as Request, init);
+  }) as typeof fetch;
+
+  try {
+    const res = await handler!(
+      healthRequest({ action: 'intel-health', probe: 'AbuseIPDB|ip/reputation' }, 'test-service-role-key'),
+    );
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    const row = body.sources[0];
+    assertEquals(row.provider, 'AbuseIPDB');
+    assertEquals(row.status, 'degraded');
+    assertEquals(row.httpStatus, 401);
+    assert(String(row.error).includes('credential'));
+    assertEquals(row.probed, true);
+    // The real cause is also written to the technical error log.
+    assert(
+      recorded.some(
+        (r) =>
+          r.url.includes('/rest/v1/rpc/governance_write_error') &&
+          JSON.stringify(r.body).includes('AbuseIPDB'),
+      ),
+    );
+    assert(!JSON.stringify(body).includes('test-abuseipdb-key'));
+  } finally {
+    globalThis.fetch = realFetchStub;
+    Deno.env.delete('ABUSEIPDB_API_KEY');
+  }
+});
+
+Deno.test('an unknown source id is not invented', async () => {
+  const res = await handler!(
+    healthRequest({ action: 'intel-health', probe: 'NotASource|nothing' }, 'test-service-role-key'),
+  );
+  assertEquals(res.status, 404);
 });

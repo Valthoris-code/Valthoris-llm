@@ -442,6 +442,58 @@
   flex-shrink: 0;
 }
 
+/* ─── Embedded place map (assistant answers) ────────────────────── */
+.ai-place-map {
+  margin-top: 0.6rem;
+}
+.ai-place-map-surface {
+  height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+}
+/* Leaflet panes default to a very high z-index and would cover the chat UI. */
+.ai-place-map-surface .leaflet-pane,
+.ai-place-map-surface .leaflet-top,
+.ai-place-map-surface .leaflet-bottom {
+  z-index: 1;
+}
+.ai-place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.ai-place-btn {
+  flex: 1 1 150px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--text-primary, #eaf6ff);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.ai-place-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.22);
+}
+.ai-place-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.ai-place-hint {
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ─── Grounding indicator ───────────────────────────────────────── */
+.ai-grounding {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
 /* ─── Sources panel ─────────────────────────────────────────────── */
 .ai-sources {
   margin-top: 0.5rem;

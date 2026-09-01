@@ -110,6 +110,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     title: 'Intelligence',
     items: [
       {
+        to: '/admin/intel-sources',
+        label: 'Fontes de Intel',
+        icon: '🛰',
+        permission: 'system_health.read',
+        phase: 1,
+        summary: 'Estado real de cada fonte externa, último erro e teste em tempo real.',
+      },
+      {
         to: '/admin/threat-intelligence',
         label: 'Threat Intelligence',
         icon: '🕵',

@@ -16,12 +16,18 @@ import {
   formatEvidence,
   gatherIntelligence,
   isValidEntity,
+  listSources,
+  nominatimThrottle,
   placeContactMissing,
   placeMapLink,
   providersFor,
+  probeSource,
   resetGoPlusToken,
   resetNominatimState,
+  setIntelFailureSink,
+  sourceId,
 } from './intel.ts';
+import type { IntelFailure } from './intel.ts';
 
 const SECRET_KEYS = [
   'ABUSEIPDB_API_KEY',
@@ -441,4 +447,137 @@ Deno.test('the map link is only built from real coordinates', () => {
   assertEquals(placeMapLink('38.5713', undefined), undefined);
   assertEquals(placeMapLink('38.5713', '-7.9135; DROP'), undefined);
   assertEquals(placeMapLink('not-a-number', '-7.9135'), undefined);
+});
+
+// ─── Nominatim usage policy ──────────────────────────────────────────────────
+
+Deno.test('a repeated place search is answered from the cache, not from Nominatim', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      calls += 1;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { name: 'McDonald\'s', display_name: 'McDonald\'s, Évora', lat: '38.5713', lon: '-7.9135' },
+          ]),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const first = await gatherIntelligence({ kind: 'place', value: "McDonald's Évora" });
+    const second = await gatherIntelligence({ kind: 'place', value: "mcdonald's évora" });
+    assertEquals(first[0]?.status, 'success');
+    assertEquals(second[0]?.status, 'success');
+    assertEquals(second[0]?.data?.name, "McDonald's");
+    // The public gazetteer allows one request per second for the whole app;
+    // the same question must not spend a second one.
+    assertEquals(calls, 1);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('concurrent Nominatim lookups are spaced by at least one second', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  const timestamps: number[] = [];
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      timestamps.push(Date.now());
+      return Promise.resolve(
+        new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } }),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    await Promise.all([
+      nominatimThrottle(() => fetch('https://nominatim.openstreetmap.org/search?q=a')),
+      nominatimThrottle(() => fetch('https://nominatim.openstreetmap.org/search?q=b')),
+    ]);
+    assertEquals(timestamps.length, 2);
+    assert(timestamps[1] - timestamps[0] >= 950, `${timestamps[1] - timestamps[0]} ms apart`);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+// ─── Source health ───────────────────────────────────────────────────────────
+
+Deno.test('a disabled source is reported as disabled and never contacted', async () => {
+  clearSecrets();
+  Deno.env.set('CRYPTOSCAMDB_API_URL', 'https://api.cryptoscamdb.test');
+  const realFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = ((): Promise<Response> => {
+    called = true;
+    return Promise.resolve(new Response('{}', { status: 200 }));
+  }) as typeof fetch;
+
+  try {
+    const health = await probeSource(sourceId('CryptoScamDB', 'crypto/scam-database'));
+    assertEquals(health?.status, 'disabled');
+    assertEquals(called, false);
+
+    const reports = await gatherIntelligence({ kind: 'domain', value: 'example.com' });
+    const scamdb = reports.find((r) => r.provider === 'CryptoScamDB');
+    assertEquals(scamdb?.status, 'disabled');
+    assert(String(scamdb?.error).includes('discontinued'));
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('every failure is handed to the failure sink with its HTTP status', async () => {
+  clearSecrets();
+  Deno.env.set('ABUSEIPDB_API_KEY', 'unit-test-abuseipdb-key');
+  const failures: IntelFailure[] = [];
+  setIntelFailureSink((failure) => failures.push(failure));
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((): Promise<Response> =>
+    Promise.resolve(new Response('forbidden', { status: 403 }))) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'ip', value: '8.8.8.8' });
+    assertEquals(reports.find((r) => r.provider === 'AbuseIPDB')?.status, 'failed');
+    const failure = failures.find((f) => f.provider === 'AbuseIPDB');
+    assertEquals(failure?.status, 403);
+    assert(String(failure?.message).includes('403'));
+    // The sink must never receive a credential.
+    assert(!JSON.stringify(failures).includes('unit-test-abuseipdb-key'));
+  } finally {
+    globalThis.fetch = realFetch;
+    setIntelFailureSink(undefined);
+    clearSecrets();
+  }
+});
+
+Deno.test('the registry lists a source for every configured secret, values excluded', () => {
+  clearSecrets();
+  const sources = listSources();
+  assert(sources.length > 10);
+  assertEquals(
+    sources.filter((s) => s.provider === 'Nominatim')[0]?.status,
+    'operational',
+  );
+  // Without secrets everything else is "not configured" — never "operational".
+  assert(
+    sources
+      .filter((s) => s.provider !== 'Nominatim')
+      .every((s) => s.status === 'not_configured' || s.status === 'disabled'),
+  );
 });
