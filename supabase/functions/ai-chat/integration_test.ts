@@ -489,6 +489,35 @@ Deno.test('the place query keeps the place and drops the need', () => {
   assert(query.toLowerCase().includes('évora'), query);
   assert(!query.toLowerCase().includes('fome'), query);
   assert(!query.toLowerCase().includes('comer'), query);
+  // The commas and the preposition of the removed clauses must go with them:
+  // a gazetteer reads "McDonald's em Évora, , de" literally and finds nothing.
+  assertEquals(query, "McDonald's em Évora");
+});
+
+Deno.test('the place query is left with no dangling separators or prepositions', () => {
+  assertEquals(fn.placeQuery('quero ir ao Continente de Évora'), 'Continente de Évora');
+  assertEquals(fn.placeQuery('onde ficam os correios de Faro'), 'correios de Faro');
+  assertEquals(
+    fn.placeQuery('preciso de uma bomba de gasolina em Beja'),
+    'bomba de gasolina em Beja',
+  );
+});
+
+Deno.test('everyday establishments reach the map like a hospital does', () => {
+  // The vocabulary used to stop at a handful of words, so a turn naming a
+  // supermarket or a petrol station was answered from the model's memory.
+  for (
+    const turn of [
+      'supermercado em Beja',
+      'preciso de uma bomba de gasolina em Beja',
+      'onde ficam os correios de Faro',
+      'talho em Évora',
+      'centro comercial de Setúbal',
+      'pastelaria no Porto',
+    ]
+  ) {
+    assert(fn.isPlaceLookup(turn), turn);
+  }
 });
 
 Deno.test('the place query drops the question and keeps the place', () => {
