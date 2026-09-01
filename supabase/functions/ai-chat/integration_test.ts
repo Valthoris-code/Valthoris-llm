@@ -1061,3 +1061,152 @@ Deno.test('the name of a business is recognised however it is written', () => {
     assert(!fn.isSearchableTurn(chat), chat);
   }
 });
+
+// ─── Intent detection and conversation memory ────────────────────────────────
+
+Deno.test('conversation is never searched, whatever words it happens to contain', () => {
+  for (
+    const chat of [
+      'Preciso de ajuda',
+      'Não sabes nada',
+      'Não falas comigo?',
+      'Pensava que eras uma inteligência artificial',
+      'Porcaria de inteligência artificial',
+      'Posso ser teu amigo',
+      'Assim fica difícil conversar',
+      'Isso é para quê?',
+    ]
+  ) {
+    assertEquals(fn.classifyTurn(chat, false), 'social', chat);
+  }
+});
+
+Deno.test('a real question is still classified as a lookup', () => {
+  assertEquals(fn.classifyTurn('Hospital Distrital de Évora', false), 'place');
+  assertEquals(fn.classifyTurn('Centro comercial Plaza em Évora', false), 'place');
+  assertEquals(fn.classifyTurn('o que é phishing?', false), 'encyclopedic');
+  assertEquals(fn.classifyTurn('Alertas de fraude desta semana', false), 'news');
+  assertEquals(fn.classifyTurn('+351266757500', true), 'artifact');
+});
+
+Deno.test('the encyclopedia is only consulted for an encyclopedic question', () => {
+  assertEquals(fn.excludedProvidersFor('encyclopedic'), []);
+  for (const intent of ['social', 'artifact', 'news', 'place', 'factual'] as const) {
+    assertEquals(fn.excludedProvidersFor(intent), ['Wikipedia'], intent);
+  }
+});
+
+Deno.test('a follow-up is resolved against what was said before', () => {
+  const messages = [
+    { role: 'user' as const, content: 'Hospital Distrital de Évora' },
+    { role: 'assistant' as const, content: 'É o Hospital do Espírito Santo, em Évora.' },
+    { role: 'user' as const, content: 'Morada do hospital' },
+  ];
+  const subject = fn.conversationSubject(messages);
+  assertEquals(subject, 'Hospital Distrital de Évora');
+  assertEquals(fn.classifyTurn('Morada do hospital', false, subject), 'place');
+
+  // A turn that names its own subject is not a follow-up and carries no context.
+  assertEquals(
+    fn.conversationSubject([
+      ...messages.slice(0, 2),
+      { role: 'user' as const, content: 'Centro comercial Plaza em Évora' },
+    ]),
+    null,
+  );
+});
+
+Deno.test('"e a morada?" is looked up as the place named two turns earlier', async () => {
+  recorded = [];
+  nominatimPlace = DEFAULT_PLACE;
+  webSearchPages = [];
+  providerAnswers = ['✅ Seguro\nFica em Évora.\n[DETALHE]\nMORADA / ADDRESS: …'];
+
+  const res = await handler!(post({
+    messages: [
+      { role: 'user', content: 'Hospital Distrital de Beja' },
+      { role: 'assistant', content: 'É o hospital público da cidade de Beja.' },
+      { role: 'user', content: 'e a morada?' },
+    ],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  const gazetteer = recorded.find((r) =>
+    r.url.startsWith('https://nominatim.openstreetmap.org/search')
+  );
+  assert(gazetteer, 'the follow-up did not reach the gazetteer');
+  assertStringIncludes(decodeURIComponent(gazetteer!.url), 'Hospital Distrital de Beja');
+  assertEquals(body.grounded, true);
+
+  // The turn the model receives says, explicitly, what the reference resolved to.
+  const answerCall = recorded.find(
+    (r) =>
+      r.url.startsWith('https://generativelanguage.googleapis.com/') &&
+      (r.body as Record<string, unknown>)?.systemInstruction !== undefined,
+  );
+  assert(answerCall);
+  assertStringIncludes(JSON.stringify(answerCall!.body), 'Referência resolvida');
+});
+
+Deno.test('a casual message consults nothing and cites no source', async () => {
+  recorded = [];
+  providerAnswers = ['Claro que sim! Diga-me o que quer verificar.'];
+
+  const res = await handler!(post({
+    messages: [
+      { role: 'user', content: 'Hospital Distrital de Évora' },
+      { role: 'assistant', content: 'É o Hospital do Espírito Santo, em Évora.' },
+      { role: 'user', content: 'Posso ser teu amigo?' },
+    ],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.sources, undefined);
+  assertEquals(recorded.length, 1);
+  assert(recorded[0].url.startsWith('https://generativelanguage.googleapis.com/'));
+});
+
+Deno.test('a phone number is never looked up in an encyclopedia', async () => {
+  recorded = [];
+  providerAnswers = [
+    'ℹ️ Conhecido/legítimo\nÉ um número fixo português.\n[DETALHE]\n…',
+    VALID_VERDICT,
+  ];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: '+351266757500' }],
+  }));
+
+  assertEquals(res.status, 200);
+  assert(
+    !recorded.some((r) => /wikipedia\.org/.test(r.url)),
+    'the encyclopedia was consulted for a phone number',
+  );
+});
+
+Deno.test('the evidence answer leads with a plain verdict and folds the detail', () => {
+  const answer = fn.answerFromEvidence('place', [
+    {
+      provider: 'Nominatim (OpenStreetMap)',
+      endpoint: 'geocoding/search',
+      entity: 'hospital de évora',
+      timestamp: '2026-09-01T10:00:00.000Z',
+      status: 'success',
+      data: {
+        found: true,
+        name: 'Hospital do Espírito Santo',
+        address: 'Largo Senhor da Pobreza, Évora',
+        latitude: '38.5717',
+        longitude: '-7.9135',
+      },
+    },
+  ]);
+  assert(answer);
+  const [summary, detail] = answer!.split(fn.DETAIL_MARKER);
+  // What the user sees first is two short lines with no provider name in them.
+  assert(summary.trim().split('\n').length <= 3, summary);
+  assert(!summary.includes('Nominatim'), summary);
+  assertStringIncludes(detail, 'Nominatim (OpenStreetMap)');
+});

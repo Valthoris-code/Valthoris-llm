@@ -444,12 +444,20 @@ export default function AIAssistant() {
     // Request payload = the conversation as it stands *before* this turn plus
     // the new user message. Failed turns are never replayed to the model as if
     // they had been real assistant answers.
-    let history: AiChatMessage[] = [];
+    //
+    // The history is read from the rendered state, never from inside the
+    // updater below: a state updater does not run synchronously, so collecting
+    // the history there left it empty for the request that is dispatched a few
+    // lines further down. Every turn then reached the model alone, which is why
+    // the assistant treated each message as the first one of the session and
+    // could not resolve "a morada?" against the place named one turn earlier.
+    const previous = conversations.find(c => c.id === targetId);
+    const history: AiChatMessage[] = (previous?.messages ?? [])
+      .filter(m => !m.isStreaming && !m.isError && m.content.length > 0)
+      .map(m => ({ role: m.role, content: m.content }));
+
     setConversations(prev => prev.map(c => {
       if (c.id !== targetId) return c;
-      history = c.messages
-        .filter(m => !m.isStreaming && !m.isError && m.content.length > 0)
-        .map(m => ({ role: m.role, content: m.content }));
       return {
         ...c,
         title: c.messages.length === 0 ? content.slice(0, 40) : c.title,
@@ -488,7 +496,7 @@ export default function AIAssistant() {
     } finally {
       setSending(false);
     }
-  }, [activeId, createConversation, sending, principal]);
+  }, [activeId, conversations, createConversation, sending, principal]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
