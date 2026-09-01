@@ -93,6 +93,14 @@ together with an opaque request id, and the real cause (message, stack, path) is
 stored in `governance.error_logs`. Stack traces, SQL errors, API keys, tokens and
 internal paths are never returned.
 
+The AI Assistant follows the same rule and now feeds the same table: when an
+external intelligence source fails, the user still reads the single generic
+sentence, while `governance.error_logs` receives one `ai-chat/intel` entry with
+the provider, the lookup, the HTTP status (401 credential, 403 blocked, 404
+retired endpoint, 429 quota, timeout) and the timestamp. `/admin/intel-sources`
+reads that state and can re-test any source on demand. No credential, URL or
+request body is ever recorded.
+
 ---
 
 ## 5. Provisioning the Supabase project
@@ -174,6 +182,7 @@ therefore done by Hermínio and Tiago themselves, at their first sign-in on
 | `/admin/administrators` | Administrator register, roles, MFA, last access |
 | `/admin/roles` | RBAC model read from the database |
 | `/admin/audit` | Paginated, searchable, filterable audit trail |
+| `/admin/intel-sources` | State of every external intelligence source (✅ operational / ⚠️ degraded / ➖ not configured / ❌ disabled), last error with its HTTP status, and a **test now** button that performs a real lookup. Requires `system_health.read` |
 | other `/admin/*` | Route, permission and navigation already in place; data connected in the phase shown on the page |
 
 The legacy Internet Identity operations console moved from `/admin` to

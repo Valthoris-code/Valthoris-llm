@@ -39,12 +39,12 @@ Valthoris frontend (src/frontend/src/pages/AIAssistant.tsx)
 | NumVerify | `NUMVERIFY_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup | `apilayer.net/api/validate` | validity, country, carrier, line type | NumVerify | ACTIVE |
 | Abstract Phone | `ABSTRACT_PHONE_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup | `phonevalidation/v1` | validity, type, carrier, country | Abstract | ACTIVE |
 | FTC Do Not Call | `DATA_GOV_API_KEY` | `ai-chat` → `intel.ts` | Phone lookup (**US only**) | `v0/dnc-complaints?area_code=…` | complaints in the area, robocall count, common subjects | FTC (api.ftc.gov) | ACTIVE |
-| Nominatim (OpenStreetMap) | none (keyless) | `ai-chat` → `intel.ts` | Public place / business lookup | `search?q=…&format=jsonv2` | name, address, category, coordinates, OSM link | OpenStreetMap | ACTIVE |
+| Nominatim (OpenStreetMap) | none (keyless) | `ai-chat` → `intel.ts` | Public place / business lookup | `search?q=…&format=jsonv2`, identifiable `User-Agent`, ≥1 req/s queue, 24 h cache | name, address, category, coordinates, embedded map + routing | OpenStreetMap | ACTIVE |
 | OpenIBAN | `OPENIBAN_API_URL` | `ai-chat` → `intel.ts` | IBAN | `/validate/{iban}` | validity, bank name, BIC, check results | OpenIBAN | ACTIVE |
 | Abstract IBAN | `ABSTRACT_IBAN_API_KEY` | `ai-chat` → `intel.ts` | IBAN | `ibanvalidation/v1` | validity, country, bank, BIC | Abstract | ACTIVE |
 | Abstract VAT | `ABSTRACT_VAT_API_KEY` | `ai-chat` → `intel.ts` | VAT / business intelligence | `vat/v1/validate` | validity, company name and address | Abstract | ACTIVE |
 | Etherscan | `ETHERSCAN_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | API **V2** `v2/api?chainid=1` — `account/balance`, `account/txlist` | balance, recent activity, first/last seen | Etherscan | ACTIVE |
-| CryptoScamDB | `CRYPTOSCAMDB_API_URL` | `ai-chat` → `intel.ts` | Crypto Intelligence | `/v1/check/{entity}` | scam status, entry type, blocked flag | CryptoScamDB | ACTIVE |
+| CryptoScamDB | `CRYPTOSCAMDB_API_URL` | `ai-chat` → `intel.ts` | Crypto Intelligence | `/v1/check/{entity}` — answers HTTP 404 for every entity | — | CryptoScamDB | **DISABLED** (service discontinued; candidate replacements: Chainabuse, ScamSniffer) |
 | CoinGecko | `COINGECKO_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | `coins/ethereum/contract/{address}` | listed token, symbol, market cap rank, price | CoinGecko | ACTIVE |
 | NewsData | `NEWSDATA_API_KEY` | `ai-chat` → `intel.ts` | Threat Intelligence (current) | `api/1/news` | headlines, sources, publication dates | NewsData | ACTIVE |
 
@@ -56,21 +56,22 @@ own state to the user:
 | `success` | the provider answered and its data is in the report |
 | `failed` | the provider was queried and did not answer (quota, HTTP error, timeout) — the analysis continues with the other providers and the limitation is stated |
 | `not_configured` | the secret is absent on this deployment — the provider is never presented as consulted |
+| `disabled` | the provider is switched off in code with a stated reason (a discontinued service); it is never contacted and the reason is shown instead of a silent failure |
 
 ## Provider selection per entity
 
 | Entity detected in the turn | Providers queried |
 | --- | --- |
 | IP address | AbuseIPDB + IPinfo + VirusTotal + Abstract IP |
-| URL | VirusTotal + URLScan + GoPlus + CryptoScamDB |
-| Domain | VirusTotal + URLScan + CryptoScamDB |
+| URL | VirusTotal + URLScan + GoPlus |
+| Domain | VirusTotal + URLScan |
 | E-mail | Abstract Email |
 | Phone | NumVerify + Abstract Phone + FTC Do Not Call (US numbers only) |
 | IBAN | OpenIBAN + Abstract IBAN |
 | VAT number | Abstract VAT |
-| Ethereum address | Etherscan + CryptoScamDB + GoPlus + CoinGecko |
-| Bitcoin address | CryptoScamDB |
-| Public place / business question | Nominatim (only when the turn names a place **and** asks for a factual detail) |
+| Ethereum address | Etherscan + GoPlus + CoinGecko |
+| Bitcoin address | — (CryptoScamDB disabled; no replacement contracted yet) |
+| Public place / business question | Nominatim (whenever the turn names a place **and** either asks for a factual detail **or** expresses a practical need — "tenho fome", "perto de mim", "como chego lá") |
 | Current-threat question | NewsData (only on an explicit news intent) |
 
 ## Guarantees
@@ -85,3 +86,11 @@ own state to the user:
   holding a base URL must be absolute `https://` origins.
 * **No key leakage.** Upstream error bodies are never echoed: only the HTTP
   status is reported, because some providers carry the key in the query string.
+* **Diagnosable failures.** Each HTTP status is translated into an actionable
+  cause (401 credential rejected, 403 blocked, 404 endpoint retired, 429 quota,
+  timeout) and written to `governance.error_logs`; `/admin/intel-sources` shows
+  the state of every source and can re-test one on demand.
+* **Grounding is explicit.** The answer carries whether it was built on a
+  real-time lookup. When no source was consulted, the model is required to say
+  the information was not verified in real time, so a correct-by-memory answer
+  can never be mistaken for a verified one.
