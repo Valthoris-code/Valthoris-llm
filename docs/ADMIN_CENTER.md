@@ -182,7 +182,7 @@ therefore done by Hermínio and Tiago themselves, at their first sign-in on
 | `/admin/administrators` | Administrator register, roles, MFA, last access |
 | `/admin/roles` | RBAC model read from the database |
 | `/admin/audit` | Paginated, searchable, filterable audit trail |
-| `/admin/intel-sources` | State of every external intelligence source (✅ operational / ⚠️ degraded / ➖ not configured / ❌ disabled), last error with its HTTP status, and a **test now** button that performs a real lookup. Requires `system_health.read` |
+| `/admin/intel-sources` | State of every external intelligence source (✅ operational / ⚠️ degraded / ➖ not configured / ⊘ disabled), last error with its HTTP status, and a **test now** button that performs a real lookup. Requires `system_health.read` |
 | other `/admin/*` | Route, permission and navigation already in place; data connected in the phase shown on the page |
 
 The legacy Internet Identity operations console moved from `/admin` to
