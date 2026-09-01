@@ -919,7 +919,7 @@ const PLACE_POSTCODE_RE = /\b\d{4}-\d{3}\b/;
  * when the user types everything in lower case.
  */
 const NAMED_PLACE_RE = new RegExp(
-  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:d[oa]s?|de|em|no|na|of|in|at)?\\s*\\p{L}[\\p{L}.'-]{2,}`,
+  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:(?:d[oa]s?|de|em|no|na|of|in|at)\\s+)?\\p{L}[\\p{L}.'-]{2,}`,
   'iu',
 );
 
