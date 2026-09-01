@@ -37,8 +37,17 @@
 
 import { detectArtifact } from './artifacts.ts';
 import type { DetectedArtifact } from './artifacts.ts';
-import { formatEvidence, gatherIntelligence, placeContactMissing } from './intel.ts';
+import {
+  formatEvidence,
+  gatherIntelligence,
+  listSources,
+  placeContactMissing,
+  probeAllSources,
+  probeSource,
+  setIntelFailureSink,
+} from './intel.ts';
 import type { IntelEntity, IntelEntityKind, SourceReport } from './intel.ts';
+import { writeErrorLog } from './errorLog.ts';
 import {
   isPipelineConfigured,
   parseStructuredAnalysis,
@@ -55,6 +64,14 @@ interface ChatMessage {
 
 interface ChatRequest {
   messages?: ChatMessage[];
+  /**
+   * Server-to-server operation instead of a chat turn. The only one is
+   * `intel-health`, used by the administration; it requires the service-role
+   * key and never answers a browser session.
+   */
+  action?: string;
+  /** `all`, or the id of a single source, for `intel-health`. */
+  probe?: string;
   /**
    * Internet Identity principal of the caller, used only to attribute the
    * resulting fraud event. It is metadata: it grants no privilege whatsoever
@@ -132,6 +149,26 @@ const ANALYSIS_PROMPT = [
   'Do not include any prose outside the JSON object.',
 ].join(' ');
 
+/**
+ * Instructions used when NO external source was consulted for the turn.
+ *
+ * Answering a factual question (an address, a phone number, an opening time, a
+ * price) from the model's own memory is the failure mode this block exists to
+ * stop: the answer may happen to be right today and be silently wrong
+ * tomorrow, and the user cannot tell the two apart. When nothing was looked up,
+ * the answer must say so.
+ */
+const UNGROUNDED_RESPONSE_FORMAT = [
+  'No external source was consulted for this turn: no evidence block is present.',
+  'You may answer from general knowledge, but you must not present time-sensitive facts',
+  '(addresses, phone numbers, opening hours, prices, balances, reputation scores, current',
+  'events) as verified. When the question asks for such a fact, state plainly, in the',
+  'user\'s language, that it was not confirmed in real time by any source, and say which',
+  'concrete detail the user should supply so it can be verified (for example the full name',
+  'and the town of the place, or the exact address, URL, wallet or number).',
+  'Never write that you consulted, searched or verified anything in this turn.',
+].join(' ');
+
 const MAX_MESSAGES = 30;
 const MAX_CHARS = 8_000;
 
@@ -204,6 +241,32 @@ class GeminiModelNotFound extends Error {}
  * turn can be retried without it instead of failing.
  */
 class GeminiToolUnsupported extends Error {}
+
+/**
+ * Hard ceiling for a single model call.
+ *
+ * A provider that never answers is worse than one that fails: without a
+ * deadline the turn hangs until the platform kills the whole invocation, so the
+ * other provider is never tried and the user waits for an error. A grounded
+ * (web-search) turn is the slowest case, hence the generous value.
+ */
+const MODEL_TIMEOUT_MS = 25_000;
+
+/** `fetch` with a deadline; an expired one is a normal provider failure. */
+async function fetchWithTimeout(url: string, init: RequestInit, label: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`${label} timed out after ${MODEL_TIMEOUT_MS} ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Model used when `GEMINI_MODEL` is unset, blank or unusable. */
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
@@ -294,7 +357,7 @@ async function callGeminiModel(
 ): Promise<Completion> {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     url,
     {
       method: 'POST',
@@ -316,6 +379,7 @@ async function callGeminiModel(
         generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
       }),
     },
+    'Gemini',
   );
 
   if (!res.ok) {
@@ -418,7 +482,7 @@ async function callDeepSeek(
   systemPrompt: string,
 ): Promise<Completion> {
   const model = env('DEEPSEEK_MODEL') ?? 'deepseek-chat';
-  const res = await fetch('https://api.deepseek.com/chat/completions', {
+  const res = await fetchWithTimeout('https://api.deepseek.com/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -435,7 +499,7 @@ async function callDeepSeek(
       temperature: 0.2,
       max_tokens: 800,
     }),
-  });
+  }, 'DeepSeek');
   if (!res.ok) {
     // Status only: the body can echo the request. Nothing here reaches the
     // browser — the caller falls back to Gemini.
@@ -521,10 +585,83 @@ async function complete(
         // Every provider failed: the loop ends and the generic error is thrown.
         console.error(`[ai-chat] ${provider.name} unavailable, no provider left:`, detail);
       }
+      // The user keeps seeing one generic sentence, but the operator must be
+      // able to tell an exhausted quota from a revoked key without reading raw
+      // function logs, so every model failure lands in `governance.error_logs`
+      // exactly like an intelligence-source failure does.
+      void writeErrorLog({
+        source: 'ai-chat/model',
+        severity: next ? 'WARNING' : 'ERROR',
+        message: `Model provider ${provider.name} failed`,
+        detail,
+        context: { provider: provider.name, webSearch, fallbackAvailable: Boolean(next) },
+      });
     }
   }
 
   throw new AiChatError(PROVIDERS_UNAVAILABLE);
+}
+
+// Every intelligence provider failure is recorded with its real cause. The user
+// keeps seeing one generic sentence; the operator gets the HTTP status, the
+// provider and the timestamp in `governance.error_logs`.
+setIntelFailureSink((failure) => {
+  void writeErrorLog({
+    source: 'ai-chat/intel',
+    severity: failure.status === 429 ? 'WARNING' : 'ERROR',
+    message: `Intel source ${failure.provider} (${failure.endpoint}) failed`,
+    detail: failure.message,
+    context: {
+      provider: failure.provider,
+      endpoint: failure.endpoint,
+      ...(failure.status ? { httpStatus: failure.status } : {}),
+    },
+  });
+});
+
+/**
+ * Constant-time comparison of two secrets.
+ *
+ * The health endpoint is authorised by a shared key; comparing with `===`
+ * would leak its prefix through the time the comparison takes.
+ */
+function secretEquals(a: string, b: string): boolean {
+  // The loop always spans the longer string so that a wrong length costs the
+  // same time as a wrong character: returning early would leak the key length.
+  const length = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < length; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
+/**
+ * Server-to-server health check of the intelligence sources.
+ *
+ * It is what the administration's "state of the sources" panel reads, so it is
+ * never reachable from a browser session: the caller must present this
+ * project's service-role key, which only another Edge Function holds.
+ * `probe` runs a real lookup against one source (or all of them); without it
+ * only the configured state is reported and no provider is contacted.
+ */
+async function handleIntelHealth(req: Request, probe: unknown): Promise<Response> {
+  const expected = env('SUPABASE_SERVICE_ROLE_KEY') ?? env('SERVICE_ROLE_KEY');
+  const presented = req.headers.get('x-valthoris-service-key') ?? '';
+  if (!expected || !presented || !secretEquals(presented, expected)) {
+    // Same answer as an unknown route: the endpoint does not advertise itself.
+    return json({ error: 'Not found' }, 404);
+  }
+
+  if (probe === 'all') {
+    return json({ sources: await probeAllSources(), probedAt: new Date().toISOString() }, 200);
+  }
+  if (typeof probe === 'string' && probe.length > 0 && probe.length <= 120) {
+    const result = await probeSource(probe);
+    if (!result) return json({ error: 'Unknown source' }, 404);
+    return json({ sources: [result], probedAt: new Date().toISOString() }, 200);
+  }
+  return json({ sources: listSources(), probedAt: null }, 200);
 }
 
 /** HTTP entry point. Exported so it can be exercised by the function tests. */
@@ -541,6 +678,10 @@ export async function handleRequest(req: Request): Promise<Response> {
     payload = await req.json();
   } catch {
     return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if ((payload as any)?.action === 'intel-health') {
+    return await handleIntelHealth(req, (payload as any)?.probe);
   }
 
   const messages = sanitize(Array.isArray(payload.messages) ? payload.messages : []);
@@ -565,9 +706,10 @@ export async function handleRequest(req: Request): Promise<Response> {
         },
       ]
     : messages;
+  const grounded = Boolean(intel && intel.evidence);
   const systemPrompt = intel && intel.evidence
     ? `${SYSTEM_PROMPT} ${intel.kind === 'place' ? PLACE_RESPONSE_FORMAT : INTEL_RESPONSE_FORMAT}`
-    : SYSTEM_PROMPT;
+    : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
 
   // Nominatim locates a business but frequently carries no phone number. When
   // that happens on a place turn, Google's own web search is enabled so the
@@ -579,6 +721,22 @@ export async function handleRequest(req: Request): Promise<Response> {
     completion = await complete(modelMessages, systemPrompt, webSearch);
   } catch (err) {
     console.error('[ai-chat]', err);
+    // The providers actually answered: their data is the answer, and losing it
+    // because a language model is out of quota would be throwing away the very
+    // lookup the user asked for. The evidence is reported as it stands.
+    const fallback = intel ? answerFromEvidence(intel.kind, intel.sources) : null;
+    if (fallback) {
+      return json(
+        {
+          content: fallback,
+          provider: 'valthoris/evidence',
+          model: 'evidence-only',
+          grounded: true,
+          sources: intel!.sources,
+        },
+        200,
+      );
+    }
     // Only curated messages reach the browser; unexpected faults are generic.
     const message = err instanceof AiChatError ? err.message : PROVIDERS_UNAVAILABLE;
     return json({ error: message }, err instanceof AiChatError ? err.status : 502);
@@ -608,11 +766,100 @@ export async function handleRequest(req: Request): Promise<Response> {
   return json(
     {
       ...answer,
+      // Whether the answer stands on evidence collected in this very turn. The
+      // UI shows it, so a user is never left guessing if a reply was verified.
+      grounded: grounded || sources.some((s) => s.status === 'success'),
       ...(analysis ? { analysis } : {}),
       ...(sources.length > 0 ? { sources } : {}),
     },
     200,
   );
+}
+
+/**
+ * The answer built from the evidence alone, when no language model could write it.
+ *
+ * Asking for an address is a lookup, not a conversation: once Nominatim (or any
+ * other provider) has answered, the information exists and the user is entitled
+ * to it. Returning "de momento não consigo processar o seu pedido" because
+ * Gemini and DeepSeek both refused the turn throws away a successful lookup and
+ * makes a working data source look broken. This renders exactly what the
+ * providers returned — nothing is inferred, nothing is completed from memory —
+ * and says plainly that the model did not take part.
+ *
+ * Returns `null` when there is nothing real to show, in which case the caller
+ * keeps the generic error.
+ */
+export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[]): string | null {
+  const answered = sources.filter(
+    (s) => s.status === 'success' && s.data && Object.keys(s.data).length > 0 && s.data.found !== false,
+  );
+  if (answered.length === 0) return null;
+
+  const lines: string[] = [
+    'Resposta composta diretamente pelas fontes consultadas (o modelo de linguagem ' +
+      'não está disponível neste momento). / Answer composed directly from the sources ' +
+      'consulted (the language model is unavailable).',
+    '',
+  ];
+
+  if (kind === 'place') {
+    const place = answered[0].data as Record<string, unknown>;
+    for (const [field, label] of PLACE_FIELD_LABELS) {
+      const value = evidenceValue(place[field]);
+      lines.push(`${label}: ${value ?? 'não confirmado / not confirmed'}`);
+    }
+  } else {
+    for (const report of answered) {
+      const details = Object.entries(report.data as Record<string, unknown>)
+        .map(([key, value]) => {
+          const rendered = evidenceValue(value);
+          return rendered ? `${key}: ${rendered}` : null;
+        })
+        .filter((entry): entry is string => entry !== null);
+      if (details.length > 0) {
+        lines.push(`${report.provider} (${report.endpoint}) — ${details.join('; ')}`);
+      }
+    }
+  }
+
+  lines.push('');
+  lines.push('FONTES / SOURCES:');
+  for (const report of answered) {
+    lines.push(`- ${report.provider} (${report.endpoint}) — ${report.timestamp}`);
+  }
+
+  const unavailable = sources.filter((s) => s.status !== 'success');
+  if (unavailable.length > 0) {
+    lines.push('');
+    lines.push('LIMITAÇÕES / LIMITATIONS:');
+    for (const report of unavailable) {
+      lines.push(`- ${report.provider}: ${report.error ?? report.status}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/** The place fields rendered, in order, by the evidence-only answer. */
+const PLACE_FIELD_LABELS: [string, string][] = [
+  ['name', 'NOME / NAME'],
+  ['address', 'MORADA / ADDRESS'],
+  ['phone', 'CONTACTO / CONTACT'],
+  ['website', 'SITE / WEBSITE'],
+  ['openingHours', 'HORÁRIO / OPENING HOURS'],
+  ['link', 'MAPA / MAP'],
+];
+
+/** Renders one evidence value, or nothing at all when it carries no information. */
+function evidenceValue(value: unknown): string | null {
+  if (typeof value === 'string') return value.length > 0 ? value : null;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    const parts = value.map((item) => evidenceValue(item)).filter((item) => item !== null);
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+  return null;
 }
 
 /**
@@ -637,22 +884,44 @@ const PLACE_REQUEST_RE =
   /\b(contact[oa]s?|telefone|telem[óo]vel|n[úu]mero|morada|endere[çc]o|onde\s+(?:fica|é|e|está|esta)|hor[áa]rio|hor[áa]rios|localiza[çc][ãa]o|site|website|p[áa]gina|quem\s+é\s+(?:esta|essa|a)\s+empresa|phone|address|opening hours|where is|contact)\b/i;
 
 /**
- * True when the turn is genuinely asking for a factual detail about a real
- * place or business.
+ * Public-place lookup: a practical need that can only be answered on the map.
  *
- * Both conditions must hold at the same time: naming an entity is not enough,
- * and asking for a contact is not enough either. "Olá", "bom dia", "obrigado"
- * or "como estás" satisfy neither, so they never reach an external provider.
+ * The lookup used to depend on the user phrasing an explicit question
+ * ("morada", "contacto", "onde fica"). "McDonald's em Évora, estou com fome,
+ * preciso de comer" contains none of those words, so nothing was looked up and
+ * the assistant answered a real-world location question from the language
+ * model's memory — right by luck, and unverifiable. Wanting to eat, to get
+ * there or to find the nearest one is the same request in plain language, and
+ * it must reach the map just the same.
+ */
+const PLACE_NEED_RE =
+  /\b(fome|comer|almo[çc]ar|jantar|lanchar|beber|caf[ée]|refei[çc][ãa]o|dormir|ficar|abastecer|combust[íi]vel|farm[áa]cia\s+de\s+servi[çc]o|perto\s+de\s+mim|mais\s+pr[óo]xim[oa]|aqui\s+perto|nas?\s+redondezas|como\s+(?:chego|chegar|ir)|ir\s+at[ée]|dire[çc][õo]es|rota|caminho|mapa|hungry|eat|nearby|nearest|near\s+me|how\s+do\s+i\s+get|directions|route|map)\b/i;
+
+/**
+ * True when the turn is genuinely about a real public place or business.
+ *
+ * A place must be named — an establishment type ("restaurante", "farmácia") or
+ * the "X em Y" shape — *and* the turn must express either a factual question
+ * about it or a practical need that only a location can satisfy. "Olá", "bom
+ * dia" or "obrigado" satisfy neither, so they still never reach an external
+ * provider.
  */
 export function isPlaceLookup(text: string): boolean {
   const hasEntity = PLACE_ENTITY_RE.test(text) || PLACE_PATTERN_RE.test(text);
-  const hasRequest = PLACE_REQUEST_RE.test(text);
-  return hasEntity && hasRequest;
+  if (!hasEntity) return false;
+  return PLACE_REQUEST_RE.test(text) || PLACE_NEED_RE.test(text);
 }
 
-/** Words that describe the request rather than the place, dropped from the query. */
+/**
+ * Words that describe the request rather than the place, dropped from the query.
+ *
+ * Nominatim searches a gazetteer, not free text: "McDonald's em Évora estou com
+ * fome preciso de comer" finds nothing, while "McDonald's Évora" finds the
+ * restaurant. Everything that expresses the need rather than the place is
+ * removed before the search.
+ */
 const PLACE_QUERY_NOISE_RE =
-  /\b(qual\s+é|qual|quero|preciso|sabes|podes|dizer|diz-me|d[áa]-me|indica(?:-me)?|por favor|o\s+contact[oa]s?|contact[oa]s?|n[úu]mero de telefone|n[úu]mero|telefone|telem[óo]vel|morada|endere[çc]o|hor[áa]rio(?:s)?|localiza[çc][ãa]o|onde\s+(?:fica|é|e|está|esta)|what\s+is|the\s+)\b/gi;
+  /\b(qual\s+é|qual|quero|queria|gostava|preciso|sabes|podes|dizer|diz-me|d[áa]-me|indica(?:-me)?|por favor|o\s+contact[oa]s?|contact[oa]s?|n[úu]mero de telefone|n[úu]mero|telefone|telem[óo]vel|morada|endere[çc]o|hor[áa]rio(?:s)?|localiza[çc][ãa]o|onde\s+(?:fica|é|e|está|esta)|estou\s+com\s+fome|com\s+fome|fome|comer|almo[çc]ar|jantar|lanchar|beber|dormir|abastecer|perto\s+de\s+mim|mais\s+pr[óo]xim[oa]|aqui\s+perto|nas?\s+redondezas|como\s+(?:chego|chegar|ir)|dire[çc][õo]es|rota|caminho|mapa|what\s+is|i\s+am\s+hungry|hungry|near\s+me|nearest|nearby|directions|route|map|the\s+)\b/gi;
 
 /** Builds the Nominatim query from the turn: the place, without the question. */
 export function placeQuery(text: string): string {

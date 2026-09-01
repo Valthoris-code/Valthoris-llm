@@ -88,6 +88,28 @@ export interface AuditLogPage {
   items: AuditLogRow[];
 }
 
+/** State of one external intelligence source, as reported by `ai-chat`. */
+export interface IntelSourceRow {
+  provider: string;
+  endpoint: string;
+  kinds: string[];
+  status: 'operational' | 'degraded' | 'not_configured' | 'disabled';
+  error?: string;
+  httpStatus?: number;
+  checkedAt: string;
+  durationMs?: number;
+  /** True when a real request was sent to the provider for this result. */
+  probed: boolean;
+  /** Names (never values) of the secrets the source needs. */
+  secrets: string[];
+}
+
+export interface IntelSourcesResult {
+  sources: IntelSourceRow[];
+  /** ISO instant of the live test, or null when only the configured state was read. */
+  probedAt: string | null;
+}
+
 async function call<T>(path: string): Promise<T> {
   const supabase = getAdminSupabase();
   const { data } = await supabase.auth.getSession();
@@ -155,4 +177,16 @@ export function fetchAuditLogs(params: {
   if (params.result) query.set('result', params.result);
   const suffix = query.toString();
   return call<AuditLogPage>('/audit-logs' + (suffix ? `?${suffix}` : ''));
+}
+
+/**
+ * State of the external intelligence sources.
+ *
+ * Without `probe` only the configured state is read and no provider is
+ * contacted. `probe: 'all'` runs a real test lookup against every source, and a
+ * `Provider|endpoint` id tests exactly one — that is the "test now" button.
+ */
+export function fetchIntelSources(probe?: string): Promise<IntelSourcesResult> {
+  const query = probe ? `?probe=${encodeURIComponent(probe)}` : '';
+  return call<IntelSourcesResult>('/intel-sources' + query);
 }

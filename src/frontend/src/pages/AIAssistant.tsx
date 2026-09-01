@@ -9,6 +9,8 @@ import { useAuth } from '../hooks/useAuth';
 import SocialShare from '../components/SocialShare';
 import NewsTicker from '../components/NewsTicker';
 import ValthorisShield from '../components/ValthorisShield';
+import PlaceMap from '../components/PlaceMap';
+import type { PlaceLocation } from '../components/PlaceMap';
 import { useT } from '../i18n/useI18n';
 
 interface Message {
@@ -27,6 +29,8 @@ interface Message {
   analysis?: AiChatAnalysis;
   /** External lookups the backend performed for this turn. */
   sources?: AiChatSource[];
+  /** True when the answer was built on sources consulted in this turn. */
+  grounded?: boolean;
 }
 
 interface Conversation {
@@ -91,7 +95,56 @@ const SOURCE_STATUS_STYLE: Record<AiChatSource['status'], { icon: string; color:
   success:        { icon: '✓', color: 'var(--accent-green, #2ed573)' },
   failed:         { icon: '✕', color: 'var(--accent-amber, #ffa502)' },
   not_configured: { icon: '–', color: 'var(--text-muted)' },
+  disabled:       { icon: '⊘', color: 'var(--text-muted)' },
 };
+
+/** A coordinate as a provider returned it: a plain decimal number, or nothing. */
+function coordinate(value: unknown): number | undefined {
+  const parsed = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/**
+ * The located place, when a source actually returned coordinates for this turn.
+ *
+ * Only a successful lookup can produce a map: the UI never derives a position
+ * from the answer text, so what is pinned is exactly what the provider said.
+ */
+function locatedPlace(sources: AiChatSource[]): PlaceLocation | null {
+  for (const source of sources) {
+    if (source.status !== 'success' || !source.data) continue;
+    const lat = coordinate(source.data.latitude);
+    const lon = coordinate(source.data.longitude);
+    if (lat === undefined || lon === undefined) continue;
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+    return {
+      name: typeof source.data.name === 'string' ? source.data.name : source.entity,
+      address: typeof source.data.address === 'string' ? source.data.address : undefined,
+      lat,
+      lon,
+    };
+  }
+  return null;
+}
+
+/**
+ * Says whether the answer was verified against live sources in this turn.
+ *
+ * A model can be right by memory and wrong tomorrow; the user must be able to
+ * tell the two apart at a glance.
+ */
+function GroundingBadge({ grounded }: { grounded: boolean }) {
+  return (
+    <div
+      className="ai-grounding"
+      style={{ color: grounded ? 'var(--accent-green, #2ed573)' : 'var(--accent-amber, #ffa502)' }}
+    >
+      {grounded
+        ? '🔎 Resposta verificada em fontes consultadas nesta pergunta.'
+        : '🧠 Sem consulta externa nesta pergunta: resposta apenas com o conhecimento do modelo, não verificada em tempo real.'}
+    </div>
+  );
+}
 
 /**
  * Sources actually consulted for the answer.
@@ -177,6 +230,7 @@ function AssistantText({ text }: { text: string }) {
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
+  const place = !isUser && msg.sources ? locatedPlace(msg.sources) : null;
   return (
     <div
       className="animate-fade-in"
@@ -236,7 +290,11 @@ function MessageBubble({ msg }: { msg: Message }) {
             {msg.isError ? `⚠ ${msg.content}` : <AssistantText text={msg.content} />}
           </span>
         )}
+        {!isUser && !msg.isStreaming && !msg.isError && place && <PlaceMap place={place} />}
         {msg.analysis && !msg.isStreaming && <AnalysisBadge analysis={msg.analysis} />}
+        {!isUser && !msg.isStreaming && !msg.isError && msg.grounded !== undefined && (
+          <GroundingBadge grounded={msg.grounded} />
+        )}
         {msg.sources && msg.sources.length > 0 && !msg.isStreaming && <SourcePanel sources={msg.sources} />}
         <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', textAlign: 'right' }}>
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -358,7 +416,12 @@ export default function AIAssistant() {
 
     try {
       const reply = await sendChat([...history, { role: 'user', content }], principal);
-      replaceThinking({ content: reply.content, analysis: reply.analysis, sources: reply.sources });
+      replaceThinking({
+        content: reply.content,
+        analysis: reply.analysis,
+        sources: reply.sources,
+        grounded: reply.grounded,
+      });
     } catch (err) {
       replaceThinking({
         content: err instanceof Error ? err.message : String(err),

@@ -85,6 +85,7 @@ export const ACTION_PERMISSIONS: Record<string, string> = {
   administrators: 'admins.read',
   roles: 'roles.read',
   'audit-logs': 'audit.read',
+  'intel-sources': 'system_health.read',
 };
 
 export interface AdminIdentity {
@@ -337,6 +338,18 @@ async function runAction(action: string, admin: AdminIdentity, url: URL): Promis
     case 'roles':
       return { roles: await rpc('governance_list_roles', {}) };
 
+    case 'intel-sources': {
+      // The state of every external intelligence source. The registry and the
+      // credentials live in the `ai-chat` function, which is the only place
+      // that may hold them, so the administration asks *it* instead of
+      // duplicating the provider list here (the duplication is exactly what let
+      // the deployment drift from the repository in the first place).
+      const probe = url.searchParams.get('probe');
+      const safeProbe =
+        probe && probe.length <= 120 && /^[A-Za-z0-9 .|/_-]+$/.test(probe) ? probe : undefined;
+      return await intelHealth(safeProbe);
+    }
+
     case 'audit-logs': {
       const limit = Number.parseInt(url.searchParams.get('limit') ?? '50', 10);
       const offset = Number.parseInt(url.searchParams.get('offset') ?? '0', 10);
@@ -355,6 +368,34 @@ async function runAction(action: string, admin: AdminIdentity, url: URL): Promis
       // Unreachable: readAction() only returns known actions.
       throw new Error('Unhandled action: ' + action);
   }
+}
+
+/**
+ * Reads the intelligence-source health from the `ai-chat` function.
+ *
+ * The call is authorised with this project's service-role key, which `ai-chat`
+ * checks in constant time; a browser can never reach that endpoint. `probe`
+ * asks for a real test lookup ("all", or a single `Provider|endpoint` id)
+ * instead of the configured state alone.
+ */
+async function intelHealth(probe?: string): Promise<unknown> {
+  const { url, key } = serviceConfig();
+  const response = await fetch(url + '/functions/v1/ai-chat', {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      Authorization: 'Bearer ' + key,
+      'x-valthoris-service-key': key,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action: 'intel-health', ...(probe ? { probe } : {}) }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      'intel-health failed with HTTP ' + response.status + ': ' + (await response.text()),
+    );
+  }
+  return await response.json();
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────

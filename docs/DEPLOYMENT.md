@@ -4,6 +4,26 @@ This file lists the exact configuration and commands needed to deploy the
 current state of the repository. No secret values are stored here; only the
 names of the variables that must be provided by the deployment environment.
 
+## 0. One source of truth: this repository
+
+Everything that runs on Supabase — Edge Functions and migrations — is deployed
+from this repository. `.github/workflows/deploy-edge-functions.yml` redeploys
+**every** function on each push to `main`, without a path filter, precisely so
+that the deployed code cannot drift away from the code that is reviewed here.
+
+A consequence to respect: a change made by hand in the Supabase Dashboard (an
+edited function, a patched query) survives only until the next push, which
+overwrites it. If a fix is applied there under pressure, it must be committed
+here in the same session, otherwise it will silently disappear and the symptom
+will come back — which is exactly how "sources that got better and then got
+worse again" happens. Secrets are the one exception: they live only in the
+Supabase secret store and are never committed.
+
+To reconcile after an out-of-band change: pull the deployed source
+(`supabase functions download <name> --project-ref <ref>`), diff it against
+`supabase/functions/<name>/`, and commit whatever is genuinely newer with a
+`sync:` commit message.
+
 ## 1. Frontend environment (public configuration only)
 
 Provided at build time by Vite (`.env` in `src/frontend/`, or the CI
@@ -134,13 +154,73 @@ an integration that does not exist.
 | `ABSTRACT_IBAN_API_KEY` | `ai-chat/intel.ts` | **in use** — IBAN intelligence |
 | `ABSTRACT_VAT_API_KEY` | `ai-chat/intel.ts` | **in use** — VAT / business validation |
 | `ETHERSCAN_API_KEY` | `ai-chat/intel.ts` | **in use** — Ethereum address activity |
-| `CRYPTOSCAMDB_API_URL` | `ai-chat/intel.ts` | **in use** — crypto scam database |
+| `CRYPTOSCAMDB_API_URL` | `ai-chat/intel.ts` | **disabled** — the CryptoScamDB public API answers HTTP 404 for every lookup (project discontinued). The source is switched off in code and reported as `disabled`, with the reason, instead of failing on every crypto/domain analysis. Its coverage is provided by VirusTotal, URLScan and GoPlus until a replacement (Chainabuse / ScamSniffer) is contracted |
 | `COINGECKO_API_KEY` | `ai-chat/intel.ts` | **in use** — token market data |
 | `NEWSDATA_API_KEY` | `ai-chat/intel.ts` | **in use** — current threat intelligence, only on an explicit news intent |
 | `DATA_GOV_API_KEY` | `ai-chat/intel.ts` | **in use** — FTC Do Not Call complaints; **US (+1) numbers only**, no coverage for Portugal/Europe |
 
 OpenStreetMap **Nominatim** needs no secret: public place/business lookups are
-anonymous and identified only by the required `User-Agent`.
+anonymous and identified only by the required `User-Agent`. The public service
+enforces a hard usage policy and `ai-chat/intel.ts` implements it rather than
+merely documenting it:
+
+* every request is sent as
+  `Valthoris-App/1.0 (https://valthoris.com; contacto@valthoris.com)` with a
+  `Referer` of `https://valthoris.com` — a generic HTTP-client User-Agent is
+  answered with HTTP 403;
+* requests are serialised through a process-wide queue that guarantees at least
+  **one second** between calls, so simultaneous users cannot produce a burst;
+* an identical search is answered from an in-memory cache for **24 h**, so a
+  repeated question costs no request at all.
+
+Those three measures are what removes the intermittent "works, then fails, then
+works again" behaviour: it was the OpenStreetMap block, not a missing key. If
+the volume ever outgrows the public service, the next step is a self-hosted
+Nominatim or a commercial geocoder — only `NOMINATIM_BASE_URL` in `intel.ts`
+would change.
+
+### When the language model fails, the lookup is not lost
+
+`ai-chat` used to answer *"De momento não consigo processar o seu pedido"*
+whenever both language models refused the turn — including turns where the
+external sources had already answered. Asking for an address is a lookup, not a
+conversation: the address existed, and the message hid it behind what looked
+like a broken assistant.
+
+Now, when Gemini and DeepSeek both fail on a turn that collected real evidence,
+the answer is composed directly from what the providers returned (name, address,
+contact, opening hours, map link, sources and the lookup timestamp), stating
+plainly that the language model did not take part. Nothing is inferred: a field
+the source did not carry is reported as *não confirmado / not confirmed*. The
+generic message remains only for a turn where there is genuinely nothing to
+show.
+
+Each model call also has a hard 25 s deadline, so a provider that never answers
+falls back to the other one instead of hanging until the platform kills the
+invocation, and every model failure is recorded in `governance.error_logs`
+(`ai-chat/model`) with its real cause — an exhausted quota and a revoked key are
+no longer indistinguishable.
+
+### State of the sources (administration)
+
+`/admin/intel-sources` (permission `system_health.read`) lists every configured
+source with its real state and a **test now** button. The button makes the
+backend perform a genuine lookup and reports exactly what came back —
+`HTTP 401` (credential rejected), `403` (blocked), `404` (endpoint retired),
+`429` (quota) or a timeout — so "the assistant is not answering" never has to be
+diagnosed by guesswork again.
+
+The panel is served by the `intel-sources` action of `admin-api`, which asks the
+`ai-chat` function (the only place that holds the provider credentials) over the
+`intel-health` server-to-server endpoint. That endpoint requires the project's
+service-role key, compared in constant time, and answers `404` to anything else,
+so no browser can reach it.
+
+Every provider failure — during a user turn or during a test — is written to
+`governance.error_logs` with the provider, the lookup, the HTTP status and the
+timestamp. The user keeps seeing the single generic sentence (a UX decision),
+but the operator now has the real cause. No credential, URL or request body is
+ever recorded.
 
 The full mapping (secret → provider → module → lookup → data returned) is in
 `docs/architecture/api-integration-matrix.md`.
