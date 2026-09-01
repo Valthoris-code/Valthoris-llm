@@ -27,6 +27,7 @@ import {
   probeSource,
   resetGoPlusToken,
   resetNominatimState,
+  geminiSearchModels,
   scorePlaceCandidate,
   setIntelFailureSink,
   sourceId,
@@ -53,6 +54,12 @@ const SECRET_KEYS = [
   'GOPLUS_APP_KEY',
   'GOPLUS_APP_SECRET',
   'DATA_GOV_API_KEY',
+  'GEMINI_API_KEY',
+  'GEMINI_SEARCH_MODEL',
+  'GEMINI_MODEL',
+  'BRAVE_SEARCH_API_KEY',
+  'TAVILY_API_KEY',
+  'SERPER_API_KEY',
 ];
 
 function clearSecrets() {
@@ -672,6 +679,103 @@ Deno.test('a real web search is performed with no credential at all', async () =
     assert(calls.some((url) => url.startsWith('https://html.duckduckgo.com/')));
   } finally {
     globalThis.fetch = realFetch;
+  }
+});
+
+Deno.test('the Gemini key alone is enough to search the web', async () => {
+  clearSecrets();
+  Deno.env.set('GEMINI_API_KEY', 'unit-test-gemini-key');
+  const realFetch = globalThis.fetch;
+  const calls: string[] = [];
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    calls.push(url);
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      const body = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
+      assert(
+        Array.isArray(body.tools) && body.tools.some((t: Record<string, unknown>) => 'google_search' in t),
+        'the search tool was not requested',
+      );
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [{
+              content: { parts: [{ text: 'A Óptica Havaneza fica na Praça do Giraldo.' }] },
+              groundingMetadata: {
+                groundingChunks: [
+                  { web: { uri: 'https://exemplo.test/havaneza', title: 'Óptica Havaneza' } },
+                  { web: { uri: 'javascript:alert(1)', title: 'não é uma página' } },
+                  { web: { uri: 'https://exemplo.test/havaneza', title: 'duplicado' } },
+                ],
+              },
+            }],
+          }),
+          { status: 200 },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected fetch to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'web', value: 'óptica havaneza évora' });
+    const search = reports.find((r) => r.provider === 'Google Search (Gemini)');
+    assertEquals(search?.status, 'success');
+    const pages = search?.data?.pages as { url: string }[];
+    // The unsafe link is dropped and the duplicate is collapsed.
+    assertEquals(pages.length, 1);
+    assertEquals(pages[0].url, 'https://exemplo.test/havaneza');
+    assertEquals(search?.data?.answer, 'A Óptica Havaneza fica na Praça do Giraldo.');
+    // The key never appears anywhere but in the request itself.
+    assert(!JSON.stringify(search).includes('unit-test-gemini-key'));
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('a Gemini search that finds nothing says so instead of recalling', async () => {
+  clearSecrets();
+  Deno.env.set('GEMINI_API_KEY', 'unit-test-gemini-key');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ candidates: [{ content: { parts: [{ text: 'SEM RESULTADOS' }] } }] }),
+          { status: 200 },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected fetch to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'web', value: 'assunto inexistente' });
+    const search = reports.find((r) => r.provider === 'Google Search (Gemini)');
+    assertEquals(search?.status, 'success');
+    assertEquals(search?.data?.found, false);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('the search model can be pointed at a model of its own', () => {
+  clearSecrets();
+  Deno.env.set('GEMINI_MODEL', 'models/gemini-2.5-pro/');
+  Deno.env.set('GEMINI_SEARCH_MODEL', 'gemini-2.5-flash');
+  try {
+    const chain = geminiSearchModels();
+    assertEquals(chain[0], 'gemini-2.5-flash');
+    assert(chain.includes('gemini-2.5-pro'), 'the configured model is still tried');
+    assert(chain.includes('gemini-2.5-flash-lite'), 'the fallback is still tried');
+    // A name is never repeated: each entry costs a request when the one before
+    // it fails.
+    assertEquals(new Set(chain).size, chain.length);
+  } finally {
+    clearSecrets();
   }
 });
 

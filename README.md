@@ -401,12 +401,16 @@ flowchart TD
 
 Qualquer pergunta real — moradas, empresas, notícias, saúde, direito, desporto,
 tecnologia, o que for — é **pesquisada na Internet** antes de o modelo responder,
-e a resposta mostra as páginas que foram efetivamente lidas, com link. Duas das
-fontes não precisam de chave nenhuma (DuckDuckGo e Wikipédia), por isso a
-pesquisa funciona em qualquer instalação; `BRAVE_SEARCH_API_KEY`,
-`TAVILY_API_KEY` e `SERPER_API_KEY` acrescentam motores comerciais quando
-existirem. Só conversa social ("olá", "obrigado") é respondida sem pesquisa, e a
-badge por baixo de cada resposta diz sempre qual dos dois casos aconteceu.
+e a resposta mostra as páginas que foram efetivamente lidas, com link. O
+motor principal é a **pesquisa Google através do Gemini** — a chave
+`GEMINI_API_KEY` que já existe serve também para pesquisar, e por ser uma API
+contratada é estável, ao contrário de raspar páginas públicas. Ao lado dela
+correm duas fontes sem chave nenhuma (DuckDuckGo e Wikipédia), e
+`BRAVE_SEARCH_API_KEY`, `TAVILY_API_KEY` e `SERPER_API_KEY` acrescentam motores
+comerciais quando existirem.
+
+Só conversa social ("olá", "obrigado") é respondida sem pesquisa, e a badge por
+baixo de cada resposta diz sempre qual dos dois casos aconteceu.
 
 O resultado alvo deve fornecer, quando disponível: **nome oficial/reconhecido**, **morada**, **telefone**, **website**, **localização no mapa**, **fontes de suporte**, **contexto relevante** e **timestamp da recolha**.
 

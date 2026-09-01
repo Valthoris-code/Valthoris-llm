@@ -82,11 +82,19 @@ function stubGemini() {
       if (empty) return Promise.resolve(empty);
       return Promise.reject(new Error(`unexpected fetch to ${url}`));
     }
-    recorded.push({
-      url,
-      headers: new Headers(init?.headers),
-      body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
-    });
+    const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+    // The web-search source calls Gemini too, before the answer is written. It
+    // is recognised by carrying no system instruction, and it answers with
+    // nothing here: this file is about the completion call.
+    if (body && body.systemInstruction === undefined) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ candidates: [{ content: { parts: [{ text: 'SEM RESULTADOS' }] } }] }),
+          { status: 200 },
+        ),
+      );
+    }
+    recorded.push({ url, headers: new Headers(init?.headers), body });
     if (notFoundModels.some((model) => url.includes(`/models/${model}:`))) {
       return Promise.resolve(
         new Response(

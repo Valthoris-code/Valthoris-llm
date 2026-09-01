@@ -26,10 +26,13 @@
  *   OPENIBAN_API_URL, CRYPTOSCAMDB_API_URL, GOPLUS_API_URL,
  *   GOPLUS_APP_KEY, GOPLUS_APP_SECRET, COINGECKO_API_KEY, ETHERSCAN_API_KEY,
  *   NEWSDATA_API_KEY, DATA_GOV_API_KEY,
+ *   GEMINI_API_KEY (+ GEMINI_SEARCH_MODEL) — Google Search through Gemini,
  *   BRAVE_SEARCH_API_KEY, TAVILY_API_KEY, SERPER_API_KEY (web search, optional)
  *
- * Four providers need no credential at all, so every deployment really searches
- * the open web and really locates a place: OpenStreetMap Nominatim and Photon
+ * The primary web search is Google's own, reached through the Gemini key the
+ * deployment already has: it is a contracted API, so it does not depend on a
+ * public endpoint tolerating a datacentre address. Four more providers need no
+ * credential at all and run alongside it: OpenStreetMap Nominatim and Photon
  * (public gazetteers, queried with the User-Agent their usage policy requires),
  * DuckDuckGo (its no-JavaScript result page) and Wikipedia. The commercial
  * search APIs above are used in addition whenever their key is configured.
@@ -575,6 +578,112 @@ async function wikipediaSearch(query: string): Promise<WebResult[]> {
     if (results.length >= 3) break;
   }
   return dedupeResults(results, 4);
+}
+
+/**
+ * Google Search through Gemini — the search that does not depend on scraping.
+ *
+ * Every keyless engine wired above is a public endpoint that may throttle a
+ * datacentre address, and the answer then silently narrows to whatever is left.
+ * Gemini's `google_search` tool is a contracted API served against the key the
+ * deployment already has, so it is the source that makes the web search
+ * *stable*: it runs before the answer is written, its result is evidence like
+ * any other, and the pages it consulted are reported with their links.
+ */
+export const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/** Models tried, in order, for a search call. */
+const GEMINI_SEARCH_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+/**
+ * The model names to try for a search.
+ *
+ * `GEMINI_SEARCH_MODEL` overrides `GEMINI_MODEL` for search only, so an
+ * operator whose main model does not serve the tool can point the search at one
+ * that does without changing the model that writes the answers.
+ */
+export function geminiSearchModels(): string[] {
+  const chain: string[] = [];
+  for (const name of [env('GEMINI_SEARCH_MODEL'), env('GEMINI_MODEL')]) {
+    if (!name) continue;
+    const cleaned = name.replace(/^\/+|\/+$/g, '').replace(/^models\//, '').trim();
+    if (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(cleaned) && !chain.includes(cleaned)) chain.push(cleaned);
+  }
+  for (const fallback of GEMINI_SEARCH_FALLBACK_MODELS) {
+    if (!chain.includes(fallback)) chain.push(fallback);
+  }
+  return chain;
+}
+
+/** The instruction the search model receives: find, do not recall. */
+const GEMINI_SEARCH_INSTRUCTION =
+  'Pesquisa AGORA na Web com a ferramenta de pesquisa e responde apenas com o que as ' +
+  'páginas encontradas dizem. Para locais ou empresas indica morada completa, telefone, ' +
+  'site oficial e horário quando existirem. Se a pesquisa não encontrar o assunto, ' +
+  'responde exatamente "SEM RESULTADOS". Nunca respondas de memória. Pergunta: ';
+
+/**
+ * Reads Gemini's grounding metadata into result pages.
+ *
+ * Only chunks that carry a real, public URL are reported: an answer with no
+ * grounding chunks consulted no page and must not be presented as a search.
+ */
+export function geminiGroundingResults(data: any): WebResult[] {
+  const candidate = data?.candidates?.[0];
+  const chunks: any[] = Array.isArray(candidate?.groundingMetadata?.groundingChunks)
+    ? candidate.groundingMetadata.groundingChunks
+    : [];
+  const results: WebResult[] = [];
+  for (const chunk of chunks) {
+    const raw = chunk?.web?.uri;
+    if (typeof raw !== 'string') continue;
+    const url = safeResultUrl(raw);
+    if (!url) continue;
+    const title = str(chunk?.web?.title, 200) ?? str(chunk?.web?.domain, 200);
+    if (!title) continue;
+    results.push({ title, url });
+  }
+  return dedupeResults(results, 8);
+}
+
+/** The text of a Gemini candidate, concatenated across its parts. */
+export function geminiAnswerText(data: any): string {
+  const parts: any[] = Array.isArray(data?.candidates?.[0]?.content?.parts)
+    ? data.candidates[0].content.parts
+    : [];
+  return parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('').trim();
+}
+
+async function geminiWebSearch(query: string): Promise<{ results: WebResult[]; answer?: string }> {
+  const key = env('GEMINI_API_KEY');
+  if (!key) throw new Error('GEMINI_API_KEY is not configured');
+  let lastError: Error | undefined;
+  for (const model of geminiSearchModels()) {
+    try {
+      const data = await fetchJson(
+        `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: GEMINI_SEARCH_INSTRUCTION + query }] }],
+            tools: [{ google_search: {} }],
+            generationConfig: { temperature: 0, maxOutputTokens: 600 },
+          }),
+        },
+      );
+      const results = geminiGroundingResults(data);
+      const text = geminiAnswerText(data);
+      const answer = /^SEM RESULTADOS/i.test(text) ? undefined : str(text, 900);
+      return { results, ...(answer ? { answer } : {}) };
+    } catch (err) {
+      // A model that does not exist for this key, or does not serve the search
+      // tool, answers 404/400: try the next name before giving up, so a single
+      // misconfigured `GEMINI_MODEL` never costs the deployment its search.
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+  throw lastError ?? new Error('Gemini search failed');
 }
 
 
@@ -1535,6 +1644,20 @@ const PROVIDERS: Provider[] = [
 
   // ── Public web search (any subject) ───────────────────────────────────────
   {
+    // Google Search, served through the Gemini key the deployment already has.
+    // It is listed first because it is the only search here that is a
+    // contracted API rather than a public endpoint that may throttle us.
+    provider: 'Google Search (Gemini)',
+    endpoint: 'web/search',
+    kinds: ['web', 'topic'],
+    probeValue: 'openstreetmap',
+    config: () => env('GEMINI_API_KEY'),
+    run: async (value) => {
+      const { results, answer } = await geminiWebSearch(value);
+      return webSearchResult(results, answer);
+    },
+  },
+  {
     // Brave Search API — used when a key is configured, because it returns the
     // cleanest, freshest result set of the engines wired here.
     provider: 'Brave Search',
@@ -1877,6 +2000,7 @@ const PROVIDER_SECRETS: Record<string, string[]> = {
   CoinGecko: ['COINGECKO_API_KEY'],
   Nominatim: [],
   Photon: [],
+  'Google Search (Gemini)': ['GEMINI_API_KEY'],
   'Brave Search': ['BRAVE_SEARCH_API_KEY'],
   Tavily: ['TAVILY_API_KEY'],
   'Serper (Google)': ['SERPER_API_KEY'],

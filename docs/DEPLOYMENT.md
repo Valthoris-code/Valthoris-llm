@@ -161,24 +161,39 @@ an integration that does not exist.
 | `BRAVE_SEARCH_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search; when present it is used in addition to the keyless engines, with fresher and cleaner results |
 | `TAVILY_API_KEY` | `ai-chat/intel.ts` | **optional** — public web search built for AI answers |
 | `SERPER_API_KEY` | `ai-chat/intel.ts` | **optional** — Google results (including the knowledge panel's phone, site and address) |
+| `GEMINI_SEARCH_MODEL` | `ai-chat/intel.ts` | **optional** — the model used for the web search only; defaults to `GEMINI_MODEL` and then to `gemini-2.5-flash` |
 
-### Web search works without any of those keys
+### The web search runs on the Gemini key you already have
 
 Every turn that is a real question — any subject, not only security — is
-searched on the open web before the model answers, and the pages that were read
-are listed as sources under the answer. Two engines need no credential at all,
-so a deployment with only `GEMINI_API_KEY` still searches for real:
+searched on the web **before** the model writes the answer, and the pages that
+were read are listed as sources under it.
+
+The primary engine is **Google Search through Gemini**: `ai-chat/intel.ts`
+calls `generateContent` with the `google_search` tool as a *search source*, not
+as an answer, keeps the pages from the grounding metadata and hands them to the
+turn as evidence. That is what makes the search stable — it is a contracted API
+served against `GEMINI_API_KEY`, so it does not depend on a public endpoint
+tolerating requests from a datacentre address. If the configured model does not
+serve the tool, the next model in the chain is tried (`GEMINI_SEARCH_MODEL` →
+`GEMINI_MODEL` → `gemini-2.5-flash` → `gemini-2.5-flash-lite`).
+
+Two more engines need no credential at all and run alongside it, so the answer
+never rests on a single provider:
 
 * **DuckDuckGo**, through its no-JavaScript result page (with the Instant Answer
   API as the fallback when that page throttles the datacentre address);
 * **Wikipedia**, searched in Portuguese and English.
 
 The optional keys above are added on top: when they are configured, their
-engines answer alongside the keyless ones and every source is listed
-individually, so a throttled engine is visible instead of silently narrowing the
-answer. Google's own search tool is enabled on the Gemini call for the same
-turns, and the pages it grounded on are reported as the
-`Google Search (Gemini)` source.
+engines answer alongside the others and every source is listed individually, so
+a throttled engine is visible instead of silently narrowing the answer.
+
+When **no** engine returned a page, the answer call itself is made with
+Google's search tool enabled, so the model searches instead of recalling; the
+pages it grounded on are reported as the `Google Search (Gemini)` source with
+the `web/grounding` endpoint. When a search source already answered, that second
+search is skipped, so a question never spends the search quota twice.
 
 Only small talk (a greeting, a thank-you, "ok") skips the search entirely.
 

@@ -732,10 +732,12 @@ export async function handleRequest(req: Request): Promise<Response> {
     : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
 
   // Google's own search tool is enabled on every turn that is a lookup rather
-  // than small talk: it is a second, independent search on top of the engines
-  // queried above, and it is what stops a factual question from being answered
-  // from the model's memory when those engines are throttled.
-  const webSearch = Boolean(lastUser && isSearchableTurn(lastUser.content));
+  // than small talk, unless a search engine already came back with pages in
+  // this turn. That keeps a factual question from ever being answered from the
+  // model's memory — if every engine was throttled, the model searches itself —
+  // without spending the Gemini search quota twice on the same question.
+  const webSearch = Boolean(lastUser && isSearchableTurn(lastUser.content)) &&
+    !(intel?.searched ?? false);
 
   let completion: Completion;
   try {
@@ -775,7 +777,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   if (completion.webSources && completion.webSources.length > 0) {
     sources.push({
       provider: 'Google Search (Gemini)',
-      endpoint: 'web/search',
+      endpoint: 'web/grounding',
       entity: intel?.entity ?? '',
       timestamp: new Date().toISOString(),
       status: 'success',
@@ -881,7 +883,10 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
     lines.push('');
     lines.push('LIMITAÇÕES / LIMITATIONS:');
     for (const report of unavailable) {
-      lines.push(`- ${report.provider}: ${report.error ?? report.status}`);
+      // The provider is named so the user knows what could not be checked; the
+      // upstream diagnostic stays in `sources` for the operator, because an
+      // HTTP status in the middle of an answer only reads like a broken app.
+      lines.push(`- ${report.provider}: não respondeu / did not answer`);
     }
   }
 
@@ -1163,7 +1168,13 @@ async function collectIntelligence(
   userText: string,
   artifact: DetectedArtifact | null,
 ): Promise<
-  { kind: IntelEntityKind; entity: string; sources: SourceReport[]; evidence: string | null } | null
+  {
+    kind: IntelEntityKind;
+    entity: string;
+    sources: SourceReport[];
+    evidence: string | null;
+    searched: boolean;
+  } | null
 > {
   const entities: IntelEntity[] = [];
   const artifactEntity = artifact ? intelEntityFor(artifact) : null;
@@ -1193,6 +1204,12 @@ async function collectIntelligence(
     entity: primary.value,
     sources,
     evidence: usable ? formatEvidence(primary, sources) : null,
+    // Whether a search engine really came back with pages in this turn. It
+    // decides whether the answer call still needs to spend a second search.
+    searched: sources.some(
+      (s) => s.status === 'success' && Array.isArray((s.data as any)?.pages) &&
+        ((s.data as any).pages as unknown[]).length > 0,
+    ),
   };
 }
 

@@ -108,9 +108,34 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
   });
 
   if (url.startsWith('https://generativelanguage.googleapis.com/')) {
-    const content = providerAnswers.shift() ?? '';
-    // The real API only returns grounding metadata when the search tool ran.
     const parsed = rawBody ? JSON.parse(rawBody) : {};
+    // The web-search source calls Gemini before the answer is written; it is
+    // the request that carries no system instruction. It answers with the
+    // pages the test configured, exactly as the grounded API does.
+    if (parsed?.systemInstruction === undefined) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{
+                    text: webSearchPages.length > 0 ? 'Resultado da pesquisa.' : 'SEM RESULTADOS',
+                  }],
+                },
+                groundingMetadata: {
+                  groundingChunks: webSearchPages.map((page) => ({
+                    web: { uri: page.url, title: page.title },
+                  })),
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    const content = providerAnswers.shift() ?? '';
     const searched = Array.isArray(parsed?.tools) &&
       parsed.tools.some((t: Record<string, unknown>) => t && 'google_search' in t);
     return Promise.resolve(
@@ -510,9 +535,12 @@ Deno.test('a place question is grounded on Nominatim', async () => {
   assertEquals(body.analysis, undefined);
 });
 
-Deno.test('a place with no phone in the gazetteer falls back to the Gemini web search', async () => {
+Deno.test('a place lookup is searched on Google through the Gemini key', async () => {
   recorded = [];
   nominatimPlace = DEFAULT_PLACE;
+  webSearchPages = [
+    { title: 'HESE', url: 'https://www.hesevora.min-saude.pt/', snippet: 'Hospital de Évora' },
+  ];
   providerAnswers = ['NOME: Hospital do Espírito Santo\nCONTACTO: +351 266 740 100'];
 
   const res = await handler!(post({
@@ -522,20 +550,22 @@ Deno.test('a place with no phone in the gazetteer falls back to the Gemini web s
   assertEquals(res.status, 200);
   const body = await res.json();
 
+  // The search ran as a source of its own, before the answer was written.
   const gemini = recorded.find((r) => r.url.startsWith('https://generativelanguage.googleapis.com/'));
   const tools = (gemini?.body as Record<string, unknown>)?.tools as Record<string, unknown>[];
   assert(Array.isArray(tools) && tools.some((t) => 'google_search' in t), 'search tool not enabled');
 
-  // The pages the search actually read are listed as a source, deduplicated.
+  // The pages it actually read are listed as a source, with their links.
   const web = body.sources.find(
-    (s: Record<string, unknown>) => s.provider === 'Google Search (Gemini)',
+    (s: Record<string, unknown>) =>
+      s.provider === 'Google Search (Gemini)' && s.endpoint === 'web/search',
   );
   assertEquals(web.status, 'success');
-  assertEquals(web.data.pages.length, 1);
-  assertEquals(web.data.pages[0].uri, 'https://www.hesevora.min-saude.pt/');
+  assertEquals(web.data.pages[0].url, 'https://www.hesevora.min-saude.pt/');
   assert(typeof web.timestamp === 'string' && web.timestamp.length > 0);
   // The internal field is not leaked into the answer payload.
   assertEquals(body.webSources, undefined);
+  webSearchPages = [];
 });
 
 Deno.test('a place lookup searches the web even when the gazetteer has a phone', async () => {
@@ -597,7 +627,9 @@ Deno.test('a model that does not serve the search tool still answers the turn', 
     }));
     assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(toolCalls, 1);
+    // The search source tries each model in its chain, and the answer call then
+    // falls back to Google's own tool because that source found nothing.
+    assertEquals(toolCalls, 3);
     assertEquals(body.content, 'NOME: Hospital do Espírito Santo\nCONTACTO: não confirmado');
     assertEquals(body.error, undefined);
   } finally {
