@@ -221,7 +221,7 @@ function AdminDashboardContent() {
 
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
         <Link
-          to="/admin/users"
+          to="/operations/users"
           className="card"
           style={{ textDecoration: 'none', flex: '1 1 280px', cursor: 'pointer', display: 'block' }}
         >

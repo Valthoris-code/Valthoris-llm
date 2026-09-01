@@ -1,0 +1,254 @@
+/**
+ * Styles of the Valthoris administration.
+ *
+ * Deliberately scoped under `.vadmin` so nothing here can leak into the normal
+ * application, whose stylesheet is untouched.
+ */
+
+.vadmin {
+  --vadmin-bg: #070b12;
+  --vadmin-panel: #0d131f;
+  --vadmin-panel-2: #121a29;
+  --vadmin-border: #1e2a3d;
+  --vadmin-text: #e6edf7;
+  --vadmin-muted: #8494ad;
+  --vadmin-accent: #35d0d6;
+  --vadmin-danger: #ff6b6b;
+  --vadmin-warning: #ffc857;
+  --vadmin-ok: #4ade80;
+
+  min-height: 100vh;
+  background: var(--vadmin-bg);
+  color: var(--vadmin-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.vadmin a { color: inherit; text-decoration: none; }
+
+/* ─── Shell ───────────────────────────────────────────────────────────────── */
+
+.vadmin-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+.vadmin-sidebar {
+  background: var(--vadmin-panel);
+  border-right: 1px solid var(--vadmin-border);
+  padding: 1rem 0.75rem 2rem;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.vadmin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem 1rem;
+  border-bottom: 1px solid var(--vadmin-border);
+  margin-bottom: 0.75rem;
+}
+
+.vadmin-brand-title { font-weight: 700; letter-spacing: 0.04em; }
+.vadmin-brand-sub { font-size: 0.68rem; color: var(--vadmin-muted); }
+
+.vadmin-group-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--vadmin-muted);
+  padding: 0.9rem 0.6rem 0.35rem;
+}
+
+.vadmin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--vadmin-muted);
+}
+
+.vadmin-nav-item:hover { background: var(--vadmin-panel-2); color: var(--vadmin-text); }
+.vadmin-nav-item.active { background: var(--vadmin-panel-2); color: var(--vadmin-accent); }
+.vadmin-nav-phase {
+  margin-left: auto;
+  font-size: 0.6rem;
+  color: var(--vadmin-muted);
+  border: 1px solid var(--vadmin-border);
+  border-radius: 999px;
+  padding: 0 0.35rem;
+}
+
+.vadmin-main { display: flex; flex-direction: column; min-width: 0; }
+
+.vadmin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--vadmin-border);
+  background: var(--vadmin-panel);
+}
+
+.vadmin-identity { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; }
+
+.vadmin-content { padding: 1.5rem; flex: 1; }
+
+/* ─── Primitives ──────────────────────────────────────────────────────────── */
+
+.vadmin-card {
+  background: var(--vadmin-panel);
+  border: 1px solid var(--vadmin-border);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+}
+
+.vadmin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.9rem;
+}
+
+.vadmin-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--vadmin-muted);
+}
+
+.vadmin-stat-value { font-size: 1.7rem; font-weight: 700; margin-top: 0.3rem; }
+.vadmin-stat-hint { font-size: 0.72rem; color: var(--vadmin-muted); margin-top: 0.2rem; }
+
+.vadmin-page-title { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.25rem; }
+.vadmin-page-sub { color: var(--vadmin-muted); font-size: 0.85rem; margin: 0 0 1.2rem; }
+
+.vadmin-badge {
+  display: inline-block;
+  font-size: 0.66rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--vadmin-border);
+  color: var(--vadmin-muted);
+}
+
+.vadmin-badge.root { color: var(--vadmin-accent); border-color: var(--vadmin-accent); }
+.vadmin-badge.ok { color: var(--vadmin-ok); border-color: var(--vadmin-ok); }
+.vadmin-badge.warn { color: var(--vadmin-warning); border-color: var(--vadmin-warning); }
+.vadmin-badge.danger { color: var(--vadmin-danger); border-color: var(--vadmin-danger); }
+
+.vadmin-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.vadmin-table th {
+  text-align: left;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vadmin-muted);
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--vadmin-border);
+}
+.vadmin-table td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid var(--vadmin-border);
+  vertical-align: top;
+}
+.vadmin-table tr:last-child td { border-bottom: none; }
+.vadmin-table-wrap { overflow-x: auto; }
+
+.vadmin-input,
+.vadmin-select {
+  width: 100%;
+  background: var(--vadmin-panel-2);
+  border: 1px solid var(--vadmin-border);
+  border-radius: 8px;
+  color: var(--vadmin-text);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.vadmin-input:focus,
+.vadmin-select:focus { outline: 2px solid var(--vadmin-accent); outline-offset: 1px; }
+
+.vadmin-btn {
+  background: var(--vadmin-accent);
+  color: #04202a;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vadmin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.vadmin-btn-ghost {
+  background: transparent;
+  color: var(--vadmin-muted);
+  border: 1px solid var(--vadmin-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.vadmin-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.vadmin-alert {
+  border: 1px solid var(--vadmin-danger);
+  color: var(--vadmin-danger);
+  background: rgba(255, 107, 107, 0.08);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.vadmin-note {
+  border: 1px solid var(--vadmin-border);
+  color: var(--vadmin-muted);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+/* ─── Login ───────────────────────────────────────────────────────────────── */
+
+.vadmin-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.vadmin-login-card { width: 100%; max-width: 400px; }
+.vadmin-field { margin-bottom: 0.9rem; }
+.vadmin-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vadmin-muted);
+  margin-bottom: 0.3rem;
+}
+
+.vadmin-qr { width: 190px; height: 190px; background: #fff; border-radius: 8px; }
+.vadmin-secret {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+  color: var(--vadmin-muted);
+}
+
+@media (max-width: 900px) {
+  .vadmin-shell { grid-template-columns: 1fr; }
+  .vadmin-sidebar {
+    position: static;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--vadmin-border);
+  }
+}

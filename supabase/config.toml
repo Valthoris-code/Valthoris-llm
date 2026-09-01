@@ -26,3 +26,13 @@ verify_jwt = false
 
 [functions.news-ticker]
 verify_jwt = false
+
+# ─── Administration & Governance Center ──────────────────────────────────────
+#
+# `admin-api` is the opposite case of the functions above: it is only ever
+# called by an authenticated administrator holding a real Supabase Auth JWT, so
+# gateway verification is left ON as a first barrier. The function then repeats
+# the check itself (token verified against the Auth server, AAL2, administrator
+# identity, RBAC) — the gateway is never the only thing standing in the way.
+[functions.admin-api]
+verify_jwt = true

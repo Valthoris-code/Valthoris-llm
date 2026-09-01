@@ -35,7 +35,7 @@ const DRAWER_ITEMS: DrawerItem[] = [
   // Administration is rendered only for principals the backend canister
   // resolved as administrators. Visibility is convenience, not security:
   // the canister re-checks every privileged call.
-  { to: '/admin',               label: 'Administration',      labelKey: 'nav.admin',        icon: '🛡', minRole: 'administrator' },
+  { to: '/operations',          label: 'Administration',      labelKey: 'nav.admin',        icon: '🛡', minRole: 'administrator' },
 ];
 
 interface Props {
