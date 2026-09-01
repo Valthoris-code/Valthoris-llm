@@ -85,12 +85,69 @@ const SYSTEM_PROMPT = [
   'technology, current events, everyday questions — and you also identify phishing, scams,',
   'fraud and malware.',
   'Always answer in the language the user wrote in (Portuguese or English).',
+  'Speak like a warm, close, plain-spoken person: no corporate register, no jargon the user',
+  'did not use, no formulaic sentence repeated from one answer to the next.',
+  'Only introduce yourself as VALTHORIS on the very first message of a conversation, or when',
+  'the user asks who you are — never re-introduce yourself in the middle of a conversation,',
+  'and never open an answer with "Como VALTHORIS, estou aqui para ajudar…".',
+  'Match the length of the answer to the message: a short or casual message gets a short,',
+  'human reply of one or two sentences, with no headings, no bullet lists and no source list.',
+  'What you are given is one continuous conversation: read the earlier turns and resolve what',
+  'the user refers to indirectly ("a morada?", "e o contacto?", "onde fica isso?") against',
+  'what was already discussed, instead of asking for the full name again or saying this is',
+  'the first message of the session.',
   'Never invent breach data, wallet balances, reputation scores or scan results:',
   'only report values that appear in the evidence block you were given, and say',
   'explicitly when something could not be confirmed.',
+  'Never name a source that is not in the evidence block, and never describe a database, a',
+  'register or a site as consulted when it is not there: an invented citation is worse than',
+  'no citation at all.',
   'Never give an empty answer such as "be careful" or "search on Google" —',
   'answer with what you actually have, and never refuse a question merely because it is',
   'not about security.',
+].join(' ');
+
+/**
+ * Marker that separates the plain-language summary from the technical detail.
+ *
+ * Valthoris is used by elderly people and by users with low digital literacy,
+ * for whom a wall of markdown, provider names and HTTP statuses is not an
+ * answer. Every analysis therefore answers twice: a verdict line and one plain
+ * sentence, which is all that is shown, and everything else after this marker,
+ * which the interface keeps folded behind "Ver análise completa".
+ */
+export const DETAIL_MARKER = '[DETALHE]';
+
+/** The shape every analysis answer must have: verdict first, detail folded. */
+const ANSWER_LAYOUT = [
+  `Lay the answer out in exactly two parts separated by a line containing only ${DETAIL_MARKER}.`,
+  'First part (always visible, at most three short lines, no markdown, no asterisks, no',
+  'headings): one verdict line chosen from "✅ Seguro", "⚠️ Suspeito", "❌ Perigoso",',
+  '"❔ Não foi possível confirmar", "ℹ️ Conhecido/legítimo" (translated when the user writes in',
+  'English), then a single sentence of plain explanation that a person with no technical',
+  'knowledge understands.',
+  `Then the line ${DETAIL_MARKER} on its own.`,
+  'Second part: the complete technical detail — every field, the sources that answered, their',
+  'timestamps, addresses, coordinates, and whatever could not be confirmed.',
+].join(' ');
+
+/**
+ * Instructions for a turn that is conversation rather than a question about the
+ * world.
+ *
+ * Nothing was looked up and nothing should be: a greeting, a complaint, a
+ * question about the assistant itself or a plain "preciso de ajuda" is answered
+ * the way a person answers, and citing web pages for it produces exactly the
+ * irrelevant "sources" that made the assistant unreadable.
+ */
+const CASUAL_RESPONSE_FORMAT = [
+  'This turn is conversation, not a factual question: no source was consulted and none was',
+  'needed.',
+  'Answer in one to three short sentences, warm and natural, in the user\'s language.',
+  'Do not list sources, do not add sections, do not mention limitations, do not mention',
+  'searches, and do not introduce yourself again.',
+  'If the user seems to need something concrete, simply invite them, in one sentence, to say',
+  'what they would like checked.',
 ].join(' ');
 
 /**
@@ -167,6 +224,26 @@ const ANALYSIS_PROMPT = [
   'Use "unknown" whenever the available information is insufficient.',
   'Never invent breach data, registration dates, balances or scan results.',
   'Do not include any prose outside the JSON object.',
+].join(' ');
+
+/**
+ * Instructions used for a request about current news, alerts or ongoing fraud
+ * campaigns.
+ *
+ * The right source for "what are they inventing this week" is a news feed, and
+ * an encyclopedia article is never an answer to it. When no news source
+ * answered, saying so plainly *is* the answer — filling the gap with unrelated
+ * pages is what produced Wikipedia articles about elections under a heading
+ * about fraud alerts.
+ */
+const NEWS_RESPONSE_FORMAT = [
+  'This turn asks for current news or alerts.',
+  'Use only the sources in the evidence block that are genuinely news items, with their date.',
+  'Never answer it from encyclopedia articles, and never present a general page as if it were',
+  'a recent piece of news.',
+  'If no news source returned anything, say plainly, in the user\'s language, that you have no',
+  'access to current news at this moment and have no recent items to report — and stop there,',
+  'instead of filling the answer with unrelated material.',
 ].join(' ');
 
 /**
@@ -710,34 +787,50 @@ export async function handleRequest(req: Request): Promise<Response> {
   }
 
   // ─── Intelligence orchestration ───────────────────────────────────────────
-  // Before the model answers, the entity in the last user turn (if any) is
-  // enriched with the external providers configured for this deployment. The
-  // model then reasons over real data instead of its own recollection.
+  // Before the model answers, the intent of the last user turn is decided once,
+  // the entity it refers to is resolved against the conversation, and — unless
+  // the turn is plain conversation — the entity is enriched with the external
+  // providers that cover it. The model then reasons over real data instead of
+  // its own recollection, and never over a page that has nothing to do with the
+  // question.
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const artifact = lastUser ? detectArtifact(lastUser.content) : null;
-  const intel = lastUser ? await collectIntelligence(lastUser.content, artifact) : null;
+  // What the user is referring to when they do not name it again ("a morada?").
+  const subject = conversationSubject(messages);
+  const intent: TurnIntent = lastUser
+    ? classifyTurn(lastUser.content, Boolean(artifact), subject)
+    : 'social';
+  const intel = lastUser
+    ? await collectIntelligence(lastUser.content, artifact, intent, subject)
+    : null;
 
-  const modelMessages = intel && intel.evidence
-    ? [
-        ...messages.slice(0, -1),
-        {
-          role: 'user' as const,
-          content: `${messages[messages.length - 1].content}\n\n---\n${intel.evidence}`,
-        },
-      ]
+  // The resolved reference travels with the turn, so the model answers about
+  // the place named earlier instead of asking for its name again.
+  const lastContent = messages[messages.length - 1].content;
+  const contextNote = subject && intent !== 'social'
+    ? `\n\n---\nReferência resolvida na conversa / reference resolved from the conversation: "${subject}".`
+    : '';
+  const augmented = intel?.evidence
+    ? `${lastContent}${contextNote}\n\n---\n${intel.evidence}`
+    : contextNote
+      ? `${lastContent}${contextNote}`
+      : null;
+  const modelMessages = augmented
+    ? [...messages.slice(0, -1), { role: 'user' as const, content: augmented }]
     : messages;
   const grounded = Boolean(intel && intel.evidence);
-  const systemPrompt = intel && intel.evidence
-    ? `${SYSTEM_PROMPT} ${responseFormatFor(intel.kind)}`
-    : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
+  const systemPrompt = intent === 'social'
+    ? `${SYSTEM_PROMPT} ${CASUAL_RESPONSE_FORMAT}`
+    : intel && intel.evidence
+      ? `${SYSTEM_PROMPT} ${responseFormatFor(intel.kind)}`
+      : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
 
   // Google's own search tool is enabled on every turn that is a lookup rather
-  // than small talk, unless a search engine already came back with pages in
+  // than conversation, unless a search engine already came back with pages in
   // this turn. That keeps a factual question from ever being answered from the
   // model's memory — if every engine was throttled, the model searches itself —
   // without spending the Gemini search quota twice on the same question.
-  const webSearch = Boolean(lastUser && isSearchableTurn(lastUser.content)) &&
-    !(intel?.searched ?? false);
+  const webSearch = intent !== 'social' && !(intel?.searched ?? false);
 
   let completion: Completion;
   try {
@@ -819,15 +912,29 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
   );
   if (answered.length === 0) return null;
 
-  const lines: string[] = [
-    'Resposta composta diretamente pelas fontes consultadas (o modelo de linguagem ' +
-      'não está disponível neste momento). / Answer composed directly from the sources ' +
-      'consulted (the language model is unavailable).',
-    '',
-  ];
+  const lines: string[] = [];
 
   const placeReports = answered.filter((s) => typeof s.data?.address === 'string' || s.data?.latitude);
   const webReports = answered.filter((s) => Array.isArray(s.data?.pages));
+
+  // The plain-language part, which is all the user sees unless they open the
+  // detail: what was found, in one line, with no provider names and no markup.
+  const summaryName = firstEvidenceValue(placeReports, 'name');
+  const summaryAddress = firstEvidenceValue(placeReports, 'address');
+  if (kind === 'place' && (summaryName || summaryAddress)) {
+    lines.push('ℹ️ Encontrámos este local nas fontes públicas de mapas.');
+    lines.push(`${summaryName ?? 'Local'} — ${summaryAddress ?? 'morada não confirmada'}.`);
+  } else {
+    lines.push('❔ Não foi possível confirmar tudo.');
+    lines.push('Reunimos abaixo apenas o que as fontes consultadas devolveram nesta pergunta.');
+  }
+  lines.push(DETAIL_MARKER);
+  lines.push(
+    'Resposta composta diretamente pelas fontes consultadas (o modelo de linguagem ' +
+      'não está disponível neste momento). / Answer composed directly from the sources ' +
+      'consulted (the language model is unavailable).',
+  );
+  lines.push('');
 
   if (kind === 'place' && placeReports.length > 0) {
     // Every provider contributes what it actually has: the gazetteer usually
@@ -869,7 +976,9 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
     .map((report) => evidenceValue((report.data as Record<string, unknown>).answer))
     .filter((value): value is string => value !== null);
   if (answers.length > 0) {
-    lines.splice(2, 0, answers[0], '');
+    // Right after the header of the technical part, never before the marker:
+    // the visible summary stays short.
+    lines.splice(lines.indexOf(DETAIL_MARKER) + 2, 0, answers[0], '');
   }
 
   lines.push('');
@@ -1115,7 +1224,7 @@ export function placeQuery(text: string): string {
 
 /** Chat turns that justify a live current-threat news lookup. */
 const NEWS_INTENT_RE =
-  /\b(latest|recent|current|news|trend|campaign|outbreak|zero[- ]day|ultim[oa]s?|recentes?|not[ií]cias?|atual(?:idade)?|amea[çc]as?|tend[êe]ncias?)\b/i;
+  /\b(latest|recent|current|news|trend|campaign|outbreak|zero[- ]day|alerts?|this\s+week|ultim[oa]s?|recentes?|not[ií]cias?|atual(?:idade)?|amea[çc]as?|tend[êe]ncias?|alertas?|esta\s+semana|este\s+m[êe]s|[úu]ltimos\s+dias)\b/i;
 
 /**
  * Turns that are conversation, not a question about the world.
@@ -1156,11 +1265,187 @@ export function webQuery(text: string): string {
   return text.replace(/\s+/g, ' ').trim().slice(0, 300);
 }
 
+// ─── Intent detection ───────────────────────────────────────────────────────
+//
+// One engine, used by the whole function, decides what a turn *is* before
+// anything is looked up. It is the piece that both stops a search that makes no
+// sense ("preciso de ajuda" answered with an album on Wikipedia) and starts the
+// one that does, and it is deliberately the only place where that decision is
+// taken.
+
+/**
+ * What a turn is asking for.
+ *
+ *   social       — conversation: a greeting, a complaint, a remark about the
+ *                  assistant itself, a vague sentence with nothing to verify.
+ *                  Nothing at all is looked up.
+ *   artifact     — a number, email, URL, IBAN, IP or wallet to analyse.
+ *   news         — current news, alerts or campaigns: news feeds, never an
+ *                  encyclopedia.
+ *   place        — a real public place or business.
+ *   encyclopedic — a question about a concept, a definition or history: the
+ *                  only intent for which Wikipedia is a legitimate source.
+ *   factual      — any other question about the world: open web search.
+ */
+export type TurnIntent = 'social' | 'artifact' | 'news' | 'place' | 'encyclopedic' | 'factual';
+
+/** Questions an encyclopedia genuinely answers. */
+const ENCYCLOPEDIC_RE =
+  /(?<![\p{L}\p{N}])(o\s+que\s+(?:é|e|s[ãa]o|significa)|que\s+(?:é|e)\s+(?:o|a|um|uma)|quem\s+(?:é|e|foi|era|s[ãa]o)|hist[óo]ria\s+d[aeo]s?|origem\s+d[aeo]s?|significado|defini[çc][ãa]o|define|como\s+funciona|what\s+is|what\s+are|who\s+(?:is|was|were)|history\s+of|meaning\s+of|definition\s+of|how\s+does)(?![\p{L}\p{N}])/iu;
+
+/**
+ * Turns addressed to the assistant, or to the situation, rather than to the
+ * world.
+ *
+ * "Preciso de ajuda", "não falas comigo?", "pensava que eras uma inteligência
+ * artificial", "posso ser teu amigo" were each searched literally on Wikipedia
+ * and DuckDuckGo, and answered with the album, the film or the serial killer
+ * whose name happened to match. None of them is a question about the world.
+ */
+const SOCIAL_MARKERS_RE =
+  /(?<![\p{L}\p{N}])(preciso\s+de\s+ajuda|pode(?:s|m)?\s+ajudar|ajuda(?:-me)?|n[ãa]o\s+sabes|n[ãa]o\s+percebes|n[ãa]o\s+falas|falas\s+comigo|conversar|conversa(?:r|mos)?|inteligência\s+artificial|intelig[êe]ncia\s+artificial|rob[oô]t?|chatbot|amigo|amiga|amizade|desabafar|est[áa]s?\s+a[ií]|porcaria|est[úu]pid[oa]|idiota|in[úu]til|burro|desculpa|pe[çc]o\s+desculpa|bom\s+trabalho|gosto\s+de\s+ti|sinto-me|estou\s+triste|estou\s+farto|help\s+me|i\s+need\s+help|can\s+you\s+help|are\s+you\s+(?:there|real|human|an?\s+ai)|be\s+my\s+friend|you\s+are\s+useless)(?![\p{L}\p{N}])/iu;
+
+/** A turn whose subject is named in it, rather than left to the context. */
+const OWN_SUBJECT_PROPER_NOUN_RE = /\S+\s+["'“«]?\p{Lu}[\p{L}'’-]{2,}/u;
+const OWN_SUBJECT_NUMBER_RE = /\d{3,}/;
+const OWN_SUBJECT_HANDLE_RE = /(?:@|https?:\/\/|\b[\w-]+\.(?:com|pt|net|org|io|eu)\b)/i;
+
+/** True when the turn names the thing it is about, instead of pointing at it. */
+export function namesOwnSubject(text: string): boolean {
+  return (
+    OWN_SUBJECT_PROPER_NOUN_RE.test(text) ||
+    OWN_SUBJECT_NUMBER_RE.test(text) ||
+    OWN_SUBJECT_HANDLE_RE.test(text) ||
+    PLACE_ADDRESS_RE.test(text) ||
+    PLACE_POSTCODE_RE.test(text)
+  );
+}
+
+/** A short turn with nothing in it to look up is conversation, not a question. */
+const CASUAL_MAX_WORDS = 6;
+const SOCIAL_MAX_WORDS = 24;
+
+/**
+ * True when the turn is conversation and must not reach any external source.
+ *
+ * The test is not a keyword list of greetings: a turn is conversation when it
+ * neither names a subject (a proper noun, a number, an address, a handle) nor
+ * asks something an encyclopedia or a search engine could answer. That is what
+ * separates "posso ser teu amigo" from "Hospital de Évora".
+ */
+export function isSocialTurn(text: string): boolean {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (cleaned.replace(/[^\p{L}\p{N}]/gu, '').length < MIN_SEARCHABLE_CHARS) return true;
+  if (SMALL_TALK_RE.test(cleaned) || SELF_REFERENTIAL_RE.test(cleaned)) return true;
+  const words = cleaned.split(' ').filter((w) => w.length > 0);
+  if (words.length > SOCIAL_MAX_WORDS) return false;
+  if (namesOwnSubject(cleaned)) return false;
+  if (ENCYCLOPEDIC_RE.test(cleaned)) return false;
+  if (isPlaceLookup(cleaned)) return false;
+  if (SOCIAL_MARKERS_RE.test(cleaned)) return true;
+  return words.length <= CASUAL_MAX_WORDS;
+}
+
+/**
+ * Things a follow-up says instead of repeating the name of the subject.
+ *
+ * "Morada do hospital", "e o contacto?", "onde fica isso", "localização do que
+ * te pedi" all refer to something already on the table, and used to be treated
+ * as brand-new turns with no subject at all.
+ */
+const REFERENCE_RE =
+  /(?<![\p{L}\p{N}])(isso|isto|aquilo|dele|dela|deles|delas|desse|dessa|deste|desta|daquele|daquela|a[ií]|l[áa]|o\s+mesmo|a\s+mesma|que\s+te\s+pedi|que\s+pedi|que\s+disse|que\s+falei|anterior|acima|mencionad[oa]|it|that|there|the\s+same)(?![\p{L}\p{N}])/iu;
+
+/** Maximum number of earlier turns scanned for the subject of a follow-up. */
+const CONTEXT_WINDOW = 20;
+
+/**
+ * True when the turn only makes sense against what was said before.
+ *
+ * It asks for a detail (an address, a contact, an opening time, a location) or
+ * points at something with a pronoun, and names no subject of its own.
+ */
+export function isFollowUpReference(text: string): boolean {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (cleaned.length === 0) return false;
+  if (namesOwnSubject(cleaned)) return false;
+  if (cleaned.split(' ').length > BARE_PLACE_MAX_WORDS) return false;
+  return (
+    PLACE_REQUEST_RE.test(cleaned) ||
+    PLACE_NEED_RE.test(cleaned) ||
+    REFERENCE_RE.test(cleaned) ||
+    /^e\s+/i.test(cleaned)
+  );
+}
+
+/**
+ * The subject a follow-up refers to, taken from the conversation itself.
+ *
+ * The most recent earlier user turn that actually names something is the
+ * subject: asking "Hospital Distrital de Évora" and then "morada do hospital"
+ * is one question in two messages, and the second one must be looked up against
+ * the first. Returns `null` when the turn stands on its own or when nothing
+ * earlier named a subject — the assistant then asks, rather than guessing.
+ */
+export function conversationSubject(messages: ChatMessage[]): string | null {
+  const lastUserIndex = messages.map((m) => m.role).lastIndexOf('user');
+  if (lastUserIndex < 0) return null;
+  if (!isFollowUpReference(messages[lastUserIndex].content)) return null;
+
+  const start = Math.max(0, lastUserIndex - CONTEXT_WINDOW);
+  for (let i = lastUserIndex - 1; i >= start; i -= 1) {
+    const message = messages[i];
+    if (message.role !== 'user') continue;
+    const text = message.content.replace(/\s+/g, ' ').trim();
+    if (text.length === 0 || !namesOwnSubject(text) || isSocialTurn(text)) continue;
+    const subject = placeQuery(text);
+    if (subject.length >= 3) return subject.slice(0, 160);
+  }
+  return null;
+}
+
+/**
+ * What this turn is, decided once and used everywhere.
+ *
+ * `subject` is the entity carried over from the conversation when the turn is a
+ * follow-up: it is what makes "e o contacto?" a place lookup rather than a
+ * sentence with nothing in it.
+ */
+export function classifyTurn(
+  text: string,
+  hasArtifact: boolean,
+  subject: string | null = null,
+): TurnIntent {
+  if (hasArtifact) return 'artifact';
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (cleaned.replace(/[^\p{L}\p{N}]/gu, '').length < MIN_SEARCHABLE_CHARS) return 'social';
+  if (SMALL_TALK_RE.test(cleaned) || SELF_REFERENTIAL_RE.test(cleaned)) return 'social';
+  if (NEWS_INTENT_RE.test(cleaned)) return 'news';
+  const withContext = subject ? `${subject} ${cleaned}` : cleaned;
+  if (isPlaceLookup(withContext)) return 'place';
+  if (ENCYCLOPEDIC_RE.test(cleaned)) return 'encyclopedic';
+  if (subject) return 'factual';
+  if (isSocialTurn(cleaned)) return 'social';
+  return 'factual';
+}
+
+/**
+ * The sources that must stay out of a turn of this kind.
+ *
+ * Wikipedia is an encyclopedia, not a fallback: consulted for a phone number,
+ * for a fraud alert or for "posso ser teu amigo" it can only return something
+ * unrelated, which then appears in the answer as a cited source.
+ */
+export function excludedProvidersFor(intent: TurnIntent): string[] {
+  return intent === 'encyclopedic' ? [] : ['Wikipedia'];
+}
+
 /** The answer format that matches what was actually looked up for the turn. */
 function responseFormatFor(kind: IntelEntityKind): string {
-  if (kind === 'place') return PLACE_RESPONSE_FORMAT;
-  if (kind === 'web' || kind === 'topic') return WEB_RESPONSE_FORMAT;
-  return INTEL_RESPONSE_FORMAT;
+  if (kind === 'place') return `${PLACE_RESPONSE_FORMAT} ${ANSWER_LAYOUT}`;
+  if (kind === 'topic') return `${NEWS_RESPONSE_FORMAT} ${WEB_RESPONSE_FORMAT} ${ANSWER_LAYOUT}`;
+  if (kind === 'web') return `${WEB_RESPONSE_FORMAT} ${ANSWER_LAYOUT}`;
+  return `${INTEL_RESPONSE_FORMAT} ${ANSWER_LAYOUT}`;
 }
 
 /** Maps a detected artefact to the entity kind the orchestrator understands. */
@@ -1197,6 +1482,8 @@ function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
 async function collectIntelligence(
   userText: string,
   artifact: DetectedArtifact | null,
+  intent: TurnIntent,
+  subject: string | null,
 ): Promise<
   {
     kind: IntelEntityKind;
@@ -1206,21 +1493,32 @@ async function collectIntelligence(
     searched: boolean;
   } | null
 > {
+  // Conversation is answered as conversation: no provider is contacted at all,
+  // so no irrelevant page can end up cited as a source.
+  if (intent === 'social') return null;
+
   const entities: IntelEntity[] = [];
   const artifactEntity = artifact ? intelEntityFor(artifact) : null;
   if (artifactEntity) entities.push(artifactEntity);
 
-  const place = !artifactEntity && isPlaceLookup(userText);
-  if (place) entities.push({ kind: 'place', value: placeQuery(userText) });
-  if (NEWS_INTENT_RE.test(userText)) entities.push({ kind: 'topic', value: userText.slice(0, 200) });
-  if (isSearchableTurn(userText)) entities.push({ kind: 'web', value: webQuery(userText) });
+  // The subject carried over from the conversation is what is searched for,
+  // with the detail the user is now asking about appended to it.
+  const searchText = subject ? `${subject} ${userText}` : userText;
+
+  if (!artifactEntity && intent === 'place') {
+    entities.push({ kind: 'place', value: placeQuery(subject ?? userText) });
+  }
+  if (intent === 'news') entities.push({ kind: 'topic', value: searchText.slice(0, 200) });
+  entities.push({ kind: 'web', value: webQuery(searchText) });
 
   if (entities.length === 0) return null;
   const primary = entities[0];
 
   let sources: SourceReport[];
   try {
-    sources = await gatherAllIntelligence(entities);
+    sources = await gatherAllIntelligence(entities, {
+      excludeProviders: excludedProvidersFor(intent),
+    });
   } catch (err) {
     // The orchestrator itself must never break the conversation.
     console.error('[ai-chat] intelligence orchestration failed', err);

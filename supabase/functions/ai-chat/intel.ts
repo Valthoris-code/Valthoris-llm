@@ -1835,12 +1835,32 @@ export function providersFor(kind: IntelEntityKind): Provider[] {
  * A provider never aborts the others: each one produces its own report, so a
  * partial outage degrades the analysis instead of failing it.
  */
-export async function gatherIntelligence(entity: IntelEntity): Promise<SourceReport[]> {
+export async function gatherIntelligence(
+  entity: IntelEntity,
+  options: GatherOptions = {},
+): Promise<SourceReport[]> {
   const value = normaliseEntity(entity.kind, entity.value);
   if (!isValidEntity(entity.kind, value)) return [];
 
-  const selected = providersFor(entity.kind).slice(0, MAX_CONCURRENT);
+  const excluded = new Set(options.excludeProviders ?? []);
+  const selected = providersFor(entity.kind)
+    .filter((provider) => !excluded.has(provider.provider))
+    .slice(0, MAX_CONCURRENT);
   return await Promise.all(selected.map((provider) => runProvider(provider, entity.kind, value)));
+}
+
+/**
+ * Restrictions applied to a lookup.
+ *
+ * A source is not universally appropriate: an encyclopedia has nothing useful
+ * to say about a phone number, a wallet or this week's fraud alerts, and
+ * listing it as a consulted source there only produces irrelevant citations.
+ * The caller — which is the one that knows the intent of the turn — names the
+ * providers that must stay out of it.
+ */
+export interface GatherOptions {
+  /** Provider names that must not be queried for this turn. */
+  excludeProviders?: string[];
 }
 
 /**
@@ -1850,8 +1870,11 @@ export async function gatherIntelligence(entity: IntelEntity): Promise<SourceRep
  * The reports are merged, and a provider that would answer twice for the same
  * value is only queried once, so the "Fontes" list never shows a duplicate.
  */
-export async function gatherAllIntelligence(entities: IntelEntity[]): Promise<SourceReport[]> {
-  const batches = await Promise.all(entities.map((entity) => gatherIntelligence(entity)));
+export async function gatherAllIntelligence(
+  entities: IntelEntity[],
+  options: GatherOptions = {},
+): Promise<SourceReport[]> {
+  const batches = await Promise.all(entities.map((entity) => gatherIntelligence(entity, options)));
   const seen = new Set<string>();
   const merged: SourceReport[] = [];
   for (const report of batches.flat()) {

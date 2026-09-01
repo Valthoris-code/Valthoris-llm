@@ -84,6 +84,7 @@ const pt: Catalogue = {
   'nav.profile': 'Perfil',
   'nav.comingSoon': 'Em Breve',
   'nav.more': 'Mais',
+  'nav.conversations': 'Conversas',
 
   // ── Barra superior ─────────────────────────────────────────────────────────
   'toolbar.quickScan': 'Análise rápida…',
@@ -205,6 +206,8 @@ const pt: Catalogue = {
   'assistant.sourceUnavailable': 'indisponível',
   'assistant.sourceNoAnswer': 'sem resposta',
   'assistant.newConversation': 'Nova conversa',
+  'assistant.fullAnalysis': 'Ver análise completa',
+  'assistant.conversationsTitle': 'As suas conversas',
   'assistant.suggestion.fraudAlerts': 'Alertas de fraude: O que estão a inventar esta semana?',
   'assistant.suggestion.investigate': 'Analisar uma suspeita: Fala comigo, vamos desmascarar isto.',
 
