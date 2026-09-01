@@ -43,6 +43,10 @@ concurrency:
 jobs:
   provision:
     runs-on: ubuntu-latest
+    # The job only reads this repository; every privileged action it performs is
+    # against Supabase, with Supabase credentials.
+    permissions:
+      contents: read
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
