@@ -588,9 +588,13 @@ setIntelFailureSink((failure) => {
  * would leak its prefix through the time the comparison takes.
  */
 function secretEquals(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  // The loop always spans the longer string so that a wrong length costs the
+  // same time as a wrong character: returning early would leak the key length.
+  const length = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < length; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
   return diff === 0;
 }
 

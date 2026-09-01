@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<IntelSourceRow['status'], { icon: string; text: strin
   operational:    { icon: '✅', text: 'Operacional',     badge: 'ok' },
   degraded:       { icon: '⚠️', text: 'Degradado',       badge: 'warn' },
   not_configured: { icon: '➖', text: 'Não configurada', badge: '' },
-  disabled:       { icon: '❌', text: 'Desativada',      badge: 'danger' },
+  disabled:       { icon: '⊘',  text: 'Desativada',      badge: '' },
 };
 
 function sourceId(row: IntelSourceRow): string {

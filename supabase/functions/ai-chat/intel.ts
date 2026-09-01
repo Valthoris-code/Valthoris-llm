@@ -1338,8 +1338,10 @@ export async function probeSource(id: string): Promise<SourceHealth | null> {
   }
 }
 
+const PROBE_BATCH_SIZE = 4;
+
 /**
- * Probes every source, a few at a time.
+ * Probes every source, `PROBE_BATCH_SIZE` at a time.
  *
  * The concurrency cap keeps the Nominatim throttle honest and avoids turning a
  * health check into a burst that itself trips a provider's rate limit.
@@ -1347,8 +1349,10 @@ export async function probeSource(id: string): Promise<SourceHealth | null> {
 export async function probeAllSources(): Promise<SourceHealth[]> {
   const ids = PROVIDERS.map((p) => sourceId(p.provider, p.endpoint));
   const results: SourceHealth[] = [];
-  for (let i = 0; i < ids.length; i += 4) {
-    const batch = await Promise.all(ids.slice(i, i + 4).map((id) => probeSource(id)));
+  for (let i = 0; i < ids.length; i += PROBE_BATCH_SIZE) {
+    const batch = await Promise.all(
+      ids.slice(i, i + PROBE_BATCH_SIZE).map((id) => probeSource(id)),
+    );
     for (const row of batch) if (row) results.push(row);
   }
   return results;
