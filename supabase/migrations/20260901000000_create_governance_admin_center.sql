@@ -247,8 +247,11 @@ ON CONFLICT DO NOTHING;
 
 -- ─── Helper functions ────────────────────────────────────────────────────────
 --
--- All of them are STABLE SECURITY DEFINER with a pinned search_path so they can
--- be used inside RLS policies without recursing into those same policies.
+-- The two below only read the request's JWT claims, so they touch no table and
+-- deliberately stay SECURITY INVOKER: they need no privilege of their own.
+-- The ones that follow do read `governance` tables, and are STABLE SECURITY
+-- DEFINER with a pinned search_path so they can be used inside RLS policies
+-- without recursing into those same policies.
 
 -- The assurance level of the current session ('aal1' before MFA, 'aal2' after).
 CREATE OR REPLACE FUNCTION governance.current_aal()
@@ -710,8 +713,16 @@ STABLE
 SECURITY DEFINER
 SET search_path = governance, public, pg_temp
 AS $$
-  WITH filtered AS (
-    SELECT *
+  -- The page and its total are produced by a single traversal: `count(*) OVER ()`
+  -- is evaluated before LIMIT, so it still counts the whole filtered set while
+  -- letting the planner stop reading once the page is full. Materialising a
+  -- `filtered` CTE instead would force the entire audit log into a tuplestore
+  -- on every call, which gets steadily worse as the log grows.
+  WITH page AS (
+    SELECT l.id, l.occurred_at, l.actor_email, l.action, l.target_type,
+           l.target_id, l.permission, l.result, l.reason, l.evidence,
+           l.request_id,
+           count(*) OVER () AS total_count
     FROM governance.audit_logs l
     WHERE (p_result IS NULL OR l.result = p_result)
       AND (
@@ -721,19 +732,29 @@ AS $$
         OR COALESCE(l.target_type, '') ILIKE '%' || p_search || '%'
         OR COALESCE(l.target_id, '') ILIKE '%' || p_search || '%'
       )
+    ORDER BY l.occurred_at DESC
+    LIMIT greatest(1, least(COALESCE(p_limit, 50), 200))
+    OFFSET greatest(0, COALESCE(p_offset, 0))
   )
   SELECT jsonb_build_object(
-    'total', (SELECT count(*) FROM filtered),
+    'total', COALESCE(
+      (SELECT p.total_count FROM page p LIMIT 1),
+      -- An offset past the end yields no row, and therefore no window value;
+      -- only then is a separate count worth paying for.
+      (SELECT count(*)
+         FROM governance.audit_logs l
+        WHERE (p_result IS NULL OR l.result = p_result)
+          AND (
+            p_search IS NULL OR p_search = ''
+            OR l.action ILIKE '%' || p_search || '%'
+            OR l.actor_email ILIKE '%' || p_search || '%'
+            OR COALESCE(l.target_type, '') ILIKE '%' || p_search || '%'
+            OR COALESCE(l.target_id, '') ILIKE '%' || p_search || '%'
+          ))
+    ),
     'items', COALESCE((
-      SELECT jsonb_agg(to_jsonb(p) ORDER BY p.occurred_at DESC)
-      FROM (
-        SELECT id, occurred_at, actor_email, action, target_type, target_id,
-               permission, result, reason, evidence, request_id
-        FROM filtered
-        ORDER BY occurred_at DESC
-        LIMIT greatest(1, least(COALESCE(p_limit, 50), 200))
-        OFFSET greatest(0, COALESCE(p_offset, 0))
-      ) p
+      SELECT jsonb_agg(to_jsonb(p) - 'total_count' ORDER BY p.occurred_at DESC)
+      FROM page p
     ), '[]'::jsonb)
   );
 $$;
