@@ -388,6 +388,32 @@ Deno.test('a practical need reaches the map without any keyword question', () =>
   assert(!fn.isPlaceLookup('preciso de ajuda'));
 });
 
+Deno.test('the name of a place is by itself a place lookup', () => {
+  // The turn that exposed the problem: the user simply types the name of the
+  // place. There is no "morada", no "onde fica" and no practical need, and the
+  // answer used to come from the model's memory with no source at all.
+  assert(fn.isPlaceLookup('Hospital de Setúbal'));
+  assert(fn.isPlaceLookup('hospital de setúbal'));
+  assert(fn.isPlaceLookup('Centro Hospitalar de Setúbal'));
+  assert(fn.isPlaceLookup('Farmácia Central Braga'));
+
+  // A written address, with or without a postal code, is also a location.
+  assert(fn.isPlaceLookup('Rua Camilo Castelo Branco 15, Setúbal'));
+  assert(fn.isPlaceLookup('2900-123 Setúbal'));
+
+  // What must still never reach an external provider.
+  assert(!fn.isPlaceLookup('gosto muito deste restaurante'));
+  assert(!fn.isPlaceLookup('o que é um hospital?'));
+  assert(!fn.isPlaceLookup('obrigado pela ajuda'));
+  for (const greeting of ['Olá', 'bom dia', 'obrigado', 'como estás?', 'Hi there']) {
+    assert(!fn.isPlaceLookup(greeting), greeting);
+  }
+});
+
+Deno.test('the bare name of a place is searched as written', () => {
+  assertEquals(fn.placeQuery('Hospital de Setúbal'), 'Hospital de Setúbal');
+});
+
 Deno.test('the place query keeps the place and drops the need', () => {
   const query = fn.placeQuery("McDonald's em Évora, estou com fome, preciso de comer");
   assert(query.toLowerCase().includes("mcdonald"), query);

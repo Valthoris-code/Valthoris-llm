@@ -868,8 +868,10 @@ function evidenceValue(value: unknown): string | null {
  * Either an explicit kind of establishment, or the "X em/no/na/de Y" shape that
  * names a place ("hospital de Évora", "clínica no Porto").
  */
-const PLACE_ENTITY_RE =
-  /\b(restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|escola|universidade|hotel|empresa|cl[íi]nica|banco|farm[áa]cia|caf[ée]|padaria|gin[áa]sio|oficina|est[úa]dio|museu|restaurant|shop|store|clinic|pharmacy|school|company|hotel)\b/i;
+const PLACE_ENTITY_WORDS =
+  "restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|escola|universidade|hotel|empresa|cl[íi]nica|banco|farm[áa]cia|caf[ée]|padaria|gin[áa]sio|oficina|est[úa]dio|museu|restaurant|shop|store|clinic|pharmacy|school|company|hotel";
+
+const PLACE_ENTITY_RE = new RegExp(`\\b(${PLACE_ENTITY_WORDS})\\b`, 'i');
 
 const PLACE_PATTERN_RE =
   /\b\p{L}[\p{L}.'-]{2,}\s+(?:em|no|na|nos|nas|d[oa]s?|de|in|at)\s+\p{Lu}[\p{L}.'-]{2,}/u;
@@ -898,18 +900,80 @@ const PLACE_NEED_RE =
   /\b(fome|comer|almo[çc]ar|jantar|lanchar|beber|caf[ée]|refei[çc][ãa]o|dormir|ficar|abastecer|combust[íi]vel|farm[áa]cia\s+de\s+servi[çc]o|perto\s+de\s+mim|mais\s+pr[óo]xim[oa]|aqui\s+perto|nas?\s+redondezas|como\s+(?:chego|chegar|ir)|ir\s+at[ée]|dire[çc][õo]es|rota|caminho|mapa|hungry|eat|nearby|nearest|near\s+me|how\s+do\s+i\s+get|directions|route|map)\b/i;
 
 /**
+ * Public-place lookup: a street address written out in full.
+ *
+ * A postal address ("Rua da Liberdade 5, 2900-123 Setúbal") names a location
+ * just as clearly as an establishment does, so it must reach the map too.
+ */
+const PLACE_ADDRESS_RE =
+  /\b(rua|avenida|av\.|travessa|largo|pra[çc]a|estrada|rotunda|beco|alameda|azinhaga|calçada|cal[çc]ada|urbaniza[çc][ãa]o|bairro|zona\s+industrial|parque\s+industrial|street|avenue|road|boulevard|square)\b/i;
+
+/** Portuguese postal code — on its own it already identifies a location. */
+const PLACE_POSTCODE_RE = /\b\d{4}-\d{3}\b/;
+
+/**
+ * A place named the way people actually name one, without any question.
+ *
+ * Either the capitalised "X em/de Y" shape, or an establishment word followed
+ * by its name ("hospital de Setúbal", "farmácia Central"), which also holds
+ * when the user types everything in lower case.
+ */
+const NAMED_PLACE_RE = new RegExp(
+  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:d[oa]s?|de|em|no|na|of|in|at)?\\s*\\p{L}[\\p{L}.'-]{2,}`,
+  'iu',
+);
+
+/**
+ * Turns that use a place word without pointing at any real place: opinions,
+ * small talk and questions about what something *is* rather than where it is.
+ */
+const PLACE_NON_LOOKUP_RE =
+  /\b(gosto|adoro|odeio|detesto|acho|penso|fui|estive|trabalho|trabalhei|conhe[çc]o|recomendo|obrigad[oa]|ol[áa]|bom\s+dia|boa\s+tarde|boa\s+noite|o\s+que\s+[ée]|que\s+[ée]|significa|significado|defini[çc][ãa]o|define|explica(?:r)?|como\s+funciona|what\s+is|what\s+are|how\s+does|thanks|thank\s+you|hello|hi\s+there)\b/i;
+
+/** A bare place mention is a name, not a paragraph. */
+const BARE_PLACE_MAX_WORDS = 10;
+
+/**
+ * True when the whole turn is simply the name of a place or an address.
+ *
+ * Typing "Hospital de Setúbal" — with no "morada", "contacto" or "onde fica" —
+ * is how people search for a place, and it used to be answered from the
+ * model's memory alone because no question word was present. A short turn that
+ * names a place and asks nothing else is a location search and must be looked
+ * up, while opinions ("gosto muito deste restaurante"), greetings and "o que é
+ * um hospital" stay out of every external provider.
+ */
+export function isBarePlaceMention(text: string): boolean {
+  const cleaned = text.replace(/[?¿!¡.,;:]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (cleaned.length < 3) return false;
+  if (cleaned.split(' ').length > BARE_PLACE_MAX_WORDS) return false;
+  if (PLACE_NON_LOOKUP_RE.test(cleaned)) return false;
+  return (
+    PLACE_PATTERN_RE.test(cleaned) ||
+    NAMED_PLACE_RE.test(cleaned) ||
+    PLACE_ADDRESS_RE.test(cleaned) ||
+    PLACE_POSTCODE_RE.test(cleaned)
+  );
+}
+
+/**
  * True when the turn is genuinely about a real public place or business.
  *
- * A place must be named — an establishment type ("restaurante", "farmácia") or
- * the "X em Y" shape — *and* the turn must express either a factual question
- * about it or a practical need that only a location can satisfy. "Olá", "bom
- * dia" or "obrigado" satisfy neither, so they still never reach an external
- * provider.
+ * A place must be named — an establishment type ("restaurante", "farmácia"),
+ * the "X em Y" shape or a street address — and the turn must then either ask a
+ * factual question about it, express a practical need that only a location can
+ * satisfy, or simply *be* that name. "Olá", "bom dia" or "obrigado" satisfy
+ * none of those, so they still never reach an external provider.
  */
 export function isPlaceLookup(text: string): boolean {
-  const hasEntity = PLACE_ENTITY_RE.test(text) || PLACE_PATTERN_RE.test(text);
+  const hasEntity =
+    PLACE_ENTITY_RE.test(text) ||
+    PLACE_PATTERN_RE.test(text) ||
+    PLACE_ADDRESS_RE.test(text) ||
+    PLACE_POSTCODE_RE.test(text);
   if (!hasEntity) return false;
-  return PLACE_REQUEST_RE.test(text) || PLACE_NEED_RE.test(text);
+  if (PLACE_REQUEST_RE.test(text) || PLACE_NEED_RE.test(text)) return true;
+  return isBarePlaceMention(text);
 }
 
 /**
