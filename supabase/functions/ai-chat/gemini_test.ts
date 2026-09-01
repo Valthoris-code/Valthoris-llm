@@ -44,6 +44,30 @@ function modelOf(url: string): string {
   return url.split('/models/')[1]?.split(':')[0] ?? '';
 }
 
+/**
+ * An empty, well-formed answer for the keyless sources the function consults on
+ * every lookup turn (web search and gazetteers). They are exercised for real in
+ * `intel_test.ts`; here they must simply not interfere with the model call.
+ */
+function emptySearchAnswer(url: string): Response | null {
+  if (url.startsWith('https://html.duckduckgo.com/')) {
+    return new Response('<html><body></body></html>', { status: 200 });
+  }
+  if (url.startsWith('https://api.duckduckgo.com/')) {
+    return new Response(JSON.stringify({ RelatedTopics: [] }), { status: 200 });
+  }
+  if (/^https:\/\/[a-z]{2}\.wikipedia\.org\//.test(url)) {
+    return new Response(JSON.stringify({ query: { search: [] } }), { status: 200 });
+  }
+  if (url.startsWith('https://photon.komoot.io/')) {
+    return new Response(JSON.stringify({ features: [] }), { status: 200 });
+  }
+  if (url.startsWith('https://nominatim.openstreetmap.org/')) {
+    return new Response(JSON.stringify([]), { status: 200 });
+  }
+  return null;
+}
+
 function stubGemini() {
   recorded = [];
   httpStatus = 200;
@@ -51,14 +75,18 @@ function stubGemini() {
   errorBody = { error: 'quota' };
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (!url.startsWith('https://generativelanguage.googleapis.com/')) {
+      // The keyless web-search engines run on every lookup turn; this file is
+      // about the model call, so they answer with nothing and are not recorded.
+      const empty = emptySearchAnswer(url);
+      if (empty) return Promise.resolve(empty);
+      return Promise.reject(new Error(`unexpected fetch to ${url}`));
+    }
     recorded.push({
       url,
       headers: new Headers(init?.headers),
       body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
     });
-    if (!url.startsWith('https://generativelanguage.googleapis.com/')) {
-      return Promise.reject(new Error(`unexpected fetch to ${url}`));
-    }
     if (notFoundModels.some((model) => url.includes(`/models/${model}:`))) {
       return Promise.resolve(
         new Response(

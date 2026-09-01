@@ -18,12 +18,16 @@ import {
   isValidEntity,
   listSources,
   nominatimThrottle,
+  parseDuckDuckGoHtml,
+  pickPlaceCandidate,
   placeContactMissing,
   placeMapLink,
+  placeQueryVariants,
   providersFor,
   probeSource,
   resetGoPlusToken,
   resetNominatimState,
+  scorePlaceCandidate,
   setIntelFailureSink,
   sourceId,
 } from './intel.ts';
@@ -96,7 +100,17 @@ Deno.test('each entity kind selects its real providers', () => {
   assert(names('crypto_eth').includes('CryptoScamDB'));
   assert(names('topic').includes('NewsData'));
   assert(names('phone').includes('FTC DNC Complaints'));
-  assertEquals(names('place'), ['Nominatim']);
+  // Two keyless gazetteers answer a place, so one index missing a business is
+  // not the end of the lookup.
+  assertEquals(names('place').sort(), ['Nominatim', 'Photon']);
+  // The open web is searched with the keyless engines on every deployment, and
+  // with the commercial APIs whenever their key is configured.
+  const web = names('web');
+  assert(web.includes('DuckDuckGo'));
+  assert(web.includes('Wikipedia'));
+  assert(web.includes('Brave Search'));
+  assert(web.includes('Tavily'));
+  assert(web.includes('Serper (Google)'));
 });
 
 // ─── Not configured ──────────────────────────────────────────────────────────
@@ -570,14 +584,122 @@ Deno.test('the registry lists a source for every configured secret, values exclu
   clearSecrets();
   const sources = listSources();
   assert(sources.length > 10);
-  assertEquals(
-    sources.filter((s) => s.provider === 'Nominatim')[0]?.status,
-    'operational',
-  );
+  // The sources that need no credential work on every deployment.
+  const keyless = ['Nominatim', 'Photon', 'DuckDuckGo', 'Wikipedia'];
+  for (const provider of keyless) {
+    assertEquals(sources.filter((s) => s.provider === provider)[0]?.status, 'operational', provider);
+  }
   // Without secrets everything else is "not configured" — never "operational".
   assert(
     sources
-      .filter((s) => s.provider !== 'Nominatim')
+      .filter((s) => !keyless.includes(s.provider))
       .every((s) => s.status === 'not_configured' || s.status === 'disabled'),
   );
+});
+
+// ─── Public web search ───────────────────────────────────────────────────────
+
+Deno.test('the keyless search engine parses real result pages', () => {
+  const html = `
+    <div class="result">
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.hesevora.min-saude.pt%2Fcontactos">
+        Hospital do Esp&iacute;rito Santo &mdash; Contactos
+      </a>
+      <a class="result__snippet">Telefone: <b>266 740 100</b></a>
+    </div>
+    <div class="result">
+      <a class="result__a" href="https://www.evora.net/optica-havaneza">Óptica Havaneza</a>
+      <a class="result__snippet">Praça do Giraldo, Évora</a>
+    </div>`;
+  const results = parseDuckDuckGoHtml(html);
+  assertEquals(results.length, 2);
+  // The redirect wrapper is unwrapped: the source is the page, not DuckDuckGo.
+  assertEquals(results[0].url, 'https://www.hesevora.min-saude.pt/contactos');
+  assertEquals(results[0].title, 'Hospital do Espírito Santo — Contactos');
+  assertEquals(results[0].snippet, 'Telefone: 266 740 100');
+  assertEquals(results[1].url, 'https://www.evora.net/optica-havaneza');
+});
+
+Deno.test('a search result that is not a public page is never reported', () => {
+  const html = `
+    <a class="result__a" href="javascript:alert(1)">click</a>
+    <a class="result__a" href="http://127.0.0.1:8000/admin">internal</a>
+    <a class="result__a" href="https://example.com/real">real page</a>`;
+  const results = parseDuckDuckGoHtml(html);
+  assertEquals(results.length, 1);
+  assertEquals(results[0].url, 'https://example.com/real');
+});
+
+Deno.test('a real web search is performed with no credential at all', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  const calls: string[] = [];
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    calls.push(url);
+    if (url.startsWith('https://html.duckduckgo.com/')) {
+      return Promise.resolve(
+        new Response(
+          '<a class="result__a" href="https://exemplo.test/pagina">Uma página</a>' +
+            '<a class="result__snippet">O que a página diz</a>',
+          { status: 200 },
+        ),
+      );
+    }
+    if (/^https:\/\/[a-z]{2}\.wikipedia\.org\//.test(url)) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ query: { search: [{ title: 'Évora', snippet: 'Cidade <b>portuguesa</b>' }] } }),
+          { status: 200 },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected fetch to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'web', value: 'óptica havaneza évora' });
+    const ddg = reports.find((r) => r.provider === 'DuckDuckGo');
+    assertEquals(ddg?.status, 'success');
+    assertEquals((ddg?.data?.pages as { url: string }[])[0].url, 'https://exemplo.test/pagina');
+
+    const wiki = reports.find((r) => r.provider === 'Wikipedia');
+    assertEquals(wiki?.status, 'success');
+    assertEquals((wiki?.data?.pages as { url: string }[])[0].url, 'https://pt.wikipedia.org/wiki/%C3%89vora');
+
+    // The engines that need a key are reported as unavailable, never faked.
+    assertEquals(reports.find((r) => r.provider === 'Brave Search')?.status, 'not_configured');
+    assert(calls.some((url) => url.startsWith('https://html.duckduckgo.com/')));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+// ─── Place ranking ───────────────────────────────────────────────────────────
+
+Deno.test('a bus stop never outranks the place the user asked about', () => {
+  const busStop = {
+    name: 'Hospital',
+    display_name: 'Hospital, Rua Diogo Cão, Barreiro, Setúbal, Portugal',
+    category: 'highway',
+    type: 'bus_stop',
+    importance: 0.4,
+  };
+  const hospital = {
+    name: 'Hospital de São Bernardo',
+    display_name: 'Hospital de São Bernardo, Setúbal, Portugal',
+    category: 'amenity',
+    type: 'hospital',
+    importance: 0.3,
+  };
+  const query = 'Hospital de Setúbal';
+  assert(scorePlaceCandidate(hospital, query) > scorePlaceCandidate(busStop, query));
+  assertEquals(pickPlaceCandidate([busStop, hospital], query), hospital);
+});
+
+Deno.test('a place query is reformulated until the gazetteer understands it', () => {
+  const variants = placeQueryVariants('Óptica Havaneza em Évora');
+  assert(variants.includes('Óptica Havaneza em Évora'));
+  assert(variants.includes('Óptica Havaneza, Évora'));
+  assert(variants.includes('Havaneza, Évora'), variants.join(' | '));
 });

@@ -67,7 +67,31 @@ const DEFAULT_PLACE: Record<string, unknown> = {
 };
 let nominatimPlace: Record<string, unknown> = DEFAULT_PLACE;
 
+/** Results the stubbed DuckDuckGo page returns. Reset by each test that uses it. */
+let webSearchPages: { title: string; url: string; snippet?: string }[] = [];
+
+/** The no-JavaScript DuckDuckGo result page, in the shape the parser reads. */
+function duckDuckGoHtml(): string {
+  const results = webSearchPages
+    .map(
+      (page) =>
+        `<div class="result"><a class="result__a" href="${page.url}">${page.title}</a>` +
+        `<a class="result__snippet">${page.snippet ?? ''}</a></div>`,
+    )
+    .join('');
+  return `<html><body>${results}</body></html>`;
+}
+
 const realFetch = globalThis.fetch;
+
+/** The recorded request body: JSON when it is JSON, the raw string otherwise. */
+function parseBody(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
 
 globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -77,7 +101,9 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
   recorded.push({
     url,
     method,
-    body: rawBody ? JSON.parse(rawBody) : undefined,
+    // A search engine is posted a form, not JSON: the raw body is kept as it is
+    // rather than losing the call to a parse error.
+    body: rawBody ? parseBody(rawBody) : undefined,
     prefer: headers.get('Prefer') ?? undefined,
   });
 
@@ -116,6 +142,24 @@ globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise
     return Promise.resolve(
       new Response(JSON.stringify({ error: { message: 'Insufficient Balance' } }), { status: 402 }),
     );
+  }
+
+  // The keyless web-search engines and the second gazetteer are consulted on
+  // every lookup turn. They answer with nothing here unless a test sets
+  // `webSearchPages`, so each test asserts one thing at a time.
+  if (url.startsWith('https://html.duckduckgo.com/')) {
+    return Promise.resolve(new Response(duckDuckGoHtml(), { status: 200 }));
+  }
+  if (url.startsWith('https://api.duckduckgo.com/')) {
+    return Promise.resolve(new Response(JSON.stringify({ RelatedTopics: [] }), { status: 200 }));
+  }
+  if (/^https:\/\/[a-z]{2}\.wikipedia\.org\//.test(url)) {
+    return Promise.resolve(
+      new Response(JSON.stringify({ query: { search: [] } }), { status: 200 }),
+    );
+  }
+  if (url.startsWith('https://photon.komoot.io/')) {
+    return Promise.resolve(new Response(JSON.stringify({ features: [] }), { status: 200 }));
   }
 
   if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
@@ -494,7 +538,7 @@ Deno.test('a place with no phone in the gazetteer falls back to the Gemini web s
   assertEquals(body.webSources, undefined);
 });
 
-Deno.test('a place that already has a phone does not trigger the web search', async () => {
+Deno.test('a place lookup searches the web even when the gazetteer has a phone', async () => {
   recorded = [];
   nominatimPlace = {
     name: 'Óptica Havaneza',
@@ -517,11 +561,14 @@ Deno.test('a place that already has a phone does not trigger the web search', as
   assertEquals(source.data.phone, '+351 266 702 297');
   assertEquals(source.data.website, 'https://opticahavaneza.test');
 
+  // A lookup turn is always searched on the open web as well: the gazetteer
+  // knows where a business is, not whether it moved, closed or changed number.
   const gemini = recorded.find((r) => r.url.startsWith('https://generativelanguage.googleapis.com/'));
-  assertEquals((gemini?.body as Record<string, unknown>)?.tools, undefined);
-  assertEquals(
-    body.sources.find((s: Record<string, unknown>) => s.provider === 'Google Search (Gemini)'),
-    undefined,
+  const tools = (gemini?.body as Record<string, unknown>)?.tools as Record<string, unknown>[];
+  assert(Array.isArray(tools) && tools.some((t) => 'google_search' in t), 'search tool not enabled');
+  assert(
+    recorded.some((r) => r.url.startsWith('https://html.duckduckgo.com/')),
+    'the keyless web search did not run',
   );
   nominatimPlace = DEFAULT_PLACE;
 });
@@ -811,4 +858,145 @@ Deno.test('an unknown source id is not invented', async () => {
     healthRequest({ action: 'intel-health', probe: 'NotASource|nothing' }, 'test-service-role-key'),
   );
   assertEquals(res.status, 404);
+});
+
+// ─── Web search on any subject ───────────────────────────────────────────────
+
+Deno.test('any real question is searched on the web, whatever the subject is', async () => {
+  recorded = [];
+  webSearchPages = [
+    {
+      title: 'Restaurante Á do Fernando — Olhão',
+      url: 'https://exemplo.test/a-do-fernando',
+      snippet: 'Avenida 5 de Outubro, Olhão. Telefone 289 000 000.',
+    },
+  ];
+  providerAnswers = ['O restaurante fica na Avenida 5 de Outubro, em Olhão.'];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: 'Restaurante Á do Fernando em olhão' }],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  const search = body.sources.find(
+    (s: Record<string, unknown>) => s.provider === 'DuckDuckGo',
+  );
+  assertEquals(search.status, 'success');
+  assertEquals(search.data.pages[0].url, 'https://exemplo.test/a-do-fernando');
+  assertEquals(body.grounded, true);
+  webSearchPages = [];
+});
+
+Deno.test('a question with no place and no artefact is still searched', async () => {
+  recorded = [];
+  webSearchPages = [
+    { title: 'Salário mínimo em 2026', url: 'https://exemplo.test/salario', snippet: 'Valor atualizado.' },
+  ];
+  providerAnswers = ['De acordo com a página consultada, o valor é o publicado em Diário da República.'];
+
+  const res = await handler!(post({
+    messages: [{ role: 'user', content: 'qual é o salário mínimo este ano?' }],
+  }));
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assert(
+    recorded.some((r) => r.url.startsWith('https://html.duckduckgo.com/')),
+    'the question was not searched',
+  );
+  assertEquals(body.grounded, true);
+  webSearchPages = [];
+});
+
+Deno.test('small talk is answered without searching anything', async () => {
+  recorded = [];
+  providerAnswers = ['De nada!'];
+
+  const res = await handler!(post({ messages: [{ role: 'user', content: 'obrigado' }] }));
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.sources, undefined);
+  assertEquals(recorded.length, 1);
+  assert(recorded[0].url.startsWith('https://generativelanguage.googleapis.com/'));
+});
+
+Deno.test('the search results answer the turn when no model is available', () => {
+  const answer = fn.answerFromEvidence('web', [
+    {
+      provider: 'DuckDuckGo',
+      endpoint: 'web/search',
+      entity: 'óptica havaneza évora',
+      timestamp: '2026-09-01T10:00:00.000Z',
+      status: 'success',
+      data: {
+        found: true,
+        results: 1,
+        pages: [
+          {
+            title: 'Óptica Havaneza',
+            url: 'https://exemplo.test/havaneza',
+            snippet: 'Praça do Giraldo, Évora. Telefone 266 702 297.',
+          },
+        ],
+      },
+    },
+  ]);
+  assert(answer);
+  assertStringIncludes(answer!, 'Óptica Havaneza');
+  assertStringIncludes(answer!, 'https://exemplo.test/havaneza');
+  assertStringIncludes(answer!, 'Praça do Giraldo');
+  assertStringIncludes(answer!, 'DuckDuckGo (web/search) — 2026-09-01T10:00:00.000Z');
+});
+
+Deno.test('a place answer takes each field from whichever source has it', () => {
+  const answer = fn.answerFromEvidence('place', [
+    {
+      provider: 'Nominatim',
+      endpoint: 'place/public-search',
+      entity: 'Óptica Havaneza, Évora',
+      timestamp: '2026-09-01T10:00:00.000Z',
+      status: 'success',
+      data: {
+        found: true,
+        name: 'Óptica Havaneza',
+        address: 'Praça do Giraldo, Évora',
+        latitude: '38.5717',
+        link: 'https://www.openstreetmap.org/?mlat=38.5717&mlon=-7.9089#map=17/38.5717/-7.9089',
+      },
+    },
+    {
+      provider: 'Serper (Google)',
+      endpoint: 'web/search',
+      entity: 'Óptica Havaneza, Évora',
+      timestamp: '2026-09-01T10:00:01.000Z',
+      status: 'success',
+      data: {
+        found: true,
+        results: 1,
+        phone: '+351 266 702 297',
+        pages: [{ title: 'Óptica Havaneza', url: 'https://exemplo.test/havaneza' }],
+      },
+    },
+  ]);
+  assert(answer);
+  // The gazetteer has the address, the web search has the phone: both are used.
+  assertStringIncludes(answer!, 'MORADA / ADDRESS: Praça do Giraldo, Évora');
+  assertStringIncludes(answer!, 'CONTACTO / CONTACT: +351 266 702 297');
+  assertStringIncludes(answer!, 'MAPA / MAP: https://www.openstreetmap.org/?mlat=38.5717');
+});
+
+Deno.test('the name of a business is recognised however it is written', () => {
+  // The two turns that were answered from the model's memory instead of a
+  // lookup, because neither matched the old place patterns.
+  assert(fn.isPlaceLookup('Restaurante Á do Fernando em olhão'));
+  assert(fn.isPlaceLookup('Óptica Havaneza em Évora'));
+  // And both are, in any case, searched on the web.
+  assert(fn.isSearchableTurn('Restaurante Á do Fernando em olhão'));
+  assert(fn.isSearchableTurn('Óptica Havaneza em Évora'));
+  assert(fn.isSearchableTurn('quem ganhou a última volta a Portugal?'));
+  // Small talk never is.
+  for (const chat of ['Olá', 'bom dia', 'obrigado', 'ok', 'Hi', 'quem és tu?']) {
+    assert(!fn.isSearchableTurn(chat), chat);
+  }
 });

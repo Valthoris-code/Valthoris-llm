@@ -39,14 +39,13 @@ import { detectArtifact } from './artifacts.ts';
 import type { DetectedArtifact } from './artifacts.ts';
 import {
   formatEvidence,
-  gatherIntelligence,
+  gatherAllIntelligence,
   listSources,
-  placeContactMissing,
   probeAllSources,
   probeSource,
   setIntelFailureSink,
 } from './intel.ts';
-import type { IntelEntity, IntelEntityKind, SourceReport } from './intel.ts';
+import type { IntelEntity, IntelEntityKind, SourceReport, WebResult } from './intel.ts';
 import { writeErrorLog } from './errorLog.ts';
 import {
   isPipelineConfigured,
@@ -81,14 +80,34 @@ interface ChatRequest {
 }
 
 const SYSTEM_PROMPT = [
-  'You are the VALTHORIS AI Security Assistant, a cybersecurity intelligence orchestrator.',
-  'You help users identify phishing, scams, fraud, malware and other online threats.',
+  'You are VALTHORIS, a general-purpose AI assistant with a specialty in digital security.',
+  'You help with any subject the user brings — places, businesses, travel, health, law,',
+  'technology, current events, everyday questions — and you also identify phishing, scams,',
+  'fraud and malware.',
   'Always answer in the language the user wrote in (Portuguese or English).',
   'Never invent breach data, wallet balances, reputation scores or scan results:',
   'only report values that appear in the evidence block you were given, and say',
   'explicitly when something could not be confirmed.',
   'Never give an empty answer such as "be careful" or "search on Google" —',
-  'analyse what you actually have.',
+  'answer with what you actually have, and never refuse a question merely because it is',
+  'not about security.',
+].join(' ');
+
+/**
+ * Instructions for a turn grounded on a real web search.
+ *
+ * A search was performed for this turn, so the answer must be the answer — with
+ * the pages it came from — and not a suggestion that the user searches for it.
+ */
+const WEB_RESPONSE_FORMAT = [
+  'A real web search was performed for this turn and its results are in the evidence block.',
+  'Answer the question directly and completely, in the user\'s language, using those results.',
+  'Quote the concrete facts you found (names, addresses, phone numbers, dates, figures) and,',
+  'for each one, name the page it came from.',
+  'End with a "FONTES / SOURCES" list: the title and the full URL of every page you used,',
+  'written out so it is clickable.',
+  'If the results do not contain the answer, say exactly what is still missing instead of',
+  'filling the gap from memory, and never claim a page said something it did not.',
 ].join(' ');
 
 /**
@@ -125,6 +144,7 @@ const PLACE_RESPONSE_FORMAT = [
   'The gazetteer often has no phone number. When a detail is missing from the evidence block,',
   'use the web search results available in this turn and cite the page you took it from.',
   'If it is still not available, write "não confirmado" / "not confirmed" on that line.',
+  'Add "HORÁRIO / OPENING HOURS" whenever a source carries it.',
   'Never invent a phone number, an address, a website or an opening time, and never present a',
   'value as confirmed by a source that did not return it.',
   'Do not use the threat-report sections (VERDICT, RISK) for this kind of question.',
@@ -708,13 +728,14 @@ export async function handleRequest(req: Request): Promise<Response> {
     : messages;
   const grounded = Boolean(intel && intel.evidence);
   const systemPrompt = intel && intel.evidence
-    ? `${SYSTEM_PROMPT} ${intel.kind === 'place' ? PLACE_RESPONSE_FORMAT : INTEL_RESPONSE_FORMAT}`
+    ? `${SYSTEM_PROMPT} ${responseFormatFor(intel.kind)}`
     : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
 
-  // Nominatim locates a business but frequently carries no phone number. When
-  // that happens on a place turn, Google's own web search is enabled so the
-  // contact comes from a real page instead of the model's memory.
-  const webSearch = intel?.kind === 'place' && placeContactMissing(intel.sources);
+  // Google's own search tool is enabled on every turn that is a lookup rather
+  // than small talk: it is a second, independent search on top of the engines
+  // queried above, and it is what stops a factual question from being answered
+  // from the model's memory when those engines are throttled.
+  const webSearch = Boolean(lastUser && isSearchableTurn(lastUser.content));
 
   let completion: Completion;
   try {
@@ -803,14 +824,20 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
     '',
   ];
 
-  if (kind === 'place') {
-    const place = answered[0].data as Record<string, unknown>;
+  const placeReports = answered.filter((s) => typeof s.data?.address === 'string' || s.data?.latitude);
+  const webReports = answered.filter((s) => Array.isArray(s.data?.pages));
+
+  if (kind === 'place' && placeReports.length > 0) {
+    // Every provider contributes what it actually has: the gazetteer usually
+    // gives the address and the coordinates, a web result the phone number.
     for (const [field, label] of PLACE_FIELD_LABELS) {
-      const value = evidenceValue(place[field]);
+      const value = firstEvidenceValue(placeReports, field) ??
+        firstEvidenceValue(webReports, field);
       lines.push(`${label}: ${value ?? 'não confirmado / not confirmed'}`);
     }
   } else {
     for (const report of answered) {
+      if (Array.isArray(report.data?.pages)) continue;
       const details = Object.entries(report.data as Record<string, unknown>)
         .map(([key, value]) => {
           const rendered = evidenceValue(value);
@@ -823,13 +850,33 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
     }
   }
 
+  // The pages a search engine returned are the answer's substance when no model
+  // could summarise them: title, link and the engine's own extract, verbatim.
+  const pages = webPages(webReports);
+  if (pages.length > 0) {
+    lines.push('');
+    lines.push('RESULTADOS DA PESQUISA / SEARCH RESULTS:');
+    for (const page of pages) {
+      lines.push(`- ${page.title}`);
+      if (page.snippet) lines.push(`  ${page.snippet}`);
+      lines.push(`  ${page.url}`);
+    }
+  }
+
+  const answers = webReports
+    .map((report) => evidenceValue((report.data as Record<string, unknown>).answer))
+    .filter((value): value is string => value !== null);
+  if (answers.length > 0) {
+    lines.splice(2, 0, answers[0], '');
+  }
+
   lines.push('');
   lines.push('FONTES / SOURCES:');
   for (const report of answered) {
     lines.push(`- ${report.provider} (${report.endpoint}) — ${report.timestamp}`);
   }
 
-  const unavailable = sources.filter((s) => s.status !== 'success');
+  const unavailable = sources.filter((s) => s.status === 'failed');
   if (unavailable.length > 0) {
     lines.push('');
     lines.push('LIMITAÇÕES / LIMITATIONS:');
@@ -839,6 +886,38 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
   }
 
   return lines.join('\n');
+}
+
+/** The first non-empty value of `field` across a set of source reports. */
+function firstEvidenceValue(reports: SourceReport[], field: string): string | null {
+  for (const report of reports) {
+    const value = evidenceValue((report.data as Record<string, unknown> | undefined)?.[field]);
+    if (value) return value;
+  }
+  return null;
+}
+
+/** The pages the search engines returned, deduplicated across engines. */
+function webPages(reports: SourceReport[]): WebResult[] {
+  const seen = new Set<string>();
+  const pages: WebResult[] = [];
+  for (const report of reports) {
+    const list = (report.data as Record<string, unknown>).pages;
+    if (!Array.isArray(list)) continue;
+    for (const entry of list) {
+      const page = entry as Partial<WebResult>;
+      if (typeof page?.url !== 'string' || typeof page?.title !== 'string') continue;
+      if (seen.has(page.url)) continue;
+      seen.add(page.url);
+      pages.push({
+        title: page.title,
+        url: page.url,
+        ...(typeof page.snippet === 'string' ? { snippet: page.snippet } : {}),
+      });
+      if (pages.length >= 8) return pages;
+    }
+  }
+  return pages;
 }
 
 /** The place fields rendered, in order, by the evidence-only answer. */
@@ -915,11 +994,12 @@ const PLACE_POSTCODE_RE = /\b\d{4}-\d{3}\b/;
  * A place named the way people actually name one, without any question.
  *
  * Either the capitalised "X em/de Y" shape, or an establishment word followed
- * by its name ("hospital de Setúbal", "farmácia Central"), which also holds
- * when the user types everything in lower case.
+ * by its name ("hospital de Setúbal", "farmácia Central", "Restaurante Á do
+ * Fernando"), which also holds when the user types everything in lower case and
+ * when the name itself is a single letter or a very short word.
  */
 const NAMED_PLACE_RE = new RegExp(
-  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:(?:d[oa]s?|de|em|no|na|of|in|at)\\s+)?\\p{L}[\\p{L}.'-]{2,}`,
+  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:(?:d[oa]s?|de|em|no|na|of|in|at)\\s+)?\\p{L}[\\p{L}.'-]*`,
   'iu',
 );
 
@@ -931,7 +1011,7 @@ const PLACE_NON_LOOKUP_RE =
   /\b(gosto|adoro|odeio|detesto|acho|penso|fui|estive|trabalho|trabalhei|conhe[çc]o|recomendo|obrigad[oa]|ol[áa]|bom\s+dia|boa\s+tarde|boa\s+noite|o\s+que\s+[ée]|que\s+[ée]|significa|significado|defini[çc][ãa]o|define|explica(?:r)?|como\s+funciona|what\s+is|what\s+are|how\s+does|thanks|thank\s+you|hello|hi\s+there)\b/i;
 
 /** A bare place mention is a name, not a paragraph. */
-const BARE_PLACE_MAX_WORDS = 10;
+const BARE_PLACE_MAX_WORDS = 12;
 
 /**
  * True when the whole turn is simply the name of a place or an address.
@@ -1002,6 +1082,52 @@ export function placeQuery(text: string): string {
 const NEWS_INTENT_RE =
   /\b(latest|recent|current|news|trend|campaign|outbreak|zero[- ]day|ultim[oa]s?|recentes?|not[ií]cias?|atual(?:idade)?|amea[çc]as?|tend[êe]ncias?)\b/i;
 
+/**
+ * Turns that are conversation, not a question about the world.
+ *
+ * These are the only turns that must *not* reach a search engine: a greeting, a
+ * thank-you, an acknowledgement or a remark addressed to the assistant itself.
+ * Everything else — any subject at all — is looked up, because answering a real
+ * question from the model's memory is precisely the behaviour being removed.
+ */
+const SMALL_TALK_RE =
+  /^(?:[\s!?.…,]*(?:ol[áa]|oi|hey|hi|hello|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+est[áa]s?|obrigad[oa]|agradecido|thanks|thank\s+you|ok|okay|certo|perfeito|fixe|adeus|at[ée]\s+j[áa]|bye|good\s*bye|sim|n[ãa]o|yes|no|test(?:e)?)(?![\p{L}\p{N}]))+[\s!?.…,]*$/iu;
+
+/** Turns addressed to the assistant itself, which no external page can answer. */
+const SELF_REFERENTIAL_RE =
+  /^\s*(?:quem\s+[ée]s\s+tu|quem\s+es\s+tu|o\s+que\s+[ée]s\s+tu|what\s+are\s+you|who\s+are\s+you|como\s+te\s+chamas|what\s+is\s+your\s+name)\b/i;
+
+/** A turn too short to search with, once punctuation is removed. */
+const MIN_SEARCHABLE_CHARS = 3;
+
+/**
+ * True when the turn should be searched on the open web.
+ *
+ * The rule is deliberately inverted compared with the previous behaviour: the
+ * assistant searches by default and only skips the search for small talk. A
+ * question about a restaurant, a law, a medicine, a football result or a
+ * company is a question about the world, and the world is not inside the model.
+ */
+export function isSearchableTurn(text: string): boolean {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (cleaned.replace(/[^\p{L}\p{N}]/gu, '').length < MIN_SEARCHABLE_CHARS) return false;
+  if (SMALL_TALK_RE.test(cleaned)) return false;
+  if (SELF_REFERENTIAL_RE.test(cleaned)) return false;
+  return true;
+}
+
+/** The query handed to the search engines: the turn itself, trimmed. */
+export function webQuery(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 300);
+}
+
+/** The answer format that matches what was actually looked up for the turn. */
+function responseFormatFor(kind: IntelEntityKind): string {
+  if (kind === 'place') return PLACE_RESPONSE_FORMAT;
+  if (kind === 'web' || kind === 'topic') return WEB_RESPONSE_FORMAT;
+  return INTEL_RESPONSE_FORMAT;
+}
+
 /** Maps a detected artefact to the entity kind the orchestrator understands. */
 function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
   const kindMap: Record<string, IntelEntityKind> = {
@@ -1025,9 +1151,13 @@ function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
 /**
  * Collects external intelligence for the turn.
  *
- * Returns the per-provider reports (shown to the user as sources) and the
- * evidence block handed to the model. A turn with no analysable entity and no
- * current-threat intent produces no lookup at all.
+ * Two things happen here, and both are lookups against real services: the
+ * entity in the turn (an artefact, a place, a current-threat topic) is enriched
+ * with the providers that cover it, and — for anything that is a question
+ * rather than small talk — the open web is searched as well. The model is then
+ * reasoning over pages that exist, whatever the subject is.
+ *
+ * A turn with no entity and no searchable question produces no lookup at all.
  */
 async function collectIntelligence(
   userText: string,
@@ -1035,18 +1165,21 @@ async function collectIntelligence(
 ): Promise<
   { kind: IntelEntityKind; entity: string; sources: SourceReport[]; evidence: string | null } | null
 > {
-  let entity: IntelEntity | null = artifact ? intelEntityFor(artifact) : null;
-  if (!entity && isPlaceLookup(userText)) {
-    entity = { kind: 'place', value: placeQuery(userText) };
-  }
-  if (!entity && NEWS_INTENT_RE.test(userText)) {
-    entity = { kind: 'topic', value: userText.slice(0, 200) };
-  }
-  if (!entity) return null;
+  const entities: IntelEntity[] = [];
+  const artifactEntity = artifact ? intelEntityFor(artifact) : null;
+  if (artifactEntity) entities.push(artifactEntity);
+
+  const place = !artifactEntity && isPlaceLookup(userText);
+  if (place) entities.push({ kind: 'place', value: placeQuery(userText) });
+  if (NEWS_INTENT_RE.test(userText)) entities.push({ kind: 'topic', value: userText.slice(0, 200) });
+  if (isSearchableTurn(userText)) entities.push({ kind: 'web', value: webQuery(userText) });
+
+  if (entities.length === 0) return null;
+  const primary = entities[0];
 
   let sources: SourceReport[];
   try {
-    sources = await gatherIntelligence(entity);
+    sources = await gatherAllIntelligence(entities);
   } catch (err) {
     // The orchestrator itself must never break the conversation.
     console.error('[ai-chat] intelligence orchestration failed', err);
@@ -1056,10 +1189,10 @@ async function collectIntelligence(
 
   const usable = sources.some((s) => s.status !== 'not_configured');
   return {
-    kind: entity.kind,
-    entity: entity.value,
+    kind: primary.kind,
+    entity: primary.value,
     sources,
-    evidence: usable ? formatEvidence(entity, sources) : null,
+    evidence: usable ? formatEvidence(primary, sources) : null,
   };
 }
 
