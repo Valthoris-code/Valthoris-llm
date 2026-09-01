@@ -953,7 +953,7 @@ function evidenceValue(value: unknown): string | null {
  * names a place ("hospital de Évora", "clínica no Porto").
  */
 const PLACE_ENTITY_WORDS =
-  "restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|escola|universidade|hotel|empresa|cl[íi]nica|banco|farm[áa]cia|caf[ée]|padaria|gin[áa]sio|oficina|est[úa]dio|museu|restaurant|shop|store|clinic|pharmacy|school|company|hotel";
+  "restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|centro comercial|escola|universidade|hotel|hostel|pens[ãa]o|empresa|cl[íi]nica|banco|multibanco|farm[áa]cia|caf[ée]|padaria|pastelaria|pizzaria|churrasqueira|talho|peixaria|mercado|supermercado|hipermercado|minimercado|bomba de gasolina|gasolineira|posto de (?:combust[íi]vel|abastecimento)|gin[áa]sio|oficina|est[úa]dio|museu|biblioteca|correios|esquadra|posto da (?:gnr|psp)|junta de freguesia|c[âa]mara municipal|tribunal|dentista|veterin[áa]ri[oa]|cabeleireiro|parque de estacionamento|esta[çc][ãa]o|terminal rodovi[áa]rio|aeroporto|igreja|restaurant|shop|store|supermarket|clinic|pharmacy|bakery|gas station|petrol station|school|company|hotel|library|museum";
 
 const PLACE_ENTITY_RE = new RegExp(`\\b(${PLACE_ENTITY_WORDS})\\b`, 'i');
 
@@ -967,7 +967,7 @@ const PLACE_PATTERN_RE =
  * greeting or generic chat never triggers an external search.
  */
 const PLACE_REQUEST_RE =
-  /\b(contact[oa]s?|telefone|telem[óo]vel|n[úu]mero|morada|endere[çc]o|onde\s+(?:fica|é|e|está|esta)|hor[áa]rio|hor[áa]rios|localiza[çc][ãa]o|site|website|p[áa]gina|quem\s+é\s+(?:esta|essa|a)\s+empresa|phone|address|opening hours|where is|contact)\b/i;
+  /\b(contact[oa]s?|telefone|telem[óo]vel|n[úu]mero|morada|endere[çc]o|onde\s+(?:fica|ficam|é|e|s[ãa]o|est[áa]|esta|est[ãa]o)|hor[áa]rio|hor[áa]rios|localiza[çc][ãa]o|site|website|p[áa]gina|quem\s+é\s+(?:esta|essa|a)\s+empresa|phone|address|opening hours|where is|contact)\b/i;
 
 /**
  * Public-place lookup: a practical need that can only be answered on the map.
@@ -1070,16 +1070,46 @@ export function isPlaceLookup(text: string): boolean {
  * removed before the search.
  */
 const PLACE_QUERY_NOISE_RE =
-  /\b(qual\s+é|qual|quero|queria|gostava|preciso|sabes|podes|dizer|diz-me|d[áa]-me|indica(?:-me)?|por favor|o\s+contact[oa]s?|contact[oa]s?|n[úu]mero de telefone|n[úu]mero|telefone|telem[óo]vel|morada|endere[çc]o|hor[áa]rio(?:s)?|localiza[çc][ãa]o|onde\s+(?:fica|é|e|está|esta)|estou\s+com\s+fome|com\s+fome|fome|comer|almo[çc]ar|jantar|lanchar|beber|dormir|abastecer|perto\s+de\s+mim|mais\s+pr[óo]xim[oa]|aqui\s+perto|nas?\s+redondezas|como\s+(?:chego|chegar|ir)|dire[çc][õo]es|rota|caminho|mapa|what\s+is|i\s+am\s+hungry|hungry|near\s+me|nearest|nearby|directions|route|map|the\s+)\b/gi;
+  /\b(qual\s+é|qual|quero|queria|gostava|preciso|sabes|podes|dizer|diz-me|d[áa]-me|indica(?:-me)?|leva-me|por favor|o\s+contact[oa]s?|contact[oa]s?|n[úu]mero de telefone|n[úu]mero|telefone|telem[óo]vel|morada|endere[çc]o|hor[áa]rio(?:s)?|localiza[çc][ãa]o|onde\s+(?:fica|ficam|é|e|s[ãa]o|est[áa]|esta|est[ãa]o)|estou\s+com\s+fome|com\s+fome|fome|comer|almo[çc]ar|jantar|lanchar|beber|dormir|abastecer|perto\s+de\s+mim|mais\s+pr[óo]xim[oa]|aqui\s+perto|nas?\s+redondezas|como\s+(?:chego|chegar|ir)|ir\s+(?:at[ée]\s+)?(?:a[oo]s?|[àá]s?)|dire[çc][õo]es|rota|caminho|mapa|what\s+is|i\s+am\s+hungry|hungry|near\s+me|nearest|nearby|take\s+me|directions|route|map|the\s+)\b/gi;
+
+/**
+ * Debris left behind once the need words are removed from the turn.
+ *
+ * "McDonald's em Évora, estou com fome, preciso de comer" collapses to
+ * "McDonald's em Évora , , de": the commas of the removed clauses and the
+ * preposition that introduced them survive, and a gazetteer takes them
+ * literally. Empty separators are collapsed and a preposition or article left
+ * hanging at either end of the query is dropped, so only the place is searched.
+ */
+const PLACE_QUERY_DANGLING_WORDS =
+  "d[oa]s?|de|em|n[oa]s?|a[oo]s?|[àá]s?|um|uma|uns|umas|para|com|e|of|in|at|to|[oa]s?";
+
+const PLACE_QUERY_DANGLING_HEAD_RE = new RegExp(`^(?:${PLACE_QUERY_DANGLING_WORDS})\\b`, 'i');
+const PLACE_QUERY_DANGLING_TAIL_RE = new RegExp(`\\b(?:${PLACE_QUERY_DANGLING_WORDS})$`, 'i');
+
+/** Collapses the separators and connectives left over by the noise removal. */
+function tidyPlaceQuery(text: string): string {
+  let cleaned = text
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([,;])\s*/g, '$1 ')
+    .replace(/([,;])(?:\s*[,;])+/g, '$1')
+    .trim();
+  for (let pass = 0; pass < 4; pass += 1) {
+    const trimmed = cleaned
+      .replace(/^[\s,;:.\-–]+/, '')
+      .replace(/[\s,;:.\-–]+$/, '')
+      .replace(PLACE_QUERY_DANGLING_HEAD_RE, '')
+      .replace(PLACE_QUERY_DANGLING_TAIL_RE, '')
+      .trim();
+    if (trimmed === cleaned) break;
+    cleaned = trimmed;
+  }
+  return cleaned;
+}
 
 /** Builds the Nominatim query from the turn: the place, without the question. */
 export function placeQuery(text: string): string {
-  const cleaned = text
-    .replace(/[?¿!¡]/g, ' ')
-    .replace(PLACE_QUERY_NOISE_RE, ' ')
-    .replace(/^\s*(?:d[oa]s?|de|d[oa]|em|no|na)\s+/i, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const cleaned = tidyPlaceQuery(text.replace(/[?¿!¡]/g, ' ').replace(PLACE_QUERY_NOISE_RE, ' '));
   return (cleaned.length >= 3 ? cleaned : text.trim()).slice(0, 200);
 }
 
