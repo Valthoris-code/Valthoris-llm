@@ -20,6 +20,7 @@ import {
   placeMapLink,
   providersFor,
   resetGoPlusToken,
+  resetNominatimState,
 } from './intel.ts';
 
 const SECRET_KEYS = [
@@ -47,6 +48,9 @@ const SECRET_KEYS = [
 function clearSecrets() {
   for (const key of SECRET_KEYS) Deno.env.delete(key);
   resetGoPlusToken();
+  // The Nominatim throttle and its 24 h cache are process-wide: a test must
+  // start from a clean state, or it would read the previous test's answer.
+  resetNominatimState();
 }
 
 // ─── Entity validation ───────────────────────────────────────────────────────
@@ -133,7 +137,12 @@ Deno.test('one failing provider does not take the analysis down', async () => {
     assertEquals(abuse?.status, 'success');
     assertEquals(abuse?.data?.abuseConfidenceScore, 92);
     assertEquals(ipinfo?.status, 'failed');
-    assertEquals(ipinfo?.error, 'HTTP 429');
+    // The report carries the real diagnosis, not just the bare status: a quota
+    // and a revoked key must not read the same to an operator.
+    assertEquals(
+      ipinfo?.error,
+      'HTTP 429 — rate limit or quota exhausted at the provider',
+    );
     assertEquals(virustotal?.status, 'not_configured');
 
     const evidence = formatEvidence({ kind: 'ip', value: '45.10.20.30' }, reports);
@@ -353,7 +362,7 @@ Deno.test('Nominatim returns the public location and an OpenStreetMap link', asy
     );
     // No phone in the gazetteer means no phone in the report — nothing invented.
     assertEquals(osm?.data?.phone, undefined);
-    assertEquals(userAgent, 'Valthoris-App/1.0 (contacto@valthoris.com)');
+    assertEquals(userAgent, 'Valthoris-App/1.0 (https://valthoris.com; contacto@valthoris.com)');
   } finally {
     globalThis.fetch = realFetch;
     clearSecrets();

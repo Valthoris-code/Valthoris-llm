@@ -63,7 +63,12 @@ export interface SourceReport {
   entity: string;
   /** ISO-8601 instant the lookup finished. */
   timestamp: string;
-  status: 'success' | 'failed' | 'not_configured';
+  /**
+   * `disabled` marks a provider that is deliberately switched off on every
+   * deployment (a retired upstream service). It is never queried and never
+   * reported as a silent failure.
+   */
+  status: 'success' | 'failed' | 'not_configured' | 'disabled';
   /** Real failure reason. Empty when the call succeeded. */
   error?: string;
   /** Normalised, non-sensitive summary of what the provider returned. */
@@ -205,6 +210,35 @@ interface FetchOptions {
   body?: string;
 }
 
+/**
+ * Turns an HTTP status into the real, actionable reason a lookup failed.
+ *
+ * The generic "the assistant cannot answer right now" message hides exactly
+ * what an operator needs: 401 (credential rejected) and 429 (quota) look the
+ * same to a user but require opposite fixes. The upstream body is never echoed
+ * — for the query-string providers it can contain the key — so the diagnosis is
+ * derived from the status alone.
+ */
+export function describeHttpStatus(status: number): string {
+  switch (status) {
+    case 400:
+      return `HTTP 400 — the provider rejected the request format (wrong parameters)`;
+    case 401:
+      return `HTTP 401 — the provider rejected the credential (invalid, revoked or wrong header)`;
+    case 403:
+      return `HTTP 403 — access denied by the provider (plan, permission or blocked client)`;
+    case 404:
+      return `HTTP 404 — endpoint not found (upstream URL changed or was retired)`;
+    case 422:
+      return `HTTP 422 — the provider could not process this entity`;
+    case 429:
+      return `HTTP 429 — rate limit or quota exhausted at the provider`;
+    default:
+      if (status >= 500) return `HTTP ${status} — provider-side failure`;
+      return `HTTP ${status}`;
+  }
+}
+
 /** GET/POST with a hard timeout, returning parsed JSON or throwing a real error. */
 async function fetchJson(url: string, options: FetchOptions = {}): Promise<any> {
   const controller = new AbortController();
@@ -219,17 +253,27 @@ async function fetchJson(url: string, options: FetchOptions = {}): Promise<any> 
     });
     if (!res.ok) {
       // The body may echo the request (which can contain the key in a query
-      // string for some providers), so only the status is surfaced.
-      throw new Error(`HTTP ${res.status}`);
+      // string for some providers), so only the status is surfaced — but it is
+      // surfaced with the diagnosis that status actually carries.
+      throw new HttpStatusError(res.status);
     }
     return await res.json();
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error(`timed out after ${TIMEOUT_MS} ms`);
+      throw new Error(`timed out after ${TIMEOUT_MS} ms (provider slow or unreachable)`);
     }
     throw err;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/** A non-2xx answer from a provider, carrying the status for the caller. */
+export class HttpStatusError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(describeHttpStatus(status));
+    this.status = status;
   }
 }
 
@@ -256,6 +300,84 @@ function clean(data: Record<string, unknown>): Record<string, unknown> {
 // ─── Public places ───────────────────────────────────────────────────────────
 
 const COORD_RE = /^-?\d{1,3}(?:\.\d{1,10})?$/;
+
+/**
+ * Nominatim usage policy, implemented instead of merely documented.
+ *
+ * The public OpenStreetMap geocoder allows *one* request per second for the
+ * whole application and requires a User-Agent (or Referer) that identifies the
+ * caller; a generic HTTP-client User-Agent and bursts of parallel requests are
+ * answered with HTTP 403 "Usage limit reached" and the block lifts on its own
+ * after a while — precisely the intermittent failure observed in production.
+ *
+ * Three things keep Valthoris inside the policy:
+ *   • `NOMINATIM_USER_AGENT` identifies the app and a contact address;
+ *   • `nominatimThrottle()` serialises every call with at least one second
+ *     between them, even when several users ask at the same time;
+ *   • `nominatimCache` answers a repeated search from memory for 24 h, so the
+ *     same question does not spend a request at all.
+ */
+export const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
+export const NOMINATIM_USER_AGENT =
+  'Valthoris-App/1.0 (https://valthoris.com; contacto@valthoris.com)';
+export const NOMINATIM_REFERER = 'https://valthoris.com';
+const NOMINATIM_MIN_INTERVAL_MS = 1_000;
+const NOMINATIM_CACHE_TTL_MS = 24 * 60 * 60 * 1_000;
+const NOMINATIM_CACHE_MAX_ENTRIES = 200;
+
+/** Tail of the request queue: every call chains onto the previous one. */
+let nominatimQueue: Promise<void> = Promise.resolve();
+let nominatimLastCall = 0;
+
+const nominatimCache = new Map<string, { expiresAt: number; value: Record<string, unknown> }>();
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Runs `task` no sooner than one second after the previous Nominatim call.
+ *
+ * The queue is a single promise chain, so concurrent turns are serialised
+ * rather than racing: two users asking at the same instant produce two requests
+ * one second apart instead of a burst the policy forbids.
+ */
+export function nominatimThrottle<T>(task: () => Promise<T>): Promise<T> {
+  const scheduled = nominatimQueue.then(async () => {
+    const wait = nominatimLastCall + NOMINATIM_MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    nominatimLastCall = Date.now();
+    return await task();
+  });
+  // The queue must keep flowing even when this task fails.
+  nominatimQueue = scheduled.then(() => undefined, () => undefined);
+  return scheduled;
+}
+
+/** Test seam: forgets the cached searches and the throttle timestamp. */
+export function resetNominatimState(): void {
+  nominatimCache.clear();
+  nominatimQueue = Promise.resolve();
+  nominatimLastCall = 0;
+}
+
+function nominatimCached(query: string): Record<string, unknown> | undefined {
+  const hit = nominatimCache.get(query);
+  if (!hit) return undefined;
+  if (hit.expiresAt <= Date.now()) {
+    nominatimCache.delete(query);
+    return undefined;
+  }
+  return hit.value;
+}
+
+function nominatimStore(query: string, value: Record<string, unknown>): void {
+  if (nominatimCache.size >= NOMINATIM_CACHE_MAX_ENTRIES) {
+    const oldest = nominatimCache.keys().next();
+    if (!oldest.done) nominatimCache.delete(oldest.value);
+  }
+  nominatimCache.set(query, { expiresAt: Date.now() + NOMINATIM_CACHE_TTL_MS, value });
+}
 
 /**
  * Builds the clickable OpenStreetMap link for a pair of coordinates.
@@ -302,6 +424,17 @@ interface Provider {
   run: (value: string) => Promise<Record<string, unknown> | null>;
   /** Reads the secrets this provider needs; undefined when not configured. */
   config: () => string | undefined;
+  /**
+   * Set when the upstream service is retired or otherwise switched off for
+   * every deployment. A disabled provider is never called; the reason is shown
+   * instead of a silent failure that looks like a missing credential.
+   */
+  disabled?: string;
+  /**
+   * A harmless, well-known value used by the health check to prove the provider
+   * really answers. It is never a user value.
+   */
+  probeValue: string;
 }
 
 /** Base64url of a URL, the identifier VirusTotal v3 uses for URL objects. */
@@ -422,6 +555,7 @@ const PROVIDERS: Provider[] = [
     provider: 'AbuseIPDB',
     endpoint: 'ip/reputation',
     kinds: ['ip'],
+    probeValue: '8.8.8.8',
     config: () => env('ABUSEIPDB_API_KEY'),
     run: async (value) => {
       const key = env('ABUSEIPDB_API_KEY')!;
@@ -448,6 +582,7 @@ const PROVIDERS: Provider[] = [
     provider: 'IPinfo',
     endpoint: 'ip/geolocation-asn',
     kinds: ['ip'],
+    probeValue: '8.8.8.8',
     config: () => env('IPINFO_API_KEY'),
     run: async (value) => {
       const key = env('IPINFO_API_KEY')!;
@@ -469,6 +604,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Abstract IP',
     endpoint: 'ip/intelligence',
     kinds: ['ip'],
+    probeValue: '8.8.8.8',
     config: () => env('ABSTRACT_IP_API_KEY'),
     run: async (value) => {
       const key = env('ABSTRACT_IP_API_KEY')!;
@@ -490,6 +626,7 @@ const PROVIDERS: Provider[] = [
     provider: 'VirusTotal',
     endpoint: 'url-domain-ip/reputation',
     kinds: ['url', 'domain', 'ip'],
+    probeValue: 'example.com',
     config: () => env('VIRUSTOTAL_API_KEY'),
     run: async (value) => {
       const key = env('VIRUSTOTAL_API_KEY')!;
@@ -511,6 +648,7 @@ const PROVIDERS: Provider[] = [
     provider: 'URLScan',
     endpoint: 'url-domain/scan-history',
     kinds: ['url', 'domain'],
+    probeValue: 'example.com',
     config: () => env('URLSCAN_API_KEY'),
     run: async (value) => {
       const key = env('URLSCAN_API_KEY')!;
@@ -535,6 +673,7 @@ const PROVIDERS: Provider[] = [
     provider: 'GoPlus',
     endpoint: 'url/phishing-site',
     kinds: ['url'],
+    probeValue: 'https://example.com',
     config: () => goPlusConfigured(),
     run: async (value) => {
       const base = goPlusConfigured()!;
@@ -557,6 +696,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Abstract Email',
     endpoint: 'email/validation',
     kinds: ['email'],
+    probeValue: 'security@valthoris.com',
     config: () => env('ABSTRACT_EMAIL_API_KEY'),
     run: async (value) => {
       const key = env('ABSTRACT_EMAIL_API_KEY')!;
@@ -579,6 +719,7 @@ const PROVIDERS: Provider[] = [
     provider: 'NumVerify',
     endpoint: 'phone/validation',
     kinds: ['phone'],
+    probeValue: '+351210000000',
     config: () => env('NUMVERIFY_API_KEY'),
     run: async (value) => {
       const key = env('NUMVERIFY_API_KEY')!;
@@ -600,6 +741,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Abstract Phone',
     endpoint: 'phone/intelligence',
     kinds: ['phone'],
+    probeValue: '+351210000000',
     config: () => env('ABSTRACT_PHONE_API_KEY'),
     run: async (value) => {
       const key = env('ABSTRACT_PHONE_API_KEY')!;
@@ -631,6 +773,7 @@ const PROVIDERS: Provider[] = [
     provider: 'FTC DNC Complaints',
     endpoint: 'phone/us-robocall-complaints',
     kinds: ['phone'],
+    probeValue: '+12025550123',
     config: () => env('DATA_GOV_API_KEY'),
     run: async (value) => {
       // api.ftc.gov is served by api.data.gov, which only accepts the key as
@@ -672,6 +815,7 @@ const PROVIDERS: Provider[] = [
     provider: 'OpenIBAN',
     endpoint: 'iban/validation',
     kinds: ['iban'],
+    probeValue: 'DE89370400440532013000',
     config: () => baseUrl('OPENIBAN_API_URL'),
     run: async (value) => {
       const base = baseUrl('OPENIBAN_API_URL')!;
@@ -690,6 +834,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Abstract IBAN',
     endpoint: 'iban/intelligence',
     kinds: ['iban'],
+    probeValue: 'DE89370400440532013000',
     config: () => env('ABSTRACT_IBAN_API_KEY'),
     run: async (value) => {
       const key = env('ABSTRACT_IBAN_API_KEY')!;
@@ -708,6 +853,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Abstract VAT',
     endpoint: 'vat/validation',
     kinds: ['vat'],
+    probeValue: 'PT501442600',
     config: () => env('ABSTRACT_VAT_API_KEY'),
     run: async (value) => {
       const key = env('ABSTRACT_VAT_API_KEY')!;
@@ -728,6 +874,7 @@ const PROVIDERS: Provider[] = [
     provider: 'Etherscan',
     endpoint: 'ethereum/address-activity',
     kinds: ['crypto_eth'],
+    probeValue: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
     config: () => env('ETHERSCAN_API_KEY'),
     run: async (value) => {
       const key = env('ETHERSCAN_API_KEY')!;
@@ -758,9 +905,23 @@ const PROVIDERS: Provider[] = [
     },
   },
   {
+    // ── Retired upstream service ────────────────────────────────────────────
+    // The public CryptoScamDB API (`/v1/check/…`) answers HTTP 404 for every
+    // lookup: the project is no longer maintained and the endpoint is gone.
+    // Leaving it enabled produced a permanent "failed" source on every crypto
+    // and domain analysis, which read like a Valthoris outage. It is therefore
+    // switched off explicitly and reported as `disabled`, with the reason, and
+    // the entities it used to cover are still served by VirusTotal, URLScan and
+    // GoPlus. Re-enable it by removing `disabled` once a replacement
+    // (Chainabuse or ScamSniffer, both key-based) is contracted and wired here.
     provider: 'CryptoScamDB',
     endpoint: 'crypto/scam-database',
     kinds: ['crypto_eth', 'crypto_btc', 'domain', 'url'],
+    probeValue: 'example.com',
+    disabled:
+      'CryptoScamDB was discontinued: the public API answers HTTP 404. ' +
+      'Coverage is provided by VirusTotal, URLScan and GoPlus until a ' +
+      'replacement (Chainabuse / ScamSniffer) is configured.',
     config: () => baseUrl('CRYPTOSCAMDB_API_URL'),
     run: async (value) => {
       const base = baseUrl('CRYPTOSCAMDB_API_URL')!;
@@ -779,6 +940,7 @@ const PROVIDERS: Provider[] = [
     provider: 'GoPlus',
     endpoint: 'crypto/address-security',
     kinds: ['crypto_eth'],
+    probeValue: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
     config: () => goPlusConfigured(),
     run: async (value) => {
       const base = goPlusConfigured()!;
@@ -802,6 +964,7 @@ const PROVIDERS: Provider[] = [
     provider: 'CoinGecko',
     endpoint: 'crypto/token-market',
     kinds: ['crypto_eth'],
+    probeValue: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     config: () => env('COINGECKO_API_KEY'),
     run: async (value) => {
       const key = env('COINGECKO_API_KEY')!;
@@ -814,7 +977,7 @@ const PROVIDERS: Provider[] = [
           { headers: { 'x-cg-demo-api-key': key } },
         );
       } catch (err) {
-        if (err instanceof Error && err.message === 'HTTP 404') {
+        if (err instanceof HttpStatusError && err.status === 404) {
           return { listedToken: false };
         }
         throw err;
@@ -838,21 +1001,38 @@ const PROVIDERS: Provider[] = [
     provider: 'Nominatim',
     endpoint: 'place/public-search',
     kinds: ['place'],
-    config: () => 'https://nominatim.openstreetmap.org',
+    probeValue: 'Lisboa',
+    config: () => NOMINATIM_BASE_URL,
     run: async (value) => {
+      const query = value.toLowerCase();
+      const cached = nominatimCached(query);
+      if (cached) return cached;
+
       // `extratags` is what carries the contact details (phone, website,
       // opening hours); without it Nominatim answers with the location only,
       // so the answer could never contain a real contact.
-      const data = await fetchJson(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&limit=1`,
-        { headers: { 'User-Agent': 'Valthoris-App/1.0 (contacto@valthoris.com)' } },
+      const data = await nominatimThrottle(() =>
+        fetchJson(
+          `${NOMINATIM_BASE_URL}/search?q=${encodeURIComponent(value)}&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&limit=1`,
+          {
+            headers: {
+              'User-Agent': NOMINATIM_USER_AGENT,
+              Referer: NOMINATIM_REFERER,
+              'Accept-Language': 'pt,en',
+            },
+          },
+        )
       );
       const first: any = Array.isArray(data) ? data[0] : undefined;
-      if (!first) return { found: false };
+      if (!first) {
+        const empty = { found: false };
+        nominatimStore(query, empty);
+        return empty;
+      }
       const lat = str(first?.lat, 32);
       const lon = str(first?.lon, 32);
       const tags = first?.extratags ?? {};
-      return clean({
+      const result = clean({
         found: true,
         name: str(first?.name) ?? str(first?.namedetails?.name) ?? str(first?.display_name, 200),
         address: str(first?.display_name, 200),
@@ -866,6 +1046,8 @@ const PROVIDERS: Provider[] = [
         openingHours: str(tags?.opening_hours, 200),
         link: placeMapLink(lat, lon),
       });
+      nominatimStore(query, result);
+      return result;
     },
   },
 
@@ -874,6 +1056,7 @@ const PROVIDERS: Provider[] = [
     provider: 'NewsData',
     endpoint: 'threat-intelligence/news',
     kinds: ['topic'],
+    probeValue: 'phishing',
     config: () => env('NEWSDATA_API_KEY'),
     run: async (value) => {
       const key = env('NEWSDATA_API_KEY')!;
@@ -926,6 +1109,15 @@ async function runProvider(
     timestamp: new Date().toISOString(),
   };
 
+  if (provider.disabled) {
+    return {
+      ...base,
+      timestamp: new Date().toISOString(),
+      status: 'disabled',
+      error: provider.disabled,
+    };
+  }
+
   if (!provider.config()) {
     return { ...base, timestamp: new Date().toISOString(), status: 'not_configured' };
   }
@@ -942,6 +1134,15 @@ async function runProvider(
     const message = err instanceof Error ? err.message : String(err);
     // Provider name and reason only — never the key or the full URL.
     console.error(`[ai-chat] intel ${provider.provider} failed: ${message}`);
+    // The user still sees a generic message, but the operator must be able to
+    // tell a revoked key (401) from a quota (429) from a dead endpoint (404)
+    // long after the turn is over.
+    reportFailure({
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      status: err instanceof HttpStatusError ? err.status : undefined,
+      message: message.slice(0, 400),
+    });
     return {
       ...base,
       timestamp: new Date().toISOString(),
@@ -949,6 +1150,208 @@ async function runProvider(
       error: message.slice(0, 200),
     };
   }
+}
+
+// ─── Failure sink ────────────────────────────────────────────────────────────
+
+/** A provider failure, as handed to whoever is recording them. */
+export interface IntelFailure {
+  provider: string;
+  endpoint: string;
+  /** HTTP status, when the failure was an HTTP answer. */
+  status?: number;
+  message: string;
+}
+
+let failureSink: ((failure: IntelFailure) => void) | undefined;
+
+/**
+ * Registers where provider failures are recorded (the `governance.error_logs`
+ * writer in production, a collector in the tests).
+ *
+ * Recording is deliberately fire-and-forget: an intelligence lookup must never
+ * fail because the log could not be written.
+ */
+export function setIntelFailureSink(sink: ((failure: IntelFailure) => void) | undefined): void {
+  failureSink = sink;
+}
+
+function reportFailure(failure: IntelFailure): void {
+  if (!failureSink) return;
+  try {
+    failureSink(failure);
+  } catch (err) {
+    console.error('[ai-chat] intel failure sink threw', err);
+  }
+}
+
+// ─── Source health ───────────────────────────────────────────────────────────
+
+/** One line of the administrative "state of the sources" panel. */
+export interface SourceHealth {
+  provider: string;
+  endpoint: string;
+  kinds: IntelEntityKind[];
+  /**
+   * `operational` — a real test lookup answered;
+   * `degraded`    — the provider answered with an error (quota, credential,
+   *                 endpoint) and the exact reason is in `error`;
+   * `not_configured` — no secret for it on this deployment;
+   * `disabled`    — deliberately switched off, with the reason.
+   */
+  status: 'operational' | 'degraded' | 'not_configured' | 'disabled';
+  /** Real reason, when the source is not operational. */
+  error?: string;
+  /** HTTP status of the failed test lookup, when there was one. */
+  httpStatus?: number;
+  /** ISO-8601 instant of the check. */
+  checkedAt: string;
+  /** Milliseconds the test lookup took, when it ran. */
+  durationMs?: number;
+  /** True when a real request was sent to the provider. */
+  probed: boolean;
+  /** Names of the secrets this source needs, so a gap is obvious. */
+  secrets: string[];
+}
+
+/** Secrets each source reads, for the administrative panel. Names only. */
+const PROVIDER_SECRETS: Record<string, string[]> = {
+  AbuseIPDB: ['ABUSEIPDB_API_KEY'],
+  IPinfo: ['IPINFO_API_KEY'],
+  'Abstract IP': ['ABSTRACT_IP_API_KEY'],
+  VirusTotal: ['VIRUSTOTAL_API_KEY'],
+  URLScan: ['URLSCAN_API_KEY'],
+  GoPlus: ['GOPLUS_API_URL', 'GOPLUS_APP_KEY', 'GOPLUS_APP_SECRET'],
+  'Abstract Email': ['ABSTRACT_EMAIL_API_KEY'],
+  NumVerify: ['NUMVERIFY_API_KEY'],
+  'Abstract Phone': ['ABSTRACT_PHONE_API_KEY'],
+  'FTC DNC Complaints': ['DATA_GOV_API_KEY'],
+  OpenIBAN: ['OPENIBAN_API_URL'],
+  'Abstract IBAN': ['ABSTRACT_IBAN_API_KEY'],
+  'Abstract VAT': ['ABSTRACT_VAT_API_KEY'],
+  Etherscan: ['ETHERSCAN_API_KEY'],
+  CryptoScamDB: ['CRYPTOSCAMDB_API_URL'],
+  CoinGecko: ['COINGECKO_API_KEY'],
+  Nominatim: [],
+  NewsData: ['NEWSDATA_API_KEY'],
+};
+
+/** Stable identifier of a source: provider plus the lookup it performs. */
+export function sourceId(provider: string, endpoint: string): string {
+  return `${provider}|${endpoint}`;
+}
+
+/**
+ * Every source Valthoris knows about, without contacting any of them.
+ *
+ * `operational` here only means "configured": nothing was asked of the
+ * provider, which is why `probed` is false. Only `probeSource()` can state
+ * that a source really answers.
+ */
+export function listSources(): SourceHealth[] {
+  const checkedAt = new Date().toISOString();
+  return PROVIDERS.map((provider) => ({
+    provider: provider.provider,
+    endpoint: provider.endpoint,
+    kinds: provider.kinds,
+    status: provider.disabled
+      ? ('disabled' as const)
+      : provider.config()
+        ? ('operational' as const)
+        : ('not_configured' as const),
+    error: provider.disabled,
+    checkedAt,
+    probed: false,
+    secrets: PROVIDER_SECRETS[provider.provider] ?? [],
+  }));
+}
+
+/**
+ * Sends a real test lookup to one source and reports exactly what came back.
+ *
+ * This is what the administrative panel's "test now" button runs, and it is the
+ * same code path a user turn takes — a source that passes here really answers.
+ */
+export async function probeSource(id: string): Promise<SourceHealth | null> {
+  const provider = PROVIDERS.find((p) => sourceId(p.provider, p.endpoint) === id);
+  if (!provider) return null;
+
+  const secrets = PROVIDER_SECRETS[provider.provider] ?? [];
+  const started = Date.now();
+  if (provider.disabled) {
+    return {
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      kinds: provider.kinds,
+      status: 'disabled',
+      error: provider.disabled,
+      checkedAt: new Date().toISOString(),
+      probed: false,
+      secrets,
+    };
+  }
+  if (!provider.config()) {
+    return {
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      kinds: provider.kinds,
+      status: 'not_configured',
+      error: `No usable value for: ${secrets.join(', ') || 'the provider configuration'}`,
+      checkedAt: new Date().toISOString(),
+      probed: false,
+      secrets,
+    };
+  }
+
+  try {
+    await provider.run(provider.probeValue);
+    return {
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      kinds: provider.kinds,
+      status: 'operational',
+      checkedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      probed: true,
+      secrets,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    reportFailure({
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      status: err instanceof HttpStatusError ? err.status : undefined,
+      message: `health check: ${message.slice(0, 300)}`,
+    });
+    return {
+      provider: provider.provider,
+      endpoint: provider.endpoint,
+      kinds: provider.kinds,
+      status: 'degraded',
+      error: message.slice(0, 300),
+      httpStatus: err instanceof HttpStatusError ? err.status : undefined,
+      checkedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      probed: true,
+      secrets,
+    };
+  }
+}
+
+/**
+ * Probes every source, a few at a time.
+ *
+ * The concurrency cap keeps the Nominatim throttle honest and avoids turning a
+ * health check into a burst that itself trips a provider's rate limit.
+ */
+export async function probeAllSources(): Promise<SourceHealth[]> {
+  const ids = PROVIDERS.map((p) => sourceId(p.provider, p.endpoint));
+  const results: SourceHealth[] = [];
+  for (let i = 0; i < ids.length; i += 4) {
+    const batch = await Promise.all(ids.slice(i, i + 4).map((id) => probeSource(id)));
+    for (const row of batch) if (row) results.push(row);
+  }
+  return results;
 }
 
 /**
@@ -969,6 +1372,7 @@ export function formatEvidence(entity: IntelEntity, reports: SourceReport[]): st
   const ok = reports.filter((r) => r.status === 'success');
   const failed = reports.filter((r) => r.status === 'failed');
   const missing = reports.filter((r) => r.status === 'not_configured');
+  const off = reports.filter((r) => r.status === 'disabled');
 
   if (ok.length === 0) {
     lines.push('No external source returned data for this entity.');
@@ -988,6 +1392,12 @@ export function formatEvidence(entity: IntelEntity, reports: SourceReport[]): st
     lines.push('');
     lines.push(
       `Sources not available on this deployment: ${missing.map((r) => r.provider).join(', ')}.`,
+    );
+  }
+  if (off.length > 0) {
+    lines.push('');
+    lines.push(
+      `Sources switched off (upstream service retired): ${off.map((r) => r.provider).join(', ')}.`,
     );
   }
 
