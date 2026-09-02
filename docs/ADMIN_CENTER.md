@@ -233,7 +233,32 @@ and the administration is rebuilt from this repository. The repository is the
 single source of truth for the schema; the check is inert on a database that
 already carries this design.
 
-### 5.6 What still cannot be automated
+### 5.6 A refused Internet Identity sign-in
+
+`admin-icp-bridge` answers **every** refusal with `404 Not found`: telling the
+browser *why* a delegation was rejected would tell an attacker how to fix it.
+The reason is written server-side instead, to `governance.audit_logs.reason` of
+the `ADMIN_ICP_SIGN_IN` / `ADMIN_ICP_CLAIM` row:
+
+```sql
+select occurred_at, action, result, reason
+from governance.audit_logs
+where action in ('ADMIN_ICP_SIGN_IN', 'ADMIN_ICP_CLAIM') and result = 'DENIED'
+order by occurred_at desc
+limit 20;
+```
+
+The reason names the step that gave up, for example
+`A delegation signature is not valid. Link 1 of 2, signed by a canister-signature
+key: the chain was issued by canister <x>, not by rdmx6-jaaaa-aaaaa-aaadq-cai.`
+That particular one means the browser signed in against a *different* Internet
+Identity — a local replica, or an `II_CANISTER_ID` secret that does not match the
+`VITE_INTERNET_IDENTITY_CANISTER_ID` the frontend was built with. Others name a
+certificate the IC root key rejects (`IC_ROOT_KEY_HEX` wrong or truncated), a key
+algorithm the bridge does not support, or a session key that did not sign the
+challenge.
+
+### 5.7 What still cannot be automated
 
 Enrolling a TOTP factor requires the physical authenticator of each ROOT and is
 therefore done by Hermínio and Tiago themselves, at their first sign-in on
