@@ -1044,7 +1044,8 @@ Deno.test('a listed token returns the market data and the price history', async 
       Promise.resolve(
         new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } }),
       );
-    if (url.includes('api.etherscan.io')) {
+    const host = new URL(url).hostname;
+    if (host === 'api.etherscan.io') {
       if (url.includes('action=balance')) return json({ status: '1', result: '2500000000000000000' });
       if (url.includes('action=txlist')) {
         return json({
