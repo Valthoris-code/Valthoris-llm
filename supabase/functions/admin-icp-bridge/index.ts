@@ -416,14 +416,17 @@ export async function handleRequest(request: Request): Promise<Response> {
     let principal: string;
     try {
       principal = await verifyBody(body);
-    } catch {
+    } catch (error) {
       await logAudit({
         requestId,
         adminId: admin.id,
         email: admin.email,
         action: 'ADMIN_ICP_CLAIM',
         result: 'DENIED',
-        reason: 'Delegation verification failed',
+        reason:
+          error instanceof DelegationVerificationError
+            ? error.message
+            : 'Delegation verification failed',
         ip,
         userAgent,
       });

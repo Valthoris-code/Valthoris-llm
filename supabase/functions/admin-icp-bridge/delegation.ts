@@ -30,6 +30,22 @@
  *      request body.
  *
  * Only after all five does the caller have a principal this system will look up.
+ *
+ * WHY EVERY STEP EXPLAINS ITSELF
+ * ──────────────────────────────
+ * Verification has about a dozen ways to fail — an algorithm nobody supports, a
+ * DER header that does not parse, a canister-signature blob whose CBOR cannot be
+ * read, a certificate the Internet Computer root key rejects, a signature that
+ * is simply absent from the certified tree, a chain issued by some *other*
+ * canister — and they are not interchangeable: one is a forgery, another is a
+ * misconfiguration, another is a bug in this function.
+ *
+ * Collapsing all of them into a single boolean produced exactly one symptom for
+ * every cause ("A delegation signature is not valid.") and, because the failure
+ * paths also swallowed exceptions, an internal error was reported as if the
+ * administrator's signature had been wrong. Every check therefore returns the
+ * reason it refused. The reason is recorded server-side, in
+ * `governance.audit_logs.reason`; the browser still gets the same opaque 404.
  */
 
 import {
@@ -77,6 +93,19 @@ const P256_SPKI_PREFIX = new Uint8Array([
 
 /** Thrown for every verification failure. Its message never reaches a browser. */
 export class DelegationVerificationError extends Error {}
+
+/**
+ * The outcome of a single signature check: valid, or invalid *for a stated
+ * reason*. The reason names the step that refused and the evidence it saw, so
+ * that a refusal in production can be told apart from a bug in this function.
+ */
+export type SignatureCheck = { ok: true } | { ok: false; reason: string };
+
+const VALID: SignatureCheck = { ok: true };
+
+function invalid(reason: string): SignatureCheck {
+  return { ok: false, reason };
+}
 
 export interface VerifyOptions {
   /** The chain exactly as `DelegationChain.toJSON()` produced it. */
@@ -156,6 +185,32 @@ function hasAlgorithm(der: Uint8Array, oid: Uint8Array): boolean {
   return algorithm !== null && equalBytes(algorithm, oid);
 }
 
+export function toHex(value: Uint8Array): string {
+  return Array.from(value, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** The message of a thrown value, never its stack, and never empty. */
+function errorText(error: unknown): string {
+  const text = error instanceof Error ? error.message : String(error);
+  return text.length > 0 ? text : 'no reason given';
+}
+
+/**
+ * Names a public key the way a human debugging a refusal needs it: the key
+ * type when it is one this function supports, and otherwise the raw algorithm
+ * identifier and length, which is what tells "an algorithm we do not accept"
+ * apart from "these bytes are not a key at all".
+ */
+export function describeKey(der: Uint8Array): string {
+  if (hasAlgorithm(der, CANISTER_SIGNATURE_OID)) return 'a canister-signature key';
+  if (hasAlgorithm(der, bytes(ED25519_OID))) return 'an Ed25519 key';
+  if (startsWith(der, P256_SPKI_PREFIX)) return 'an ECDSA P-256 key';
+  const algorithm = derAlgorithm(der);
+  return algorithm
+    ? `an unsupported key (${der.length} bytes, algorithm ${toHex(algorithm)})`
+    : `bytes that are not a DER public key (${der.length} bytes, starting ${toHex(der.subarray(0, 8))})`;
+}
+
 function concat(...parts: Uint8Array[]): Uint8Array {
   const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
   let offset = 0;
@@ -178,26 +233,40 @@ export function challengeMessage(challenge: string): Uint8Array {
 }
 
 /**
- * Verifies a signature made by a plain (non-canister) Internet Computer key.
+ * Verifies a signature made by a plain (non-canister) Internet Computer key,
+ * and says why when it refuses.
  *
  * Internet Identity hands the browser either an Ed25519 or an ECDSA P-256
  * session key depending on the platform, so both are supported; anything else
- * is refused rather than assumed.
+ * is refused rather than assumed — and named, because "the browser used a key
+ * type this function never learned to read" and "the signature is a forgery"
+ * are not the same incident.
  */
-export function verifyPlainSignature(
+export function checkPlainSignature(
   derPublicKey: Uint8Array,
   signature: Uint8Array,
   message: Uint8Array,
-): boolean {
-  if (signature.length !== 64) return false;
+): SignatureCheck {
+  if (signature.length !== 64) {
+    return invalid(
+      `the signature is ${signature.length} bytes, and both supported key types sign 64`,
+    );
+  }
 
   // Ed25519: DER `SEQUENCE(SEQUENCE(OID 1.3.101.112), BITSTRING(raw))`.
   if (hasAlgorithm(derPublicKey, bytes(ED25519_OID))) {
+    let raw: Uint8Array;
     try {
-      const raw = bytes(unwrapDER(buffer(derPublicKey), ED25519_OID));
-      return ed25519.verify(signature, message, raw);
-    } catch {
-      return false;
+      raw = bytes(unwrapDER(buffer(derPublicKey), ED25519_OID));
+    } catch (error) {
+      return invalid(`the Ed25519 key could not be unwrapped: ${errorText(error)}`);
+    }
+    try {
+      return ed25519.verify(signature, message, raw)
+        ? VALID
+        : invalid('Ed25519 rejected the signature');
+    } catch (error) {
+      return invalid(`Ed25519 verification failed: ${errorText(error)}`);
     }
   }
 
@@ -205,15 +274,30 @@ export function verifyPlainSignature(
   // what the browser signs with — emits `r || s` over the SHA-256 digest.
   if (startsWith(derPublicKey, P256_SPKI_PREFIX)) {
     const raw = derPublicKey.subarray(P256_SPKI_PREFIX.length);
-    if (raw.length !== 65 || raw[0] !== 0x04) return false;
+    if (raw.length !== 65 || raw[0] !== 0x04) {
+      return invalid(
+        `the ECDSA P-256 key carries ${raw.length} bytes after its header instead of a 65-byte uncompressed point`,
+      );
+    }
     try {
-      return p256.verify(signature, sha256(message), raw, { prehash: false });
-    } catch {
-      return false;
+      return p256.verify(signature, sha256(message), raw, { prehash: false })
+        ? VALID
+        : invalid('ECDSA P-256 rejected the signature');
+    } catch (error) {
+      return invalid(`ECDSA P-256 verification failed: ${errorText(error)}`);
     }
   }
 
-  return false;
+  return invalid(`the signer presented ${describeKey(derPublicKey)}`);
+}
+
+/** `checkPlainSignature` reduced to a boolean, for callers that only decide. */
+export function verifyPlainSignature(
+  derPublicKey: Uint8Array,
+  signature: Uint8Array,
+  message: Uint8Array,
+): boolean {
+  return checkPlainSignature(derPublicKey, signature, message).ok;
 }
 
 /**
@@ -229,31 +313,54 @@ export function verifyPlainSignature(
  * user signs in, while the delegation it certifies is deliberately valid for
  * days afterwards, so "recent" is meaningless for it. Freshness is enforced
  * where it belongs — the delegation's own expiry and the one-shot challenge.
+ *
+ * Every way this can go wrong is reported as its own reason: a chain minted by
+ * another canister, a signature blob that is not decodable CBOR, a certificate
+ * the root key rejects and a message simply absent from the certified tree are
+ * four different incidents that used to look identical.
  */
-export async function verifyCanisterSignature(
+export async function checkCanisterSignature(
   derPublicKey: Uint8Array,
   signature: Uint8Array,
   message: Uint8Array,
   expectedCanisterId: string,
   rootKeyHex: string,
-): Promise<boolean> {
-  if (!hasAlgorithm(derPublicKey, CANISTER_SIGNATURE_OID)) return false;
+): Promise<SignatureCheck> {
+  if (!hasAlgorithm(derPublicKey, CANISTER_SIGNATURE_OID)) {
+    return invalid(`the signer presented ${describeKey(derPublicKey)}, not a canister-signature key`);
+  }
 
   let canisterId: Principal;
   let seed: Uint8Array;
   try {
     const raw = bytes(unwrapDER(buffer(derPublicKey), CANISTER_SIGNATURE_OID));
     const idLength = raw[0];
-    if (!idLength || raw.length < idLength + 1) return false;
+    if (!idLength || raw.length < idLength + 1) {
+      return invalid(
+        `the canister-signature key announces a ${idLength}-byte canister id but carries ${raw.length} bytes`,
+      );
+    }
     canisterId = Principal.fromUint8Array(raw.subarray(1, idLength + 1));
     seed = raw.subarray(idLength + 1);
-  } catch {
-    return false;
+  } catch (error) {
+    return invalid(`the canister-signature key could not be read: ${errorText(error)}`);
   }
 
   // Only the Internet Identity canister may vouch for a Valthoris
   // administrator: any other canister could mint principals at will.
-  if (canisterId.toText() !== expectedCanisterId) return false;
+  if (canisterId.toText() !== expectedCanisterId) {
+    return invalid(
+      `the chain was issued by canister ${canisterId.toText()}, not by ${expectedCanisterId}`,
+    );
+  }
+
+  let rootKey: ArrayBuffer;
+  try {
+    rootKey = buffer(fromHex(rootKeyHex));
+  } catch (error) {
+    // A misconfigured IC_ROOT_KEY_HEX is an operator mistake, not a forgery.
+    return invalid(`the configured Internet Computer root key is unusable: ${errorText(error)}`);
+  }
 
   let certificateBytes: Uint8Array;
   let tree: unknown;
@@ -261,23 +368,29 @@ export async function verifyCanisterSignature(
     const decoded = Cbor.decode<{ certificate: ArrayBuffer | Uint8Array; tree: unknown }>(
       buffer(signature),
     );
-    if (!decoded?.certificate || !decoded?.tree) return false;
+    if (!decoded?.certificate || !decoded?.tree) {
+      return invalid('the canister signature carries no certificate and tree');
+    }
     certificateBytes = bytes(decoded.certificate);
     tree = decoded.tree;
-  } catch {
-    return false;
+  } catch (error) {
+    return invalid(
+      `the canister signature (${signature.length} bytes) is not decodable CBOR: ${errorText(error)}`,
+    );
   }
 
   let cert: Certificate;
   try {
     cert = await Certificate.create({
       certificate: buffer(certificateBytes),
-      rootKey: buffer(fromHex(rootKeyHex)),
+      rootKey,
       canisterId,
       disableTimeVerification: true,
     });
-  } catch {
-    return false;
+  } catch (error) {
+    return invalid(
+      `the state certificate was rejected against the Internet Computer root key: ${errorText(error)}`,
+    );
   }
 
   try {
@@ -285,9 +398,13 @@ export async function verifyCanisterSignature(
     const certified = lookupResultToBuffer(
       cert.lookup(['canister', buffer(canisterId.toUint8Array()), 'certified_data']),
     );
-    if (!certified) return false;
+    if (!certified) {
+      return invalid(`the certificate holds no certified data for canister ${canisterId.toText()}`);
+    }
     // deno-lint-ignore no-explicit-any
-    if (!equalBytes(bytes(certified), bytes(await reconstruct(tree as any)))) return false;
+    if (!equalBytes(bytes(certified), bytes(await reconstruct(tree as any)))) {
+      return invalid('the tree carried by the signature is not the one the canister certified');
+    }
 
     // …and it must contain this exact message under this exact seed.
     const found = lookup_path(
@@ -295,10 +412,32 @@ export async function verifyCanisterSignature(
       // deno-lint-ignore no-explicit-any
       tree as any,
     );
-    return found.status === LookupStatus.Found;
-  } catch {
-    return false;
+    return found.status === LookupStatus.Found
+      ? VALID
+      : invalid(
+        `the certified tree holds no signature for this message under seed ${toHex(seed)} (lookup: ${found.status})`,
+      );
+  } catch (error) {
+    return invalid(`the certified tree could not be examined: ${errorText(error)}`);
   }
+}
+
+/** `checkCanisterSignature` reduced to a boolean, for callers that only decide. */
+export async function verifyCanisterSignature(
+  derPublicKey: Uint8Array,
+  signature: Uint8Array,
+  message: Uint8Array,
+  expectedCanisterId: string,
+  rootKeyHex: string,
+): Promise<boolean> {
+  const check = await checkCanisterSignature(
+    derPublicKey,
+    signature,
+    message,
+    expectedCanisterId,
+    rootKeyHex,
+  );
+  return check.ok;
 }
 
 /** The message a delegation is signed over, per the Internet Computer spec. */
@@ -330,12 +469,16 @@ export async function verifyInternetIdentity(options: VerifyOptions): Promise<Ve
   try {
     // deno-lint-ignore no-explicit-any
     chain = DelegationChain.fromJSON(options.delegation as any);
-  } catch {
-    throw new DelegationVerificationError('The delegation chain could not be parsed.');
+  } catch (error) {
+    throw new DelegationVerificationError(
+      `The delegation chain could not be parsed: ${errorText(error)}.`,
+    );
   }
 
   if (chain.delegations.length === 0 || chain.delegations.length > 8) {
-    throw new DelegationVerificationError('Unexpected delegation chain length.');
+    throw new DelegationVerificationError(
+      `Unexpected delegation chain length: ${chain.delegations.length}.`,
+    );
   }
   if (!isDelegationValid(chain)) {
     throw new DelegationVerificationError('The delegation chain has expired.');
@@ -347,15 +490,21 @@ export async function verifyInternetIdentity(options: VerifyOptions): Promise<Ve
   let currentKey = bytes(chain.publicKey);
   let expiresAt = Number.MAX_SAFE_INTEGER;
 
-  for (const signed of chain.delegations) {
+  for (let index = 0; index < chain.delegations.length; index++) {
+    const signed = chain.delegations[index];
     const message = delegationMessage(signed.delegation);
     const signature = bytes(signed.signature);
 
-    const ok = hasAlgorithm(currentKey, CANISTER_SIGNATURE_OID)
-      ? await verifyCanisterSignature(currentKey, signature, message, canisterId, rootKeyHex)
-      : verifyPlainSignature(currentKey, signature, message);
-    if (!ok) {
-      throw new DelegationVerificationError('A delegation signature is not valid.');
+    const check = hasAlgorithm(currentKey, CANISTER_SIGNATURE_OID)
+      ? await checkCanisterSignature(currentKey, signature, message, canisterId, rootKeyHex)
+      : checkPlainSignature(currentKey, signature, message);
+    if (!check.ok) {
+      // The sentence stays, so anything already watching for it keeps working;
+      // what follows it is the part that says *where* the walk gave up.
+      throw new DelegationVerificationError(
+        `A delegation signature is not valid. Link ${index + 1} of ${chain.delegations.length},` +
+          ` signed by ${describeKey(currentKey)}: ${check.reason}.`,
+      );
     }
 
     // `expiration` is in nanoseconds.
@@ -365,8 +514,22 @@ export async function verifyInternetIdentity(options: VerifyOptions): Promise<Ve
 
   // The last key of the chain is the browser's session key. Proving possession
   // of it *now* is what makes a copied chain useless on its own.
-  if (!verifyPlainSignature(currentKey, fromHex(options.signature), challengeMessage(options.challenge))) {
-    throw new DelegationVerificationError('The challenge signature is not valid.');
+  let challengeSignature: Uint8Array;
+  try {
+    challengeSignature = fromHex(options.signature);
+  } catch {
+    throw new DelegationVerificationError('The challenge signature is not hex encoded.');
+  }
+  const challenge = checkPlainSignature(
+    currentKey,
+    challengeSignature,
+    challengeMessage(options.challenge),
+  );
+  if (!challenge.ok) {
+    throw new DelegationVerificationError(
+      `The challenge signature is not valid. Session key is ${describeKey(currentKey)}:` +
+        ` ${challenge.reason}.`,
+    );
   }
 
   return {
