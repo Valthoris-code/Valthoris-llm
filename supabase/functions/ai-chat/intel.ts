@@ -289,6 +289,73 @@ export class HttpStatusError extends Error {
   }
 }
 
+// ─── Quota guard ─────────────────────────────────────────────────────────────
+//
+// Some providers are metered on a small free plan: NumVerify answers HTTP 429
+// once the month's quota is spent, and every further lookup then costs a
+// round-trip that is guaranteed to fail. Two mechanisms keep the plan usable:
+//
+//   • the answer for one exact value is remembered for `QUOTA_CACHE_TTL_MS`, so
+//     the same number asked twice — the common case, since a user re-asks about
+//     the same number in the same conversation — spends one request, not two;
+//   • after a 429 the provider is left alone for `QUOTA_COOLDOWN_MS`; during
+//     the cooldown the lookup fails immediately, with the real reason, instead
+//     of burning a request and eight seconds of the turn.
+//
+// Nothing is fabricated by either mechanism: the cache only ever replays an
+// answer the provider itself gave.
+
+const QUOTA_CACHE_TTL_MS = 6 * 60 * 60 * 1_000;
+const QUOTA_COOLDOWN_MS = 15 * 60 * 1_000;
+const QUOTA_CACHE_MAX_ENTRIES = 300;
+
+const quotaCache = new Map<string, { expiresAt: number; value: Record<string, unknown> | null }>();
+const quotaCooldown = new Map<string, number>();
+
+/** Test seam: forgets the cached answers and any cooldown in force. */
+export function resetQuotaGuard(): void {
+  quotaCache.clear();
+  quotaCooldown.clear();
+}
+
+async function withQuotaGuard(
+  provider: string,
+  value: string,
+  run: () => Promise<Record<string, unknown> | null>,
+): Promise<Record<string, unknown> | null> {
+  const key = `${provider}:${value.toLowerCase()}`;
+  const hit = quotaCache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.value;
+  if (hit) quotaCache.delete(key);
+
+  const until = quotaCooldown.get(provider);
+  if (until !== undefined) {
+    if (until > Date.now()) {
+      throw new Error(
+        `${describeHttpStatus(429)} — no further request is sent until ${
+          new Date(until).toISOString()
+        }`,
+      );
+    }
+    quotaCooldown.delete(provider);
+  }
+
+  try {
+    const result = await run();
+    if (quotaCache.size >= QUOTA_CACHE_MAX_ENTRIES) {
+      const oldest = quotaCache.keys().next();
+      if (!oldest.done) quotaCache.delete(oldest.value);
+    }
+    quotaCache.set(key, { expiresAt: Date.now() + QUOTA_CACHE_TTL_MS, value: result });
+    return result;
+  } catch (err) {
+    if (err instanceof HttpStatusError && err.status === 429) {
+      quotaCooldown.set(provider, Date.now() + QUOTA_COOLDOWN_MS);
+    }
+    throw err;
+  }
+}
+
 /**
  * GET/POST returning the raw body, for the sources that answer with HTML.
  *
@@ -654,35 +721,109 @@ export function geminiAnswerText(data: any): string {
   return parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('').trim();
 }
 
+/**
+ * Models the *key itself* can call, discovered from the API.
+ *
+ * The production logs show every configured name answering HTTP 404 ("endpoint
+ * not found"), on every search. A 404 from `…/models/<name>:generateContent`
+ * does not mean the URL is wrong — it means *this key* does not serve *that
+ * model*: the name was retired, or the key belongs to a project where it was
+ * never enabled. Guessing more names cannot fix that, so the list of models the
+ * key really has is fetched from `ListModels` and used as the last link of the
+ * chain. It is discovered at most once per function instance.
+ */
+let geminiDiscoveredModels: string[] | undefined;
+
+/** Test seam: forces the next search to discover the model list again. */
+export function resetGeminiModelDiscovery(): void {
+  geminiDiscoveredModels = undefined;
+}
+
+async function discoverGeminiSearchModels(key: string): Promise<string[]> {
+  if (geminiDiscoveredModels) return geminiDiscoveredModels;
+  try {
+    const data = await fetchJson(`${GEMINI_API_BASE_URL}?key=${encodeURIComponent(key)}&pageSize=100`);
+    const models: any[] = Array.isArray(data?.models) ? data.models : [];
+    geminiDiscoveredModels = models
+      .filter((model) =>
+        Array.isArray(model?.supportedGenerationMethods) &&
+        model.supportedGenerationMethods.includes('generateContent') &&
+        typeof model?.name === 'string' &&
+        model.name.startsWith('models/gemini')
+      )
+      .map((model) => String(model.name).replace(/^models\//, ''))
+      // A "-vision", "-embedding" or preview-only variant is not what a search
+      // call needs; the plain flash/pro chat models are.
+      .filter((name) => /^gemini-[\d.]+-(?:flash|pro)/.test(name))
+      .slice(0, 4);
+  } catch (err) {
+    console.error(
+      '[ai-chat] Gemini model discovery failed',
+      err instanceof Error ? err.message : String(err),
+    );
+    geminiDiscoveredModels = [];
+  }
+  return geminiDiscoveredModels;
+}
+
 async function geminiWebSearch(query: string): Promise<{ results: WebResult[]; answer?: string }> {
   const key = env('GEMINI_API_KEY');
   if (!key) throw new Error('GEMINI_API_KEY is not configured');
   let lastError: Error | undefined;
+  let notFound = false;
+  const tried = new Set<string>();
+
+  const attempt = async (model: string) => {
+    tried.add(model);
+    const data = await fetchJson(
+      `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: GEMINI_SEARCH_INSTRUCTION + query }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0, maxOutputTokens: 600 },
+        }),
+      },
+    );
+    const results = geminiGroundingResults(data);
+    const text = geminiAnswerText(data);
+    const answer = /^SEM RESULTADOS/i.test(text) ? undefined : str(text, 900);
+    return { results, ...(answer ? { answer } : {}) };
+  };
+
   for (const model of geminiSearchModels()) {
     try {
-      const data = await fetchJson(
-        `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: GEMINI_SEARCH_INSTRUCTION + query }] }],
-            tools: [{ google_search: {} }],
-            generationConfig: { temperature: 0, maxOutputTokens: 600 },
-          }),
-        },
-      );
-      const results = geminiGroundingResults(data);
-      const text = geminiAnswerText(data);
-      const answer = /^SEM RESULTADOS/i.test(text) ? undefined : str(text, 900);
-      return { results, ...(answer ? { answer } : {}) };
+      return await attempt(model);
     } catch (err) {
       // A model that does not exist for this key, or does not serve the search
       // tool, answers 404/400: try the next name before giving up, so a single
       // misconfigured `GEMINI_MODEL` never costs the deployment its search.
       lastError = err instanceof Error ? err : new Error(String(err));
+      if (err instanceof HttpStatusError && err.status === 404) notFound = true;
     }
   }
+
+  // Every configured name was rejected as unknown: ask the API which models
+  // this key actually serves, rather than leaving the search permanently dark.
+  if (notFound) {
+    for (const model of await discoverGeminiSearchModels(key)) {
+      if (tried.has(model)) continue;
+      try {
+        return await attempt(model);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      }
+    }
+    if (lastError) {
+      lastError = new Error(
+        `${lastError.message} — no model available to this GEMINI_API_KEY served ` +
+          `generateContent with the google_search tool (tried: ${[...tried].join(', ')})`,
+      );
+    }
+  }
+
   throw lastError ?? new Error('Gemini search failed');
 }
 
@@ -807,6 +948,77 @@ export function placeMapLink(lat?: string, lon?: string): string | undefined {
   if (!lat || !lon || !COORD_RE.test(lat) || !COORD_RE.test(lon)) return undefined;
   return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=17/${lat}/${lon}`;
 }
+
+/**
+ * Reads the full OpenStreetMap tags of one object, for its contact details.
+ *
+ * A place answer that shows a name and an address but never a phone number or
+ * a website is not a complete answer, and the information usually *does* exist:
+ * OSM carries `phone`, `contact:phone`, `website` and `opening_hours` on the
+ * business object itself. A search hit does not always come back with those
+ * tags — Photon never returns them at all, and a Nominatim hit resolved through
+ * an address node carries the tags of the address, not of the shop — so the
+ * object is looked up by its own id, where the tags always live.
+ *
+ * Nothing is invented: an object with no contact tag produces no contact line.
+ * The lookup honours the same throttle and cache as every other Nominatim call.
+ */
+async function osmContactTags(
+  osmType: unknown,
+  osmId: unknown,
+): Promise<Record<string, unknown>> {
+  const prefix = OSM_TYPE_PREFIX[String(osmType ?? '').toLowerCase()];
+  const id = num(osmId);
+  if (!prefix || id === undefined || !Number.isInteger(id) || id <= 0) return {};
+
+  const key = `osm:${prefix}${id}`;
+  const cached = nominatimCached(key);
+  if (cached) return cached;
+
+  let tags: any = {};
+  try {
+    const data = await nominatimThrottle(() =>
+      fetchJson(
+        `${NOMINATIM_BASE_URL}/lookup?osm_ids=${prefix}${id}&format=jsonv2&extratags=1&addressdetails=0`,
+        {
+          headers: {
+            'User-Agent': NOMINATIM_USER_AGENT,
+            Referer: NOMINATIM_REFERER,
+            'Accept-Language': 'pt,en',
+          },
+        },
+      )
+    );
+    tags = (Array.isArray(data) ? data[0]?.extratags : undefined) ?? {};
+  } catch (err) {
+    // The contact detail is a bonus on top of an answer that already exists:
+    // failing to fetch it must never lose the place itself.
+    console.error(
+      '[ai-chat] OSM contact lookup failed',
+      err instanceof Error ? err.message : String(err),
+    );
+    return {};
+  }
+
+  const contact = clean({
+    phone: str(tags?.phone ?? tags?.['contact:phone'] ?? tags?.['contact:mobile']),
+    website: str(tags?.website ?? tags?.['contact:website'] ?? tags?.url, 200),
+    email: str(tags?.email ?? tags?.['contact:email'], 200),
+    openingHours: str(tags?.opening_hours, 200),
+  });
+  nominatimStore(key, contact);
+  return contact;
+}
+
+/** OSM object types, as the `/lookup` endpoint spells them. */
+const OSM_TYPE_PREFIX: Record<string, string> = {
+  node: 'N',
+  way: 'W',
+  relation: 'R',
+  n: 'N',
+  w: 'W',
+  r: 'R',
+};
 
 /**
  * True when the place evidence has no contact detail (phone or website).
@@ -1260,21 +1472,35 @@ const PROVIDERS: Provider[] = [
     kinds: ['phone'],
     probeValue: '+351210000000',
     config: () => env('NUMVERIFY_API_KEY'),
-    run: async (value) => {
-      const key = env('NUMVERIFY_API_KEY')!;
-      const data = await fetchJson(
-        `https://apilayer.net/api/validate?access_key=${encodeURIComponent(key)}&number=${encodeURIComponent(value)}`,
-      );
-      if (data?.success === false) throw new Error(str(data?.error?.info) ?? 'provider rejected the request');
-      return clean({
-        valid: data?.valid,
-        countryName: str(data?.country_name),
-        location: str(data?.location),
-        carrier: str(data?.carrier),
-        lineType: str(data?.line_type),
-        internationalFormat: str(data?.international_format),
-      });
-    },
+    // The free apilayer plan is metered per month, and the production logs show
+    // it running out (HTTP 429). The quota guard remembers each answer for six
+    // hours and stops calling the provider for fifteen minutes after a 429, so
+    // the plan is spent on distinct numbers instead of on repeats and on
+    // requests that are already known to fail.
+    run: (value) =>
+      withQuotaGuard('NumVerify', value, async () => {
+        const key = env('NUMVERIFY_API_KEY')!;
+        const data = await fetchJson(
+          `https://apilayer.net/api/validate?access_key=${encodeURIComponent(key)}&number=${encodeURIComponent(value)}`,
+        );
+        // apilayer answers HTTP 200 with an error object when the quota is
+        // exhausted or the key is rejected; the code is mapped to the same
+        // diagnosis the HTTP statuses get, so the operator reads one vocabulary.
+        if (data?.success === false) {
+          const code = num(data?.error?.code);
+          if (code === 104 || code === 429) throw new HttpStatusError(429);
+          if (code === 101 || code === 401) throw new HttpStatusError(401);
+          throw new Error(str(data?.error?.info) ?? 'provider rejected the request');
+        }
+        return clean({
+          valid: data?.valid,
+          countryName: str(data?.country_name),
+          location: str(data?.location),
+          carrier: str(data?.carrier),
+          lineType: str(data?.line_type),
+          internationalFormat: str(data?.international_format),
+        });
+      }),
   },
   {
     provider: 'Abstract Phone',
@@ -1576,6 +1802,17 @@ const PROVIDERS: Provider[] = [
       const lat = str(first?.lat, 32);
       const lon = str(first?.lon, 32);
       const tags = first?.extratags ?? {};
+      const contact = clean({
+        phone: str(tags?.phone ?? tags?.['contact:phone'] ?? tags?.['contact:mobile']),
+        website: str(tags?.website ?? tags?.['contact:website'] ?? tags?.url, 200),
+        email: str(tags?.email ?? tags?.['contact:email'], 200),
+        openingHours: str(tags?.opening_hours, 200),
+      });
+      // The search hit did not carry the contact tags: ask for the object
+      // itself, where OSM keeps them, instead of answering without a phone.
+      if (!contact.phone && !contact.website) {
+        Object.assign(contact, await osmContactTags(first?.osm_type, first?.osm_id));
+      }
       const result = clean({
         found: true,
         name: str(first?.name) ?? str(first?.namedetails?.name) ?? str(first?.display_name, 200),
@@ -1584,10 +1821,10 @@ const PROVIDERS: Provider[] = [
         type: str(first?.type),
         latitude: lat,
         longitude: lon,
-        phone: str(tags?.phone ?? tags?.['contact:phone'] ?? tags?.['contact:mobile']),
-        website: str(tags?.website ?? tags?.['contact:website'] ?? tags?.url, 200),
-        email: str(tags?.email ?? tags?.['contact:email'], 200),
-        openingHours: str(tags?.opening_hours, 200),
+        phone: contact.phone,
+        website: contact.website,
+        email: contact.email,
+        openingHours: contact.openingHours,
         link: placeMapLink(lat, lon),
       });
       nominatimStore(query, result);
@@ -1629,6 +1866,10 @@ const PROVIDERS: Provider[] = [
       const coordinates: any[] = Array.isArray(feature.coordinates) ? feature.coordinates : [];
       const lon = str(coordinates[0] !== undefined ? String(coordinates[0]) : undefined, 32);
       const lat = str(coordinates[1] !== undefined ? String(coordinates[1]) : undefined, 32);
+      // Photon returns location only — never a phone or a site. The contact
+      // details of the very same OSM object are fetched from Nominatim, so a
+      // business found here is not reported without them when they exist.
+      const contact = await osmContactTags(feature?.osm_type, feature?.osm_id);
       return clean({
         found: true,
         name: str(feature?.name) ?? str(photonAddress(feature), 200),
@@ -1637,6 +1878,10 @@ const PROVIDERS: Provider[] = [
         type: str(feature?.type),
         latitude: lat,
         longitude: lon,
+        phone: contact.phone,
+        website: contact.website,
+        email: contact.email,
+        openingHours: contact.openingHours,
         link: placeMapLink(lat, lon),
       });
     },
@@ -1921,8 +2166,11 @@ async function runProvider(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const detail = err instanceof HttpStatusError
+      ? `${message}${credentialHint(provider.provider, err.status)}`
+      : message;
     // Provider name and reason only — never the key or the full URL.
-    console.error(`[ai-chat] intel ${provider.provider} failed: ${message}`);
+    console.error(`[ai-chat] intel ${provider.provider} failed: ${detail}`);
     // The user still sees a generic message, but the operator must be able to
     // tell a revoked key (401) from a quota (429) from a dead endpoint (404)
     // long after the turn is over.
@@ -1930,15 +2178,39 @@ async function runProvider(
       provider: provider.provider,
       endpoint: provider.endpoint,
       status: err instanceof HttpStatusError ? err.status : undefined,
-      message: message.slice(0, 400),
+      message: detail.slice(0, 400),
     });
     return {
       ...base,
       timestamp: new Date().toISOString(),
       status: 'failed',
-      error: message.slice(0, 200),
+      error: detail.slice(0, 200),
     };
   }
+}
+
+/**
+ * The actionable half of a credential failure: which secret to fix.
+ *
+ * "HTTP 401" alone has kept Abstract IP and Abstract Phone dark in production
+ * for weeks, because the status does not say *which* key is wrong — and, for
+ * Abstract in particular, the answer is rarely "the key is revoked": every
+ * Abstract product (IP geolocation, phone validation, e-mail validation, IBAN,
+ * VAT) issues its **own** key, and using one product's key on another's
+ * endpoint answers exactly this 401. That is written into the log so it can be
+ * fixed instead of re-diagnosed.
+ */
+function credentialHint(provider: string, status: number): string {
+  if (status !== 401 && status !== 403) return '';
+  const secrets = PROVIDER_SECRETS[provider] ?? [];
+  const which = secrets.length > 0
+    ? ` — check the secret ${secrets.join(', ')}`
+    : ' — check this provider’s credential';
+  const abstract = provider.startsWith('Abstract')
+    ? ' (each Abstract API product issues its own key: a key from another ' +
+      'Abstract product is rejected with exactly this status)'
+    : '';
+  return `${which}${abstract}`;
 }
 
 // ─── Failure sink ────────────────────────────────────────────────────────────
@@ -2113,18 +2385,21 @@ export async function probeSource(id: string): Promise<SourceHealth | null> {
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const detail = err instanceof HttpStatusError
+      ? `${message}${credentialHint(provider.provider, err.status)}`
+      : message;
     reportFailure({
       provider: provider.provider,
       endpoint: provider.endpoint,
       status: err instanceof HttpStatusError ? err.status : undefined,
-      message: `health check: ${message.slice(0, 300)}`,
+      message: `health check: ${detail.slice(0, 300)}`,
     });
     return {
       provider: provider.provider,
       endpoint: provider.endpoint,
       kinds: provider.kinds,
       status: 'degraded',
-      error: message.slice(0, 300),
+      error: detail.slice(0, 300),
       httpStatus: err instanceof HttpStatusError ? err.status : undefined,
       checkedAt: new Date().toISOString(),
       durationMs: Date.now() - started,

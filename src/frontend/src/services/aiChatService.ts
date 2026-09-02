@@ -79,6 +79,12 @@ export interface AiChatReply {
   grounded?: boolean;
   /** External sources consulted for this turn, when the turn required them. */
   sources?: AiChatSource[];
+  /**
+   * The deterministic traffic-light verdict, when the turn analysed an
+   * indicator. It is already the first thing inside `content`; it is repeated
+   * here in structured form so the interface can colour the answer.
+   */
+  verdict?: AiVerdict;
 }
 
 /** True when the browser has the configuration required to reach the backend. */
@@ -126,7 +132,114 @@ async function readFunctionError(error: unknown): Promise<string> {
 }
 
 /**
+ * The deterministic verdict computed by the backend for one indicator.
+ *
+ * It never comes from a language model: the Edge Function scores the raw
+ * provider payloads (and the canister evidence the browser passes in) against
+ * documented thresholds, so the assistant and the sidebar tools always show the
+ * same traffic light for the same target.
+ */
+export type VerdictLevel = 'danger' | 'caution' | 'safe' | 'insufficient';
+
+export interface AiVerdictSignal {
+  provider: string;
+  endpoint: string;
+  severity: 'strong' | 'moderate' | 'weak';
+  weight: number;
+  reason: string;
+  reasonEn: string;
+}
+
+export interface AiVerdict {
+  level: VerdictLevel;
+  score: number;
+  signals: AiVerdictSignal[];
+  coverage: { answered: number; failed: number; notConfigured: number };
+  headline: string;
+}
+
+/** The indicator kinds the shared analysis pipeline accepts. */
+export type AnalysableKind =
+  | 'ip'
+  | 'url'
+  | 'domain'
+  | 'email'
+  | 'crypto_eth'
+  | 'crypto_btc'
+  | 'iban'
+  | 'phone'
+  /** Scored over the Valthoris community evidence alone. */
+  | 'username';
+
+/** What the Internet Computer canisters already answered, in the browser. */
+export interface LocalEvidence {
+  reputation?: {
+    found: boolean;
+    riskScore?: number;
+    trustScore?: number;
+    reportCount?: number;
+    isKnownScammer?: boolean;
+    isVerifiedBusiness?: boolean;
+  };
+  threat?: {
+    isThreat: boolean;
+    confidence?: number;
+    severity?: string | null;
+    matchedIndicators?: number;
+  };
+  reports?: Array<{ status?: string | null; riskScore?: number }>;
+}
+
+export interface AnalyseReply {
+  verdict: AiVerdict;
+  sources: AiChatSource[];
+}
+
+/**
+ * Runs the shared analysis pipeline on a single indicator.
+ *
+ * This is the same code path the AI Assistant takes for the same value: the
+ * external sources are queried by the Edge Function and the verdict is computed
+ * there. `local` carries the canister findings so both bodies of evidence are
+ * weighed together instead of producing two disagreeing answers.
+ */
+export async function analyseIndicator(
+  kind: AnalysableKind,
+  value: string,
+  local?: LocalEvidence,
+  language: 'pt' | 'en' = 'pt',
+): Promise<AnalyseReply> {
+  if (!isAiBackendConfigured) {
+    throw new Error(AI_BACKEND_CONFIG_ERROR);
+  }
+
+  const { data, error } = await getSupabase().functions.invoke<AnalyseReply | { error: string }>(
+    AI_FUNCTION_NAME,
+    {
+      body: { action: 'analyse', kind, value, language, ...(local ? { local } : {}) },
+      headers: functionAuthHeaders(),
+    },
+  );
+
+  if (error) {
+    throw new Error(await readFunctionError(error));
+  }
+  if (!data) {
+    throw new Error('AI backend returned an empty response');
+  }
+  if ('error' in data && typeof data.error === 'string') {
+    throw new Error(data.error);
+  }
+  const reply = data as AnalyseReply;
+  if (!reply.verdict || typeof reply.verdict.level !== 'string') {
+    throw new Error('AI backend returned no verdict');
+  }
+  return reply;
+}
+
+/**
  * Sends the conversation to the AI backend and returns the assistant reply.
+ *
  * Throws when the backend is unreachable, unconfigured or returns an error.
  *
  * `principal` is forwarded as attribution metadata for the fraud pipeline; it

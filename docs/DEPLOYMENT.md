@@ -178,6 +178,14 @@ tolerating requests from a datacentre address. If the configured model does not
 serve the tool, the next model in the chain is tried (`GEMINI_SEARCH_MODEL` →
 `GEMINI_MODEL` → `gemini-2.5-flash` → `gemini-2.5-flash-lite`).
 
+A model name that this key does not serve answers **HTTP 404** ("endpoint not
+found") for every search, which is why the search could fail permanently while
+the key itself was perfectly valid. When the whole chain answers 404, `ai-chat`
+now asks the key which models it actually has (`ListModels`), keeps the ones
+that support `generateContent`, and retries with them; the discovered list is
+reused for the rest of the instance's life. Setting `GEMINI_SEARCH_MODEL` to a
+model the key serves skips the discovery entirely.
+
 Two more engines need no credential at all and run alongside it, so the answer
 never rests on a single provider:
 
@@ -234,12 +242,36 @@ The conversations themselves are kept in the browser, per account
 
 ### The shape of an answer
 
-An analysis answers twice: a verdict line in plain language ("✅ Seguro",
-"⚠️ Suspeito", "❌ Perigoso", "❔ Não foi possível confirmar",
-"ℹ️ Conhecido/legítimo") plus one sentence anybody understands, then the marker
-`[DETALHE]`, and only after it the full technical detail. The interface folds
-everything after the marker behind "Ver análise completa", so a user who is not
-technical is never met with provider names, timestamps and coordinates.
+An analysis answers twice: a **traffic light** in plain language plus one
+sentence anybody understands, then the marker `[DETALHE]`, and only after it the
+full technical detail. The interface folds everything after the marker behind
+"Ver análise completa", so a user who is not technical is never met with
+provider names, timestamps and coordinates.
+
+The traffic light is not written by the language model. It is computed by
+`ai-chat/verdict.ts` from the raw provider payloads, after every source has
+answered and before the answer is shown, and it *replaces* any verdict line the
+model happened to write — the model can be unavailable, and even when it is
+available it must not be the only source of truth about risk.
+
+| Light | Meaning |
+| --- | --- |
+| 🔴 PERIGO | at least one source confirms malice (VirusTotal detections, a high AbuseIPDB confidence, a confirmed Valthoris community report, a phishing/malicious flag from GoPlus or URLScan) |
+| 🟠 CUIDADO | mixed signals, slightly negative reputation, or a single source pointing at risk with no cross-confirmation |
+| 🟢 SEGURO | the risk sources answered and none of them carries a signal |
+| ⚪ SEM INFORMAÇÃO SUFICIENTE | no risk source answered, or more sources failed than answered — **never** shown as green, because "nothing was checked" is not "nothing was found" |
+
+Every signal is scored (`strong` 60, `moderate` 25, `weak` 10) and the total
+decides the light: ≥ 60 is red, ≥ 10 is amber, 0 with real coverage is green.
+Coverage is counted **only** over the reputation providers, so a search engine
+or a gazetteer answering can never turn "nothing checked" into a green light.
+
+The exact thresholds live in one exported constant, `VERDICT_THRESHOLDS` in
+`ai-chat/verdict.ts` (VirusTotal detections and reputation, AbuseIPDB confidence
+and report count, URLScan, GoPlus, community risk scores, and the score bands).
+They are meant to be tuned there — changing a number changes the verdict, and no
+other logic has to be touched. `verdict_test.ts` pins the behaviour of each
+band, including the rule that missing data is grey and never green.
 
 Only small talk (a greeting, a thank-you, "ok") skips the search entirely.
 
@@ -269,6 +301,27 @@ stop, a road or an administrative boundary that merely shares a word never
 outranks the hospital, shop or office the question is about. When a query finds
 nothing it is reformulated ("Óptica Havaneza em Évora" → "Óptica Havaneza,
 Évora" → "Havaneza, Évora") instead of being answered with "não encontrado".
+
+The **phone number and the website** of a business are asked for explicitly:
+Nominatim is queried with `extratags=1`, and a place found by Photon — which
+never returns contact details — is completed with a `/lookup` on its OSM object
+(the same throttle and the same 24 h cache, so it costs no extra quota in
+practice). Whatever the OSM object carries (`phone`, `contact:phone`, `website`,
+`contact:website`, `email`, `opening_hours`) is shown; whatever it does not
+carry is reported as not confirmed. Nothing is ever invented, and nothing that
+exists is hidden any more.
+
+### The sidebar tools answer with the same verdict
+
+Scanner, Phone, Email, IBAN, Crypto Wallet, URL, QR Code, Domain and Username
+query the Internet Computer canisters for the Valthoris community evidence, and
+then call the `analyse` action of `ai-chat` with the indicator and that
+evidence. The action runs the **same** provider orchestration and the **same**
+`computeVerdict()` as the assistant, so a number that is red in the chat is red
+in the sidebar. The canister evidence that comes from the browser is reduced to
+the few fields the verdict reads and is never used for authorization. A username
+has no external provider: its verdict rests on the community evidence alone,
+and nothing else is contacted for it.
 
 ### When the language model fails, the lookup is not lost
 
@@ -312,6 +365,22 @@ Every provider failure — during a user turn or during a test — is written to
 timestamp. The user keeps seeing the single generic sentence (a UX decision),
 but the operator now has the real cause. No credential, URL or request body is
 ever recorded.
+
+A failure that is a **configuration** problem says so instead of looking like a
+transient outage. `HTTP 401`/`403` from a provider is recorded with the name of
+the secret to fix, and for the Abstract API family with the reason it is almost
+always rejected: **each Abstract product (IP, e-mail, phone, IBAN, VAT) issues
+its own key**, so a key that works on one endpoint returns 401 on the others.
+Those keys are held in Supabase Secrets and cannot be repaired from the
+repository — the entry in `error_logs` names `ABSTRACT_IP_API_KEY` /
+`ABSTRACT_PHONE_API_KEY` and what to replace it with.
+
+A metered provider is protected instead of being burned: NumVerify answers are
+cached for 6 h, an identical lookup spends no request at all, and once the plan
+is exhausted (apilayer reports it as HTTP 200 with error code 104, which is
+translated to a real 429) the source stops sending requests for 15 minutes and
+reports the exhausted quota. That is what keeps one busy day from turning into
+permanent 429s.
 
 The full mapping (secret → provider → module → lookup → data returned) is in
 `docs/architecture/api-integration-matrix.md`.

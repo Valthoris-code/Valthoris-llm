@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useActors } from '../hooks/useActors';
+import VerdictBanner from './VerdictBanner';
+import { analyseIndicator, isAiBackendConfigured } from '../services/aiChatService';
+import type { AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
 import type { LookupResult } from '../../../declarations/identity/index.d.ts';
 import type { ThreatResult } from '../../../declarations/threat_intelligence/index.d.ts';
 import type { Report } from '../../../declarations/community/index.d.ts';
@@ -14,6 +17,12 @@ import type { Report } from '../../../declarations/community/index.d.ts';
  * All three are `query` calls that accept anonymous callers, so the tool works
  * before sign-in. When a source fails, its error is displayed — the tool never
  * renders a fabricated verdict.
+ *
+ * On top of the canisters, the same value is sent to the `ai-chat` Edge
+ * Function's `analyse` action: it runs the external intelligence providers the
+ * AI Assistant runs and computes the traffic-light verdict from *both* bodies
+ * of evidence. That is what keeps this tool and the assistant from disagreeing
+ * about the same number — there is one verdict function, not two.
  */
 
 export type LookupType = 'phone' | 'email' | 'iban' | 'crypto' | 'url' | 'qr' | 'domain' | 'username';
@@ -38,6 +47,60 @@ interface Outcome {
   threat?: ThreatResult;
   reports: Report[];
   errors: string[];
+  /** The shared verdict, when the backend could compute one. */
+  verdict?: AiVerdict;
+}
+
+/** The indicator kind the shared pipeline understands, per lookup tab. */
+function analysableKind(type: LookupType, value: string): AnalysableKind | null {
+  switch (type) {
+    case 'phone':  return 'phone';
+    case 'email':  return 'email';
+    case 'iban':   return 'iban';
+    case 'domain': return 'domain';
+    case 'crypto': return /^0x[a-fA-F0-9]{40}$/.test(value) ? 'crypto_eth' : 'crypto_btc';
+    case 'url':
+    case 'qr':
+      // A QR payload is only analysable when what it carries is a link.
+      return /^https?:\/\//i.test(value) ? 'url' : null;
+    // A username is not an internet indicator: no external provider covers it,
+    // so the backend scores it over the community evidence alone.
+    case 'username': return 'username';
+    default:
+      return null;
+  }
+}
+
+/** Converts a canister answer into the evidence shape the backend expects. */
+function localEvidence(outcome: Omit<Outcome, 'verdict'>): LocalEvidence {
+  return {
+    ...(outcome.reputation
+      ? {
+        reputation: {
+          found: outcome.reputation.found,
+          riskScore: Number(outcome.reputation.riskScore),
+          trustScore: Number(outcome.reputation.trustScore),
+          reportCount: Number(outcome.reputation.reportCount),
+          isKnownScammer: outcome.reputation.isKnownScammer,
+          isVerifiedBusiness: outcome.reputation.isVerifiedBusiness,
+        },
+      }
+      : {}),
+    ...(outcome.threat
+      ? {
+        threat: {
+          isThreat: outcome.threat.isThreat,
+          confidence: Number(outcome.threat.confidence),
+          severity: optionalVariant(outcome.threat.severity),
+          matchedIndicators: Number(outcome.threat.matchedIndicators),
+        },
+      }
+      : {}),
+    reports: outcome.reports.map(report => ({
+      status: variantKey(report.status),
+      riskScore: Number(report.riskScore),
+    })),
+  };
 }
 
 /** Variant → the single key it carries (e.g. `{ high: null }` → "high"). */
@@ -110,7 +173,23 @@ export default function LookupTool({ lookupType }: Props) {
       errors.push(`community: ${e instanceof Error ? e.message : String(e)}`);
     }
 
-    setOutcome({ reputation, threat, reports, errors });
+    const canisterOutcome = { reputation, threat, reports, errors };
+    setOutcome(canisterOutcome);
+
+    // ─── shared verdict (same pipeline as the AI Assistant) ───────────────
+    const kind = analysableKind(lookupType, target);
+    if (kind && isAiBackendConfigured) {
+      try {
+        const { verdict } = await analyseIndicator(kind, target, localEvidence(canisterOutcome));
+        setOutcome({ ...canisterOutcome, verdict });
+      } catch (e) {
+        setOutcome({
+          ...canisterOutcome,
+          errors: [...errors, `verdict: ${e instanceof Error ? e.message : String(e)}`],
+        });
+      }
+    }
+
     setLoading(false);
   };
 
@@ -153,6 +232,8 @@ export default function LookupTool({ lookupType }: Props) {
       {outcome && (
         <div className="card mt-2" style={{ maxWidth: 600 }}>
           <h3 style={{ marginTop: 0 }}>Result</h3>
+
+          {outcome.verdict && <VerdictBanner verdict={outcome.verdict} />}
 
           {outcome.errors.map(err => (
             <div key={err} className="alert-error mb-2" role="alert">⚠ {err}</div>
