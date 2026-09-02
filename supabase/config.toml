@@ -37,6 +37,14 @@ verify_jwt = false
 [functions.admin-api]
 verify_jwt = true
 
+# `admin-icp-bridge` is the one administrative endpoint that is called *before*
+# any Supabase session exists — issuing that session is its whole purpose — so
+# gateway JWT verification would make it unusable by definition. It authorises
+# instead by verifying an Internet Identity delegation chain against the
+# Internet Computer root key, and answers everybody else with the same 404.
+[functions.admin-icp-bridge]
+verify_jwt = false
+
 # ─── Administration: authentication settings ─────────────────────────────────
 #
 # These are applied to the hosted project by

@@ -37,3 +37,7 @@ jobs:
         run: deno test --allow-net --allow-env supabase/functions/ai-chat
       - name: Test the safe-room function
         run: deno test --allow-net --allow-env supabase/functions/safe-room
+      - name: Test the admin-api function
+        run: deno test --allow-net --allow-env supabase/functions/admin-api
+      - name: Test the admin-icp-bridge function
+        run: deno test --allow-net --allow-env supabase/functions/admin-icp-bridge
