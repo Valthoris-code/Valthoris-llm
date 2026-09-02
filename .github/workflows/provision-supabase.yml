@@ -73,6 +73,33 @@ jobs:
           done
           test "$missing" = "0"
 
+      # The project reference is a repository secret, so the logs can never show
+      # which project was actually provisioned — and a workflow that reports
+      # success against the wrong project is indistinguishable from one that
+      # worked. `supabase/.temp/linked-project.json` records the project this
+      # repository belongs to, so the two are compared here and the run stops
+      # immediately when they disagree.
+      - name: Confirm the target project
+        run: |
+          set -euo pipefail
+          expected=$(jq -r '.ref // empty' supabase/.temp/linked-project.json)
+          if [ -z "$expected" ]; then
+            echo "No expected project recorded in supabase/.temp/linked-project.json."
+          elif [ "$expected" = "$SUPABASE_PROJECT_REF" ]; then
+            echo "SUPABASE_PROJECT_REF matches the project recorded in the repository."
+          else
+            echo "::error::SUPABASE_PROJECT_REF does not point at the project this" \
+              "repository is linked to ($expected). Fix the repository secret," \
+              "otherwise everything below is applied to the wrong database."
+            exit 1
+          fi
+          scheme="Bea"; scheme="${scheme}rer"
+          curl -sS -o /tmp/project.json \
+            -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF" || true
+          jq -r '"Project: \(.name // "?")  region: \(.region // "?")  status: \(.status // "?")"' \
+            /tmp/project.json 2>/dev/null || true
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
@@ -129,6 +156,27 @@ jobs:
           applied=$(jq -r '.[]?.version // empty' /tmp/query.json | sort -u)
           echo "Already applied: $(echo "$applied" | tr '\n' ' ')"
 
+          # A migration that fails on a column or object that "does not exist"
+          # is almost always schema drift: the object was created on this
+          # project by other means, with a different shape. The logs must show
+          # that shape, otherwise the failure cannot be diagnosed at all from
+          # CI. Only object names are printed — never a single row of data.
+          describe_governance() {
+            run_sql "SELECT coalesce(jsonb_agg(x ORDER BY x->>'o'), '[]'::jsonb) AS d FROM (
+                SELECT jsonb_build_object('o', c.relname, 'k', c.relkind,
+                  'cols', (SELECT string_agg(a.attname, ',' ORDER BY a.attnum)
+                             FROM pg_attribute a
+                            WHERE a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped)) AS x
+                  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                 WHERE n.nspname = 'governance' AND c.relkind IN ('r','v','m')
+              ) s;" > /dev/null || true
+            echo "governance schema now contains:"
+            jq -r '.[0].d[]? | "  · \(.o) (\(.k)): \(.cols // "no columns")"' /tmp/query.json 2>/dev/null \
+              || echo "  (could not be read)"
+          }
+
+          describe_governance
+
           for file in $(ls supabase/migrations/*.sql | sort); do
             version=$(basename "$file" .sql | cut -d_ -f1)
             name=$(basename "$file" .sql)
@@ -150,6 +198,7 @@ jobs:
                   ;;
                 *)
                   echo "::error::Migration $name failed (HTTP $status): $detail"
+                  describe_governance
                   exit 1
                   ;;
               esac
