@@ -211,6 +211,51 @@ jobs:
             fi
           done
 
+      # ─── 1b. Prove the database really carries every migration ──────────────
+      #
+      # The step above can only report what it did; this one reports what the
+      # project *has*. A migration that never reached the ledger — the failure
+      # that left the administration without `governance_admin_by_principal`
+      # and made `admin-icp-bridge/session` answer 404 — is caught here even if
+      # it was applied by some other route.
+      - name: Verify every migration is recorded
+        run: |
+          set -euo pipefail
+          api="https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query"
+          scheme="Bea"; scheme="${scheme}rer"
+          query() {
+            jq -n --arg q "$1" '{query: $q}' > /tmp/verify.req
+            curl -sS -o /tmp/verify.json -w '%{http_code}' -X POST "$api" \
+              -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data-binary @/tmp/verify.req
+          }
+
+          test "$(query "SELECT version FROM supabase_migrations.schema_migrations;")" = "200"
+          applied=$(jq -r '.[]?.version // empty' /tmp/verify.json | sort -u)
+          missing=0
+          for file in supabase/migrations/*.sql; do
+            version=$(basename "$file" .sql | cut -d_ -f1)
+            if ! echo "$applied" | grep -qx "$version"; then
+              echo "::error::Migration $(basename "$file") is not recorded in" \
+                "supabase_migrations.schema_migrations."
+              missing=1
+            fi
+          done
+
+          # The functions the administration cannot work without.
+          expected="governance_admin_by_principal governance_claim_admin_principal governance_resolve_admin governance_write_audit governance_write_error"
+          test "$(query "SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname LIKE 'governance\\_%';")" = "200"
+          present=$(jq -r '.[]?.proname // empty' /tmp/verify.json | sort -u)
+          for fn in $expected; do
+            if ! echo "$present" | grep -qx "$fn"; then
+              echo "::error::public.$fn does not exist on this project."
+              missing=1
+            fi
+          done
+          test "$missing" = "0"
+          echo "All migrations are recorded and the administrative RPCs exist."
+
       # ─── 2. Authentication: MFA and the administrative access-token hook ────
       #
       # PATCH only touches the fields listed below; every other authentication

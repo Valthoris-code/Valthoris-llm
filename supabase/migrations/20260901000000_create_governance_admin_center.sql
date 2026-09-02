@@ -25,6 +25,78 @@
 -- Everything is idempotent: the migration checks for pre-existing objects
 -- before creating them and can be replayed safely.
 
+-- ─── 0. Reconcile a divergent `governance` schema ────────────────────────────
+--
+-- This project received, out of band, a *different* draft of the administration
+-- schema: `governance.audit_logs` exists there with `admin_id/timestamp/entity`
+-- instead of the `actor_admin_id/occurred_at/target_type` model below, and the
+-- other tables differ in the same way. Because every statement here is written
+-- with `IF NOT EXISTS`, those tables were kept as they were and the first index
+-- on a column that only this design has (`occurred_at`) failed — which is why
+-- this migration never reached the ledger, why the migrations that follow it
+-- were never applied, and why `Provision Supabase` has been red on `main`.
+--
+-- The repository is the single source of truth for this schema, so the foreign
+-- draft is set aside rather than patched column by column: it is renamed into
+-- an archive schema (nothing is destroyed — the rows stay readable to the
+-- database owner for forensics) and the administration is rebuilt below exactly
+-- as described. This is safe: the administration has never been able to issue a
+-- session on this project, so the draft holds no administrative history.
+--
+-- The block is inert on a database that already carries *this* design, and on
+-- an empty one.
+DO $$
+DECLARE
+  v_archive TEXT;
+  v_fn      RECORD;
+BEGIN
+  IF to_regclass('governance.audit_logs') IS NULL
+     OR EXISTS (
+       SELECT 1 FROM pg_attribute
+        WHERE attrelid = 'governance.audit_logs'::regclass
+          AND attname  = 'occurred_at'
+          AND NOT attisdropped
+     )
+  THEN
+    RETURN;
+  END IF;
+
+  v_archive := 'governance_archived_' || to_char(now() AT TIME ZONE 'UTC', 'YYYYMMDDHH24MISS');
+  RAISE NOTICE 'A divergent governance schema was found; archiving it as %.', v_archive;
+
+  -- The wrappers in `public` were compiled against the draft and are recreated
+  -- in full further down, so they are dropped whatever their signature is.
+  FOR v_fn IN
+    SELECT p.oid::regprocedure AS signature
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public'
+       AND p.proname LIKE 'governance\_%'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %s CASCADE', v_fn.signature);
+  END LOOP;
+
+  -- Triggers the draft installed on `auth.users` keep running against the
+  -- archived tables once the schema is renamed, which would silently maintain
+  -- data nobody reads. They are removed; 20260901010000 installs this design's
+  -- own binding trigger.
+  FOR v_fn IN
+    SELECT t.tgname
+      FROM pg_trigger t
+      JOIN pg_proc p       ON p.oid = t.tgfoid
+      JOIN pg_namespace n  ON n.oid = p.pronamespace
+     WHERE t.tgrelid = 'auth.users'::regclass
+       AND NOT t.tgisinternal
+       AND n.nspname = 'governance'
+  LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON auth.users', v_fn.tgname);
+  END LOOP;
+
+  EXECUTE format('ALTER SCHEMA governance RENAME TO %I', v_archive);
+  -- The archive is for the database owner alone: no API role may reach it.
+  EXECUTE format('REVOKE ALL ON SCHEMA %I FROM PUBLIC, anon, authenticated, service_role', v_archive);
+END $$;
+
 CREATE SCHEMA IF NOT EXISTS governance;
 
 -- `anon` must never see the administration. `authenticated` may only *use* the
