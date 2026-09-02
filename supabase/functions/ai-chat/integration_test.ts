@@ -254,8 +254,10 @@ Deno.test('a real analysis produces a completed run, a decision and a justificat
   assertEquals(res.status, 200);
   const body = await res.json();
 
-  // The answer is the real provider answer, not a placeholder.
-  assertEquals(body.content, 'This link is a phishing page imitating a bank.');
+  // The answer is the real provider answer, not a placeholder — now preceded by
+  // the deterministic verdict computed from the sources.
+  assert(String(body.content).includes('This link is a phishing page imitating a bank.'));
+  assert(/^(?:🔴|🟠|🟢|⚪)/u.test(String(body.content)));
   assertEquals(body.provider, 'gemini');
   assert(!String(body.content).includes('Backend integration pending'));
 
@@ -322,7 +324,9 @@ Deno.test('an unusable provider verdict records a failed run and no decision', a
   assertEquals(res.status, 200);
   const body = await res.json();
   // The user still gets the real answer…
-  assertEquals(body.content, 'It looks risky to me.');
+  assert(String(body.content).includes('It looks risky to me.'));
+  // …under a verdict that never turns "no source answered" into green.
+  assert(String(body.content).startsWith('⚪'), body.content);
   // …but nothing is fabricated: no verdict, and the real reason is reported.
   assertEquals(body.analysis.recorded, false);
   assertEquals(body.analysis.verdict, undefined);

@@ -40,6 +40,7 @@ import type { DetectedArtifact } from './artifacts.ts';
 import {
   formatEvidence,
   gatherAllIntelligence,
+  isValidEntity,
   listSources,
   probeAllSources,
   probeSource,
@@ -53,6 +54,8 @@ import {
   recordSecurityAnalysis,
 } from './pipeline.ts';
 import type { PipelineOutcome, StructuredAnalysis } from './pipeline.ts';
+import { computeVerdict, isRiskKind, verdictLanguage } from './verdict.ts';
+import type { LocalEvidence, Verdict } from './verdict.ts';
 
 type Role = 'system' | 'user' | 'assistant';
 
@@ -77,6 +80,21 @@ interface ChatRequest {
    * and is never used for authorization.
    */
   principal?: string;
+}
+
+/**
+ * A single-indicator analysis request, sent by the sidebar lookup tools.
+ *
+ * `local` carries what the Internet Computer canisters already answered in the
+ * browser (reputation, IOC match, community reports) so the verdict is computed
+ * over every piece of evidence at once, in the one place that computes it.
+ */
+interface AnalyseRequest {
+  action: 'analyse';
+  kind?: string;
+  value?: string;
+  local?: unknown;
+  language?: string;
 }
 
 const SYSTEM_PROMPT = [
@@ -761,8 +779,111 @@ async function handleIntelHealth(req: Request, probe: unknown): Promise<Response
   return json({ sources: listSources(), probedAt: null }, 200);
 }
 
-/** HTTP entry point. Exported so it can be exercised by the function tests. */
-export async function handleRequest(req: Request): Promise<Response> {
+/**
+ * Direct analysis of a single indicator — the sidebar tools' entry point.
+ *
+ * Scanner, Phone, Email, IBAN, Crypto Wallet, URL, QR Code, Domain and
+ * Username used to reach the Internet Computer canisters and nothing else, so
+ * the same number could be "no indicator matched" in the sidebar and a red
+ * verdict in the assistant. This action runs *the same* provider lookups and
+ * *the same* {@link computeVerdict} the assistant runs, and accepts the
+ * canister findings (`local`) so both bodies of evidence produce one verdict.
+ *
+ * Nothing here needs a language model: the answer is the traffic light plus the
+ * source reports the interface already knows how to render.
+ */
+async function handleAnalyse(payload: AnalyseRequest): Promise<Response> {
+  const kind = typeof payload.kind === 'string' ? payload.kind as IntelEntityKind : null;
+  const value = typeof payload.value === 'string' ? payload.value.trim() : '';
+
+  if (!kind || !ANALYSABLE_KINDS.includes(kind)) {
+    return json({ error: 'Unsupported analysis kind' }, 400);
+  }
+  if (value.length === 0 || value.length > 512 || !isValidEntity(kind, value)) {
+    return json({ error: 'The value is not a valid ' + kind }, 400);
+  }
+
+  let sources: SourceReport[] = [];
+  try {
+    sources = await gatherAllIntelligence([{ kind, value }]);
+  } catch (err) {
+    // A provider fault must not deny the caller the canister evidence it
+    // already has: the verdict is still computed, over less evidence.
+    console.error('[ai-chat] analyse orchestration failed', err);
+  }
+
+  const verdict = computeVerdict({
+    kind,
+    sources,
+    entity: value,
+    local: sanitizeLocalEvidence(payload.local),
+    language: payload.language === 'en' ? 'en' : 'pt',
+  });
+
+  return json({ verdict, sources }, 200);
+}
+
+/** The entity kinds the sidebar tools may ask for. */
+const ANALYSABLE_KINDS: IntelEntityKind[] = [
+  'ip',
+  'url',
+  'domain',
+  'email',
+  'crypto_eth',
+  'crypto_btc',
+  'iban',
+  'phone',
+];
+
+/**
+ * Keeps only the fields the verdict reads from the caller-supplied canister
+ * evidence. The browser sends it, so nothing else is trusted, and no field is
+ * ever used for authorization.
+ */
+function sanitizeLocalEvidence(local: unknown): LocalEvidence | undefined {
+  if (!local || typeof local !== 'object') return undefined;
+  const source = local as Record<string, any>;
+  const numberOrUndefined = (value: unknown): number | undefined =>
+    typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+  const reputation = source.reputation && typeof source.reputation === 'object'
+    ? {
+      found: source.reputation.found === true,
+      riskScore: numberOrUndefined(source.reputation.riskScore),
+      trustScore: numberOrUndefined(source.reputation.trustScore),
+      reportCount: numberOrUndefined(source.reputation.reportCount),
+      isKnownScammer: source.reputation.isKnownScammer === true,
+      isVerifiedBusiness: source.reputation.isVerifiedBusiness === true,
+    }
+    : undefined;
+
+  const threat = source.threat && typeof source.threat === 'object'
+    ? {
+      isThreat: source.threat.isThreat === true,
+      confidence: numberOrUndefined(source.threat.confidence),
+      severity: typeof source.threat.severity === 'string'
+        ? source.threat.severity.slice(0, 40)
+        : null,
+      matchedIndicators: numberOrUndefined(source.threat.matchedIndicators),
+    }
+    : undefined;
+
+  const reports = Array.isArray(source.reports)
+    ? source.reports.slice(0, 100).map((report: any) => ({
+      status: typeof report?.status === 'string' ? report.status.slice(0, 40) : null,
+      riskScore: numberOrUndefined(report?.riskScore),
+    }))
+    : undefined;
+
+  if (!reputation && !threat && !reports) return undefined;
+  return {
+    ...(reputation ? { reputation } : {}),
+    ...(threat ? { threat } : {}),
+    ...(reports ? { reports } : {}),
+  };
+}
+
+/** HTTP entry point. Exported so it can be exercised by the function tests. */export async function handleRequest(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
   }
@@ -779,6 +900,10 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   if ((payload as any)?.action === 'intel-health') {
     return await handleIntelHealth(req, (payload as any)?.probe);
+  }
+
+  if ((payload as any)?.action === 'analyse') {
+    return await handleAnalyse(payload as AnalyseRequest);
   }
 
   const messages = sanitize(Array.isArray(payload.messages) ? payload.messages : []);
@@ -832,6 +957,20 @@ export async function handleRequest(req: Request): Promise<Response> {
   // without spending the Gemini search quota twice on the same question.
   const webSearch = intent !== 'social' && !(intel?.searched ?? false);
 
+  // ─── Deterministic verdict ────────────────────────────────────────────────
+  // Computed from the provider payloads alone, before any answer is written:
+  // the traffic light the user sees is a function of the evidence, never of
+  // whichever model happened to answer (or of none answering at all).
+  const language = lastUser ? verdictLanguage(lastUser.content) : 'pt';
+  const verdict: Verdict | null = intel && isRiskKind(intel.kind)
+    ? computeVerdict({
+      kind: intel.kind,
+      sources: intel.sources,
+      entity: intel.entity,
+      language,
+    })
+    : null;
+
   let completion: Completion;
   try {
     completion = await complete(modelMessages, systemPrompt, webSearch);
@@ -840,7 +979,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     // The providers actually answered: their data is the answer, and losing it
     // because a language model is out of quota would be throwing away the very
     // lookup the user asked for. The evidence is reported as it stands.
-    const fallback = intel ? answerFromEvidence(intel.kind, intel.sources) : null;
+    const fallback = intel ? answerFromEvidence(intel.kind, intel.sources, verdict) : null;
     if (fallback) {
       return json(
         {
@@ -849,6 +988,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           model: 'evidence-only',
           grounded: true,
           sources: intel!.sources,
+          ...(verdict ? { verdict } : {}),
         },
         200,
       );
@@ -882,6 +1022,9 @@ export async function handleRequest(req: Request): Promise<Response> {
   return json(
     {
       ...answer,
+      // The verdict replaces whatever conclusion the model wrote: it is the
+      // same one the evidence-only path would have produced.
+      ...(verdict ? { content: applyVerdict(completion.content, verdict), verdict } : {}),
       // Whether the answer stands on evidence collected in this very turn. The
       // UI shows it, so a user is never left guessing if a reply was verified.
       grounded: grounded || sources.some((s) => s.status === 'success'),
@@ -891,6 +1034,43 @@ export async function handleRequest(req: Request): Promise<Response> {
     200,
   );
 }
+
+/**
+ * Puts the deterministic verdict at the very top of an answer.
+ *
+ * The model writes the explanation; the traffic light is not its decision. Any
+ * verdict line the model produced on its own (a "✅ Seguro" that contradicts
+ * four VirusTotal detections, for example) is removed from the visible part and
+ * the computed headline takes its place, so the first thing the user reads is
+ * always the conclusion the evidence supports.
+ *
+ * The technical detail after {@link DETAIL_MARKER} is left untouched: it stays
+ * folded behind "Ver análise completa" in the interface.
+ */
+export function applyVerdict(content: string, verdict: Verdict): string {
+  const markerIndex = content.indexOf(DETAIL_MARKER);
+  const summary = markerIndex >= 0 ? content.slice(0, markerIndex) : content;
+  const detail = markerIndex >= 0 ? content.slice(markerIndex) : '';
+
+  const kept = summary
+    .split('\n')
+    .filter((line) => !MODEL_VERDICT_LINE_RE.test(line.trim()))
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const visible = [verdict.headline, ...kept].join('\n');
+  return detail ? `${visible}\n${detail}` : `${visible}\n${DETAIL_MARKER}`;
+}
+
+/**
+ * A verdict line written by the model, in either language.
+ *
+ * These are the openers the answer layout asks for; they are dropped once a
+ * computed verdict exists, because two verdicts in the same answer — possibly
+ * disagreeing — is worse than none.
+ */
+const MODEL_VERDICT_LINE_RE =
+  /^(?:[*_\s]*)(?:✅|⚠️|⚠|❌|❔|❓|ℹ️|ℹ|🔴|🟠|🟡|🟢|⚪)/u;
 
 /**
  * The answer built from the evidence alone, when no language model could write it.
@@ -906,7 +1086,11 @@ export async function handleRequest(req: Request): Promise<Response> {
  * Returns `null` when there is nothing real to show, in which case the caller
  * keeps the generic error.
  */
-export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[]): string | null {
+export function answerFromEvidence(
+  kind: IntelEntityKind,
+  sources: SourceReport[],
+  verdict?: Verdict | null,
+): string | null {
   const answered = sources.filter(
     (s) => s.status === 'success' && s.data && Object.keys(s.data).length > 0 && s.data.found !== false,
   );
@@ -921,9 +1105,19 @@ export function answerFromEvidence(kind: IntelEntityKind, sources: SourceReport[
   // detail: what was found, in one line, with no provider names and no markup.
   const summaryName = firstEvidenceValue(placeReports, 'name');
   const summaryAddress = firstEvidenceValue(placeReports, 'address');
-  if (kind === 'place' && (summaryName || summaryAddress)) {
+  if (verdict) {
+    // The verdict does not depend on the language model, so it is exactly the
+    // same here as it would have been in a model-written answer.
+    lines.push(verdict.headline);
+  } else if (kind === 'place' && (summaryName || summaryAddress)) {
     lines.push('ℹ️ Encontrámos este local nas fontes públicas de mapas.');
-    lines.push(`${summaryName ?? 'Local'} — ${summaryAddress ?? 'morada não confirmada'}.`);
+    const contact = firstEvidenceValue(placeReports, 'phone') ??
+      firstEvidenceValue(webReports, 'phone');
+    lines.push(
+      `${summaryName ?? 'Local'} — ${summaryAddress ?? 'morada não confirmada'}${
+        contact ? ` — ${contact}` : ''
+      }.`,
+    );
   } else {
     lines.push('❔ Não foi possível confirmar tudo.');
     lines.push('Reunimos abaixo apenas o que as fontes consultadas devolveram nesta pergunta.');
