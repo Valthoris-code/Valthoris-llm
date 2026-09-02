@@ -38,6 +38,7 @@ import React, {
 import type { ReactNode } from 'react';
 import { getAdminSupabase, isAdminBackendConfigured } from './adminClient';
 import { AdminAccessDenied, fetchAdminSession } from './adminApi';
+import { linkInternetIdentity, signInWithInternetIdentity } from './icpBridge';
 import type { AdminSession } from './adminApi';
 
 export type AdminAuthStage =
@@ -67,6 +68,14 @@ export interface AdminAuthValue {
   error: string | null;
   configured: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  /**
+   * Signs in with Internet Identity, the identity provider the rest of
+   * Valthoris uses. It replaces the password step only: the MFA stages below
+   * still apply, because `admin-api` refuses anything under AAL2.
+   */
+  signInWithIcp: () => Promise<void>;
+  /** Binds this browser's Internet Identity to the administrator signed in. */
+  linkIcp: () => Promise<boolean>;
   signOut: () => Promise<void>;
   startEnrollment: () => Promise<AdminEnrollment>;
   verifyCode: (code: string, factorId?: string) => Promise<void>;
@@ -77,6 +86,8 @@ export interface AdminAuthValue {
 
 /** The only authentication failure message. It never says why. */
 const GENERIC_SIGN_IN_ERROR = 'Credenciais inválidas.';
+/** Same rule for Internet Identity: no reason is ever disclosed. */
+const GENERIC_ICP_ERROR = 'Não foi possível iniciar sessão com Internet Identity.';
 const GENERIC_CODE_ERROR = 'Código inválido.';
 
 const AdminAuthContext = createContext<AdminAuthValue | null>(null);
@@ -187,6 +198,25 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     [resolve],
   );
 
+  const signInWithIcp = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await signInWithInternetIdentity();
+      await resolve();
+    } catch {
+      // "Not an administrator", "the delegation did not verify" and "the window
+      // was closed" are the same answer.
+      if (mounted.current) setError(GENERIC_ICP_ERROR);
+    } finally {
+      if (mounted.current) setBusy(false);
+    }
+  }, [resolve]);
+
+  const linkIcp = useCallback(async () => {
+    return await linkInternetIdentity();
+  }, []);
+
   const signOut = useCallback(async () => {
     if (isAdminBackendConfigured) {
       await getAdminSupabase().auth.signOut();
@@ -265,13 +295,28 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       error,
       configured: isAdminBackendConfigured,
       signIn,
+      signInWithIcp,
+      linkIcp,
       signOut,
       startEnrollment,
       verifyCode,
       refresh: resolve,
       can,
     }),
-    [stage, admin, busy, error, signIn, signOut, startEnrollment, verifyCode, resolve, can],
+    [
+      stage,
+      admin,
+      busy,
+      error,
+      signIn,
+      signInWithIcp,
+      linkIcp,
+      signOut,
+      startEnrollment,
+      verifyCode,
+      resolve,
+      can,
+    ],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

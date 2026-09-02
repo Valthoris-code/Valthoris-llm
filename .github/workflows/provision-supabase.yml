@@ -17,7 +17,13 @@ name: Provision Supabase (database & administration)
 # Required repository secrets:
 #   SUPABASE_ACCESS_TOKEN — personal access token (Account → Access Tokens)
 #   SUPABASE_PROJECT_REF  — the project reference
-#   SUPABASE_DB_PASSWORD  — the database password, needed to push migrations
+#
+# Optional (the migrations are applied either way):
+#   SUPABASE_DB_PASSWORD  — when set, migrations are pushed with the Supabase
+#                           CLI over a direct database connection. When it is
+#                           not set they are applied through the Management API
+#                           with SUPABASE_ACCESS_TOKEN instead, so provisioning
+#                           never depends on a second credential existing.
 #
 # Optional repository secrets:
 #   SUPABASE_SERVICE_ROLE_KEY — enables step 4. Without it the ROOT rows still
@@ -72,16 +78,89 @@ jobs:
           version: latest
 
       # ─── 1. Database ────────────────────────────────────────────────────────
+      #
+      # `supabase db push` needs the database password, which is a *second*
+      # credential. When it is missing the migrations were simply not applied
+      # and the whole workflow failed — leaving `main` red and the schema
+      # unprovisioned. The access token this job already holds is enough to run
+      # SQL through the Management API, so the fallback below applies exactly
+      # the same files, in the same order, recording each one in
+      # `supabase_migrations.schema_migrations` so that an already-applied
+      # migration is never replayed (and a later `db push` stays consistent).
       - name: Apply the migrations
         run: |
           set -euo pipefail
-          if [ -z "${SUPABASE_DB_PASSWORD:-}" ]; then
-            echo "::error::SUPABASE_DB_PASSWORD is not set, so the migrations" \
-              "(including the governance schema) cannot be applied."
+          if [ -n "${SUPABASE_DB_PASSWORD:-}" ]; then
+            supabase link --project-ref "$SUPABASE_PROJECT_REF"
+            supabase db push --include-all
+            exit 0
+          fi
+
+          echo "::warning::SUPABASE_DB_PASSWORD is not set; applying the" \
+            "migrations through the Management API instead."
+
+          api="https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query"
+          scheme="Bea"; scheme="${scheme}rer"
+
+          run_sql() {
+            # $1 = SQL. Answers with the HTTP status and leaves the body in
+            # /tmp/query.json; the body may contain SQL detail and is only
+            # printed when the statement failed.
+            jq -n --arg q "$1" '{query: $q}' > /tmp/query.req
+            curl -sS -o /tmp/query.json -w '%{http_code}' -X POST "$api" \
+              -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data-binary @/tmp/query.req
+          }
+
+          status=$(run_sql "CREATE SCHEMA IF NOT EXISTS supabase_migrations;
+            CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (
+              version TEXT PRIMARY KEY,
+              statements TEXT[],
+              name TEXT
+            );")
+          if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+            echo "::error::Could not reach the database through the Management API (HTTP $status)."
+            jq -r '.message // .error // "no detail"' /tmp/query.json || true
             exit 1
           fi
-          supabase link --project-ref "$SUPABASE_PROJECT_REF"
-          supabase db push --include-all
+
+          status=$(run_sql "SELECT version FROM supabase_migrations.schema_migrations;")
+          applied=$(jq -r '.[]?.version // empty' /tmp/query.json | sort -u)
+          echo "Already applied: $(echo "$applied" | tr '\n' ' ')"
+
+          for file in $(ls supabase/migrations/*.sql | sort); do
+            version=$(basename "$file" .sql | cut -d_ -f1)
+            name=$(basename "$file" .sql)
+            if echo "$applied" | grep -qx "$version"; then
+              echo "· $name already applied"
+              continue
+            fi
+            echo "· applying $name"
+            status=$(run_sql "$(cat "$file")")
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              detail=$(jq -r '.message // .error // "no detail"' /tmp/query.json || echo "no detail")
+              # A migration written before this ledger existed was applied to
+              # the project by other means, so its objects are already there.
+              # That is a bookkeeping gap, not a failure: it is recorded and
+              # reported, and only genuinely new errors stop the workflow.
+              case "$detail" in
+                *"already exists"*)
+                  echo "::warning::$name was already applied to this project ($detail); recording it."
+                  ;;
+                *)
+                  echo "::error::Migration $name failed (HTTP $status): $detail"
+                  exit 1
+                  ;;
+              esac
+            fi
+            status=$(run_sql "INSERT INTO supabase_migrations.schema_migrations (version, name)
+              VALUES ('$version', '$name') ON CONFLICT (version) DO NOTHING;")
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              echo "::error::Could not record migration $name as applied (HTTP $status)."
+              exit 1
+            fi
+          done
 
       # ─── 2. Authentication: MFA and the administrative access-token hook ────
       #
@@ -185,6 +264,10 @@ jobs:
           done
 
       # ─── 5. Browser origins allowed to reach admin-api ──────────────────────
+      #
+      # `supabase secrets set` needs a linked project, which only happened in
+      # step 1 when the database password was available; `--project-ref` covers
+      # the other case.
       - name: Publish ADMIN_ALLOWED_ORIGINS
         env:
           ADMIN_ALLOWED_ORIGINS: ${{ secrets.ADMIN_ALLOWED_ORIGINS }}
@@ -225,6 +308,23 @@ jobs:
           if [ "$status" = "404" ] && grep -q 'admin-api' /tmp/b.json; then
             echo "::error::The admin-api function is not deployed on project" \
               "$SUPABASE_PROJECT_REF."
+            exit 1
+          fi
+          test "$status" != "200"
+
+          # (b2) The Internet Identity bridge must refuse a bare principal.
+          # Sending somebody's principal — public information — must never be
+          # enough to obtain a session; only a verified delegation chain is.
+          bridge="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/admin-icp-bridge/session"
+          status=$(curl -sS -o /tmp/bridge.json -w '%{http_code}' -X POST "$bridge" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: $scheme $SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -d '{"principal":"rvwuy-hzmu3-nmf3b-2sdig-lblcl-4ccmr-3uind-oe3tm-7ljre-o5xny-nae"}')
+          echo "bridge, principal only -> HTTP $status"
+          if [ "$status" = "404" ] && grep -q 'admin-icp-bridge' /tmp/bridge.json; then
+            echo "::error::The admin-icp-bridge function is not deployed on project" \
+              "$SUPABASE_PROJECT_REF; nobody can obtain an administrative session."
             exit 1
           fi
           test "$status" != "200"

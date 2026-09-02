@@ -54,6 +54,7 @@ jobs:
           deno test --allow-net --allow-env supabase/functions/ai-chat
           deno test --allow-net --allow-env supabase/functions/safe-room
           deno test --allow-net --allow-env supabase/functions/admin-api
+          deno test --allow-net --allow-env supabase/functions/admin-icp-bridge
 
       - uses: supabase/setup-cli@v1
         with:
@@ -90,6 +91,18 @@ jobs:
         run: |
           set -euo pipefail
           supabase functions deploy admin-api \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      # Without this function nobody can obtain an administrative session at
+      # all: Valthoris signs in with Internet Identity, so the browser has no
+      # Supabase session until the bridge issues one.
+      - name: Deploy admin-icp-bridge
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          supabase functions deploy admin-icp-bridge \
             --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Verify the deployed function responds

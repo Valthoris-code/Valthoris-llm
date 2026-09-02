@@ -37,6 +37,42 @@ login page answers `Credenciais inválidas.` whether the password is wrong, the
 address unknown, or the address simply not an administrator — the area never
 confirms its own existence.
 
+### 1.1 Signing in with Internet Identity
+
+Valthoris authenticates its users with Internet Identity, so the browser holds
+no Supabase session: `auth.users` is empty, `auth.uid()` is NULL and every
+administrative check that depends on it recognises nobody. `admin-icp-bridge`
+is what turns an Internet Identity session into a real Supabase one:
+
+```
+/admin/login ──▶ POST /admin-icp-bridge/challenge      short-lived, HMAC-signed
+             ──▶ sign it with the Internet Identity session key
+             ──▶ POST /admin-icp-bridge/session        challenge + signature + delegation chain
+                    │
+                    ├─ delegation chain verified against the IC root key
+                    │  (canister signature of the Internet Identity canister,
+                    │   BLS certificate, subnet delegation, canister ranges)
+                    ├─ principal *derived* from the verified chain
+                    ├─ matched against governance.admins.icp_principal
+                    └─ one-time token ──▶ supabase.auth.verifyOtp() ──▶ real session
+             ──▶ TOTP (AAL2) exactly as before
+```
+
+What is never trusted is the principal in the request body: a principal is
+public information, printed on screen by the application itself, so accepting
+one as sent would be a username with no password. Only the chain proves
+ownership, and the freshly signed challenge proves the browser still holds the
+session key.
+
+An administrator whose principal is not on file yet binds it themselves, once,
+from an already-verified session (`/admin` → *Associar Internet Identity*,
+`POST /admin-icp-bridge/claim`). An existing binding is never replaced silently
+and both outcomes are audited (`ADMIN_ICP_SIGN_IN`, `ADMIN_ICP_CLAIM`).
+
+The "Administração" entry appears in the ordinary application's sidebar only
+once such a session exists **and** `admin-api` has confirmed it — never from a
+principal or an e-mail compared inside the bundle.
+
 ---
 
 ## 2. Two layers of protection
@@ -112,16 +148,24 @@ somebody remembering to click in a dashboard is not a security boundary.
 
 | # | What the workflow does | How |
 |---|---|---|
-| 1 | Applies every migration, including the `governance` schema | `supabase db push --include-all` |
+| 1 | Applies every migration, including the `governance` schema | `supabase db push --include-all`, or the Management API when `SUPABASE_DB_PASSWORD` is absent |
 | 2 | Enables TOTP MFA enrolment and verification | `PATCH /v1/projects/{ref}/config/auth` |
 | 3 | Enables the *Customize Access Token* hook on `governance.custom_access_token_admin_hook` | same call |
 | 4 | Removes `governance` from the exposed schemas if it is ever added | `GET`/`PATCH /v1/projects/{ref}/postgrest` |
 | 5 | Invites the two ROOT accounts, if they do not exist yet | Auth Admin API `POST /auth/v1/invite` |
 | 6 | Publishes `ADMIN_ALLOWED_ORIGINS` as a function secret | `supabase secrets set` |
-| 7 | Proves an anonymous caller gets no administrative data | three `curl` probes, the job fails otherwise |
+| 7 | Proves an anonymous caller gets no administrative data, and that a bare principal does not open a session | four `curl` probes, the job fails otherwise |
 
-`admin-api` itself is deployed by `.github/workflows/deploy-edge-functions.yml`,
-which also runs its unit tests first.
+`admin-api` and `admin-icp-bridge` are deployed by
+`.github/workflows/deploy-edge-functions.yml`, which runs their unit tests first.
+
+`admin-icp-bridge` is the one administrative function with
+`verify_jwt = false`: it is called *before* any Supabase session exists, because
+creating that session is its purpose. It authorises by cryptography instead —
+an Internet Identity delegation chain verified against the Internet Computer
+root key — and answers everybody else with the same opaque `404`. Optional
+function secrets: `ADMIN_ICP_BRIDGE_SECRET` (challenge signing key),
+`II_CANISTER_ID` and `IC_ROOT_KEY_HEX` (only for a local replica).
 
 ### 5.1 Repository secrets the workflow needs
 
@@ -129,7 +173,7 @@ which also runs its unit tests first.
 |---|---|---|
 | `SUPABASE_ACCESS_TOKEN` | yes | CLI + Management API |
 | `SUPABASE_PROJECT_REF` | yes | which project to act on |
-| `SUPABASE_DB_PASSWORD` | yes | pushing migrations |
+| `SUPABASE_DB_PASSWORD` | no | pushing migrations with the CLI; without it the same files are applied through the Management API and recorded in `supabase_migrations.schema_migrations` |
 | `SUPABASE_SERVICE_ROLE_KEY` | no | inviting the ROOT accounts |
 | `ADMIN_ALLOWED_ORIGINS` | no | extra browser origins for `admin-api` |
 | `SUPABASE_ANON_KEY` *or* `VITE_SUPABASE_ANON_KEY` | no | the anonymous-access probes |
@@ -177,7 +221,7 @@ therefore done by Hermínio and Tiago themselves, at their first sign-in on
 
 | Route | Content |
 | --- | --- |
-| `/admin/login` | Password + TOTP enrolment / verification |
+| `/admin/login` | Internet Identity **or** password, then TOTP enrolment / verification |
 | `/admin` | Dashboard: users, administration, audit, errors |
 | `/admin/administrators` | Administrator register, roles, MFA, last access |
 | `/admin/roles` | RBAC model read from the database |
