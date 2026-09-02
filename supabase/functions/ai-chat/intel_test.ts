@@ -27,6 +27,7 @@ import {
   probeSource,
   resetGoPlusToken,
   resetNominatimState,
+  resetQuotaGuard,
   geminiSearchModels,
   scorePlaceCandidate,
   setIntelFailureSink,
@@ -68,6 +69,8 @@ function clearSecrets() {
   // The Nominatim throttle and its 24 h cache are process-wide: a test must
   // start from a clean state, or it would read the previous test's answer.
   resetNominatimState();
+  // The quota cache and cooldown are process-wide too.
+  resetQuotaGuard();
 }
 
 // ─── Entity validation ───────────────────────────────────────────────────────
@@ -806,4 +809,219 @@ Deno.test('a place query is reformulated until the gazetteer understands it', ()
   assert(variants.includes('Óptica Havaneza em Évora'));
   assert(variants.includes('Óptica Havaneza, Évora'));
   assert(variants.includes('Havaneza, Évora'), variants.join(' | '));
+});
+
+
+// ─── Contact details of a public place ───────────────────────────────────────
+
+Deno.test('a place found by Photon still gets its phone and site from OSM', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  let lookupUrl = '';
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/lookup')) {
+      lookupUrl = url;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([{
+            extratags: {
+              phone: '+351 266 700 000',
+              website: 'https://farmaciaavo.test',
+              opening_hours: 'Mo-Sa 09:00-20:00',
+            },
+          }]),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    if (url.startsWith('https://photon.komoot.io/api/')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            features: [{
+              properties: {
+                name: 'Farmácia Avó',
+                osm_key: 'amenity',
+                osm_value: 'pharmacy',
+                osm_type: 'N',
+                osm_id: 123456789,
+                city: 'Évora',
+                country: 'Portugal',
+              },
+              geometry: { coordinates: [-7.9089, 38.5717] },
+            }],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      return Promise.resolve(
+        new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } }),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'place', value: 'Farmácia Avó Évora' });
+    const photon = reports.find((r) => r.provider === 'Photon');
+    assertEquals(photon?.status, 'success');
+    // Photon itself never returns a contact: the OSM object carries it, and it
+    // is fetched instead of leaving the answer without a phone number.
+    assert(lookupUrl.includes('osm_ids=N123456789'), lookupUrl);
+    assert(lookupUrl.includes('extratags=1'), lookupUrl);
+    assertEquals(photon?.data?.phone, '+351 266 700 000');
+    assertEquals(photon?.data?.website, 'https://farmaciaavo.test');
+    assertEquals(photon?.data?.openingHours, 'Mo-Sa 09:00-20:00');
+    assertEquals(placeContactMissing(reports), false);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('an OSM object with no contact tag produces no contact at all', async () => {
+  clearSecrets();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://nominatim.openstreetmap.org/lookup')) {
+      return Promise.resolve(
+        new Response(JSON.stringify([{ extratags: {} }]), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    if (url.startsWith('https://nominatim.openstreetmap.org/search')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([{
+            name: 'Óptica Havaneza',
+            display_name: 'Óptica Havaneza, Évora',
+            category: 'shop',
+            type: 'optician',
+            osm_type: 'way',
+            osm_id: 42,
+            lat: '38.5717',
+            lon: '-7.9089',
+          }]),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'place', value: 'Óptica Havaneza Évora' });
+    const osm = reports.find((r) => r.provider === 'Nominatim');
+    assertEquals(osm?.data?.name, 'Óptica Havaneza');
+    assertEquals(osm?.data?.phone, undefined);
+    assertEquals(osm?.data?.website, undefined);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+// ─── Metered providers ───────────────────────────────────────────────────────
+
+Deno.test('a repeated phone lookup does not spend a second NumVerify request', async () => {
+  clearSecrets();
+  Deno.env.set('NUMVERIFY_API_KEY', 'numverify-key');
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://apilayer.net/api/validate')) {
+      calls += 1;
+      return Promise.resolve(
+        new Response(JSON.stringify({ valid: true, country_name: 'Portugal', carrier: 'MEO' }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    return Promise.resolve(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
+  }) as typeof fetch;
+
+  try {
+    const first = await gatherIntelligence({ kind: 'phone', value: '+351910000000' });
+    const second = await gatherIntelligence({ kind: 'phone', value: '+351910000000' });
+    assertEquals(first.find((r) => r.provider === 'NumVerify')?.data?.countryName, 'Portugal');
+    assertEquals(second.find((r) => r.provider === 'NumVerify')?.data?.countryName, 'Portugal');
+    assertEquals(calls, 1);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('an exhausted NumVerify quota stops further requests and says why', async () => {
+  clearSecrets();
+  Deno.env.set('NUMVERIFY_API_KEY', 'numverify-key');
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://apilayer.net/api/validate')) {
+      calls += 1;
+      // apilayer reports an exhausted plan as HTTP 200 with error code 104.
+      return Promise.resolve(
+        new Response(JSON.stringify({ success: false, error: { code: 104, info: 'usage limit' } }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    return Promise.resolve(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
+  }) as typeof fetch;
+
+  try {
+    const first = await gatherIntelligence({ kind: 'phone', value: '+351910000001' });
+    const failure = first.find((r) => r.provider === 'NumVerify');
+    assertEquals(failure?.status, 'failed');
+    assert(String(failure?.error).includes('429'), failure?.error);
+
+    const second = await gatherIntelligence({ kind: 'phone', value: '+351910000002' });
+    const cooled = second.find((r) => r.provider === 'NumVerify');
+    assertEquals(cooled?.status, 'failed');
+    // The quota is spent: no further request is sent until the cooldown ends.
+    assertEquals(calls, 1);
+    assert(String(cooled?.error).includes('no further request'), cooled?.error);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('a rejected credential names the secret to fix', async () => {
+  clearSecrets();
+  Deno.env.set('ABSTRACT_PHONE_API_KEY', 'wrong-product-key');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://phonevalidation.abstractapi.com/')) {
+      return Promise.resolve(new Response('unauthorized', { status: 401 }));
+    }
+    return Promise.resolve(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
+  }) as typeof fetch;
+
+  const failures: IntelFailure[] = [];
+  setIntelFailureSink((failure) => failures.push(failure));
+  try {
+    const reports = await gatherIntelligence({ kind: 'phone', value: '+351910000003' });
+    const abstract = reports.find((r) => r.provider === 'Abstract Phone');
+    assertEquals(abstract?.status, 'failed');
+    assert(String(abstract?.error).includes('ABSTRACT_PHONE_API_KEY'), abstract?.error);
+    const logged = failures.find((f) => f.provider === 'Abstract Phone');
+    assertEquals(logged?.status, 401);
+    // The Abstract products issue one key each — the log says so, because that
+    // is what a 401 from these endpoints almost always means.
+    assert(String(logged?.message).includes('own key'), logged?.message);
+  } finally {
+    setIntelFailureSink(undefined);
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
 });

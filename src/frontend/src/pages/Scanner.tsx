@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useActors } from '../hooks/useActors';
+import VerdictBanner from '../components/VerdictBanner';
+import { analyseIndicator, isAiBackendConfigured } from '../services/aiChatService';
+import type { AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
 import type { ThreatResult } from '../../../declarations/threat_intelligence/index.d.ts';
 
 type ScanType = 'url' | 'ip' | 'domain' | 'hash' | 'email' | 'phone' | 'domain_lookup';
@@ -13,6 +16,27 @@ const SCAN_OPTIONS: { value: ScanType; label: string; placeholder: string }[] = 
   { value: 'phone',         label: 'Telefone',      placeholder: '+351 912 345 678' },
   { value: 'domain_lookup', label: 'Domínio (Lookup)', placeholder: 'banco.exemplo.pt' },
 ];
+
+/**
+ * The indicator kind the shared analysis pipeline understands.
+ *
+ * The scanner reads the Internet Computer canisters; the verdict is computed by
+ * the `ai-chat` Edge Function over those findings *and* the external providers,
+ * so this page and the AI Assistant never contradict each other. A file hash
+ * has no provider wired here, so it produces no traffic light rather than a
+ * verdict resting on nothing.
+ */
+function analysableKind(type: ScanType): AnalysableKind | null {
+  switch (type) {
+    case 'url':           return 'url';
+    case 'ip':            return 'ip';
+    case 'domain':
+    case 'domain_lookup': return 'domain';
+    case 'email':         return 'email';
+    case 'phone':         return 'phone';
+    default:              return null;
+  }
+}
 
 function severityColor(s: string): string {
   if (s === 'critical') return 'badge-red';
@@ -35,6 +59,7 @@ export default function Scanner() {
   const [query, setQuery]       = useState('');
   const [result, setResult]     = useState<ThreatResult | null>(null);
   const [phoneResult, setPhoneResult] = useState<string | null>(null);
+  const [verdict, setVerdict]   = useState<AiVerdict | null>(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
 
@@ -43,10 +68,20 @@ export default function Scanner() {
     setLoading(true);
     setResult(null);
     setPhoneResult(null);
+    setVerdict(null);
     setError('');
+    const local: LocalEvidence = {};
     try {
       if (scanType === 'phone') {
         const res = await actors.identity.lookupPhone(query.trim());
+        local.reputation = {
+          found: res.found,
+          riskScore: Number(res.riskScore),
+          trustScore: Number(res.trustScore),
+          reportCount: Number(res.reportCount),
+          isKnownScammer: res.isKnownScammer,
+          isVerifiedBusiness: res.isVerifiedBusiness,
+        };
         setPhoneResult(
           res.found
             ? `Risco: ${String(res.riskScore)}/100 | Confiança: ${String(res.trustScore)}/100 | Denúncias: ${String(res.reportCount)}` +
@@ -55,6 +90,14 @@ export default function Scanner() {
         );
       } else if (scanType === 'domain_lookup') {
         const res = await actors.identity.lookupDomain(query.trim());
+        local.reputation = {
+          found: res.found,
+          riskScore: Number(res.riskScore),
+          trustScore: Number(res.trustScore),
+          reportCount: Number(res.reportCount),
+          isKnownScammer: res.isKnownScammer,
+          isVerifiedBusiness: res.isVerifiedBusiness,
+        };
         setPhoneResult(
           res.found
             ? `Risco: ${String(res.riskScore)}/100 | Confiança: ${String(res.trustScore)}/100 | Denúncias: ${String(res.reportCount)}` +
@@ -71,13 +114,30 @@ export default function Scanner() {
           case 'email':  res = await actors.threatIntelligence.checkEmail(query.trim()); break;
           default: throw new Error('Tipo de scan desconhecido');
         }
+        local.threat = {
+          isThreat: res.isThreat,
+          confidence: Number(res.confidence),
+          severity: severityLabel(res.severity),
+          matchedIndicators: Number(res.matchedIndicators),
+        };
         setResult(res);
       }
     } catch (e) {
       setError('Erro ao realizar verificação: ' + String(e));
-    } finally {
-      setLoading(false);
     }
+
+    // The traffic light comes from the shared pipeline, never from this page.
+    const kind = analysableKind(scanType);
+    if (kind && isAiBackendConfigured) {
+      try {
+        const analysis = await analyseIndicator(kind, query.trim(), local);
+        setVerdict(analysis.verdict);
+      } catch (e) {
+        setError('Não foi possível calcular o veredito: ' + (e instanceof Error ? e.message : String(e)));
+      }
+    }
+
+    setLoading(false);
   };
 
   const opt = SCAN_OPTIONS.find(o => o.value === scanType)!;
@@ -124,6 +184,12 @@ export default function Scanner() {
       </div>
 
       {error && <div className="alert-error mt-2">{error}</div>}
+
+      {verdict && (
+        <div className="mt-2" style={{ maxWidth: 620 }}>
+          <VerdictBanner verdict={verdict} />
+        </div>
+      )}
 
       {phoneResult && (
         <div className="card mt-2" style={{ maxWidth: 620 }}>

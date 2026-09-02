@@ -55,7 +55,7 @@ import {
 } from './pipeline.ts';
 import type { PipelineOutcome, StructuredAnalysis } from './pipeline.ts';
 import { computeVerdict, isRiskKind, verdictLanguage } from './verdict.ts';
-import type { LocalEvidence, Verdict } from './verdict.ts';
+import type { LocalEvidence, Verdict, VerdictEntityKind } from './verdict.ts';
 
 type Role = 'system' | 'user' | 'assistant';
 
@@ -793,23 +793,30 @@ async function handleIntelHealth(req: Request, probe: unknown): Promise<Response
  * source reports the interface already knows how to render.
  */
 async function handleAnalyse(payload: AnalyseRequest): Promise<Response> {
-  const kind = typeof payload.kind === 'string' ? payload.kind as IntelEntityKind : null;
+  const kind = typeof payload.kind === 'string' ? payload.kind as VerdictEntityKind : null;
   const value = typeof payload.value === 'string' ? payload.value.trim() : '';
 
   if (!kind || !ANALYSABLE_KINDS.includes(kind)) {
     return json({ error: 'Unsupported analysis kind' }, 400);
   }
-  if (value.length === 0 || value.length > 512 || !isValidEntity(kind, value)) {
+  const valid = kind === 'username'
+    ? USERNAME_RE.test(value)
+    : isValidEntity(kind, value);
+  if (value.length === 0 || value.length > 512 || !valid) {
     return json({ error: 'The value is not a valid ' + kind }, 400);
   }
 
   let sources: SourceReport[] = [];
-  try {
-    sources = await gatherAllIntelligence([{ kind, value }]);
-  } catch (err) {
-    // A provider fault must not deny the caller the canister evidence it
-    // already has: the verdict is still computed, over less evidence.
-    console.error('[ai-chat] analyse orchestration failed', err);
+  // No external provider covers a username: its verdict rests on the Valthoris
+  // community evidence alone, and querying anything else would be pretending.
+  if (kind !== 'username') {
+    try {
+      sources = await gatherAllIntelligence([{ kind, value }]);
+    } catch (err) {
+      // A provider fault must not deny the caller the canister evidence it
+      // already has: the verdict is still computed, over less evidence.
+      console.error('[ai-chat] analyse orchestration failed', err);
+    }
   }
 
   const verdict = computeVerdict({
@@ -823,8 +830,11 @@ async function handleAnalyse(payload: AnalyseRequest): Promise<Response> {
   return json({ verdict, sources }, 200);
 }
 
+/** A username, as the Username tool submits it. */
+const USERNAME_RE = /^@?[A-Za-z0-9._-]{2,64}$/;
+
 /** The entity kinds the sidebar tools may ask for. */
-const ANALYSABLE_KINDS: IntelEntityKind[] = [
+const ANALYSABLE_KINDS: VerdictEntityKind[] = [
   'ip',
   'url',
   'domain',
@@ -833,6 +843,7 @@ const ANALYSABLE_KINDS: IntelEntityKind[] = [
   'crypto_btc',
   'iban',
   'phone',
+  'username',
 ];
 
 /**
@@ -1059,7 +1070,7 @@ export function applyVerdict(content: string, verdict: Verdict): string {
     .filter((line) => line.length > 0);
 
   const visible = [verdict.headline, ...kept].join('\n');
-  return detail ? `${visible}\n${detail}` : `${visible}\n${DETAIL_MARKER}`;
+  return detail ? `${visible}\n${detail}` : visible;
 }
 
 /**

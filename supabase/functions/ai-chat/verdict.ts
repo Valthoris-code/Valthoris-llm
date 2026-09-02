@@ -40,6 +40,15 @@
 
 import type { IntelEntityKind, SourceReport } from './intel.ts';
 
+/**
+ * What a verdict can be about.
+ *
+ * `username` is not an entity any external provider covers: it is scored over
+ * the Valthoris community evidence alone, so the Username tool still ends on a
+ * traffic light instead of a bare list of reports.
+ */
+export type VerdictEntityKind = IntelEntityKind | 'username';
+
 /** The four traffic-light levels. */
 export type VerdictLevel = 'danger' | 'caution' | 'safe' | 'insufficient';
 
@@ -533,7 +542,7 @@ function answered(report: SourceReport): boolean {
 }
 
 export interface VerdictInput {
-  kind: IntelEntityKind;
+  kind: VerdictEntityKind;
   sources: SourceReport[];
   local?: LocalEvidence;
   /** The entity itself, only used to phrase the headline. */
@@ -613,9 +622,10 @@ const ENTITY_NOUN: Record<string, { pt: string; en: string }> = {
   vat: { pt: 'este número de contribuinte', en: 'this VAT number' },
   crypto_eth: { pt: 'esta carteira', en: 'this wallet' },
   crypto_btc: { pt: 'esta carteira', en: 'this wallet' },
+  username: { pt: 'este utilizador', en: 'this username' },
 };
 
-function noun(kind: IntelEntityKind, language: 'pt' | 'en'): string {
+function noun(kind: VerdictEntityKind, language: 'pt' | 'en'): string {
   const entry = ENTITY_NOUN[kind] ?? { pt: 'este indicador', en: 'this indicator' };
   return entry[language];
 }
@@ -626,10 +636,15 @@ const HEADLINE_REASONS = 2;
 /**
  * The block the user sees first: one traffic-light line and, at most, two
  * short reasons. Everything else belongs behind the expander.
+ *
+ * It is written in plain text, with no markdown: the assistant interface
+ * renders the answer verbatim (only URLs become links), so an asterisk meant as
+ * bold would reach the user as an asterisk. The level is carried by the colour
+ * and by the word in capitals instead.
  */
 export function renderHeadline(
   level: VerdictLevel,
-  kind: IntelEntityKind,
+  kind: VerdictEntityKind,
   signals: VerdictSignal[],
   coverage: VerdictCoverage,
   language: 'pt' | 'en' = 'pt',
@@ -640,26 +655,26 @@ export function renderHeadline(
   if (level === 'danger') {
     lines.push(
       language === 'pt'
-        ? `🔴 **Perigo** — Com base nas fontes inspecionadas, a Valthoris desaconselha o contacto com ${subject}.`
-        : `🔴 **Danger** — Based on the sources checked, Valthoris advises against any contact with ${subject}.`,
+        ? `🔴 PERIGO — Com base nas fontes inspecionadas, a Valthoris desaconselha o contacto com ${subject}.`
+        : `🔴 DANGER — Based on the sources checked, Valthoris advises against any contact with ${subject}.`,
     );
   } else if (level === 'caution') {
     lines.push(
       language === 'pt'
-        ? `🟠 **Cuidado** — Com base nas fontes inspecionadas, há sinais de risco sobre ${subject} que não estão confirmados por todas as fontes.`
-        : `🟠 **Caution** — Based on the sources checked, there are risk signals about ${subject} that are not confirmed by every source.`,
+        ? `🟠 CUIDADO — Com base nas fontes inspecionadas, há sinais de risco sobre ${subject} que não estão confirmados por todas as fontes.`
+        : `🟠 CAUTION — Based on the sources checked, there are risk signals about ${subject} that are not confirmed by every source.`,
     );
   } else if (level === 'safe') {
     lines.push(
       language === 'pt'
-        ? `🟢 **Seguro** — Com base nas fontes inspecionadas, a Valthoris não encontrou sinais de risco em ${subject}.`
-        : `🟢 **Safe** — Based on the sources checked, Valthoris found no signs of risk in ${subject}.`,
+        ? `🟢 SEGURO — Com base nas fontes inspecionadas, a Valthoris não encontrou sinais de risco em ${subject}.`
+        : `🟢 SAFE — Based on the sources checked, Valthoris found no signs of risk in ${subject}.`,
     );
   } else {
     lines.push(
       language === 'pt'
-        ? `⚪ **Sem informação suficiente** — As fontes consultadas não devolveram dados suficientes sobre ${subject}. Isto não quer dizer que seja seguro.`
-        : `⚪ **Not enough information** — The sources consulted returned too little data about ${subject}. This does not mean it is safe.`,
+        ? `⚪ SEM INFORMAÇÃO SUFICIENTE — As fontes consultadas não devolveram dados suficientes sobre ${subject}. Isto não quer dizer que seja seguro.`
+        : `⚪ NOT ENOUGH INFORMATION — The sources consulted returned too little data about ${subject}. This does not mean it is safe.`,
     );
   }
 

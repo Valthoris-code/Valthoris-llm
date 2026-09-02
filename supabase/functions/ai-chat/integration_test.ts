@@ -1214,3 +1214,77 @@ Deno.test('the evidence answer leads with a plain verdict and folds the detail',
   assert(!summary.includes('Nominatim'), summary);
   assertStringIncludes(detail, 'Nominatim (OpenStreetMap)');
 });
+
+// ─── The sidebar tools and the assistant share one verdict ───────────────────
+
+Deno.test('a sidebar lookup is answered by the same verdict layer', async () => {
+  recorded = [];
+  Deno.env.set('ABUSEIPDB_API_KEY', 'test-abuseipdb-key');
+  const baseFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('https://api.abuseipdb.com/')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ data: { abuseConfidenceScore: 100, totalReports: 37, countryCode: 'DE' } }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }
+    return baseFetch(input as Request, init);
+  }) as typeof fetch;
+  try {
+    const res = await handler!(post({
+      action: 'analyse',
+      kind: 'ip',
+      value: '185.220.101.1',
+      language: 'pt',
+    }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    // AbuseIPDB is stubbed as a 100 % confidence abuser (see the stub above).
+    assertEquals(body.verdict.level, 'danger');
+    assertStringIncludes(body.verdict.headline, '🔴 PERIGO');
+    assert(Array.isArray(body.sources));
+    // No secret ever travels back to the browser.
+    assert(!JSON.stringify(body).includes('test-abuseipdb-key'));
+    // Nothing is written to the fraud pipeline by a sidebar lookup.
+    assertEquals(restCalls('fraud_pipelines').length, 0);
+  } finally {
+    globalThis.fetch = baseFetch;
+    Deno.env.delete('ABUSEIPDB_API_KEY');
+  }
+});
+
+Deno.test('the canister evidence of a username alone decides its verdict', async () => {
+  recorded = [];
+  const res = await handler!(post({
+    action: 'analyse',
+    kind: 'username',
+    value: '@golpista_teste',
+    local: { reports: [{ status: 'confirmed', riskScore: 95 }] },
+  }));
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.verdict.level, 'danger');
+  // A username has no external provider: nothing was contacted for it.
+  assertEquals(body.sources.length, 0);
+  assertEquals(recorded.length, 0);
+});
+
+Deno.test('a sidebar lookup with no evidence at all is grey, never green', async () => {
+  recorded = [];
+  const res = await handler!(post({ action: 'analyse', kind: 'username', value: 'ninguem' }));
+  const body = await res.json();
+  assertEquals(body.verdict.level, 'insufficient');
+  assertStringIncludes(body.verdict.headline, '⚪');
+});
+
+Deno.test('a malformed indicator is refused instead of being analysed', async () => {
+  recorded = [];
+  const bad = await handler!(post({ action: 'analyse', kind: 'ip', value: '8.8.8.999' }));
+  assertEquals(bad.status, 400);
+  const unknown = await handler!(post({ action: 'analyse', kind: 'passport', value: 'x' }));
+  assertEquals(unknown.status, 400);
+  assertEquals(recorded.length, 0);
+});
