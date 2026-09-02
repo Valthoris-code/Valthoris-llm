@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useActors } from '../hooks/useActors';
-import VerdictBanner from './VerdictBanner';
+import AnalysisReport from './AnalysisReport';
+import CryptoAnalysisPanel from './CryptoAnalysisPanel';
+import type { CommunityReportSummary } from './CryptoAnalysisPanel';
 import { analyseIndicator, isAiBackendConfigured } from '../services/aiChatService';
-import type { AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
+import type { AiChatSource, AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
 import type { LookupResult } from '../../../declarations/identity/index.d.ts';
 import type { ThreatResult } from '../../../declarations/threat_intelligence/index.d.ts';
 import type { Report } from '../../../declarations/community/index.d.ts';
@@ -43,12 +45,16 @@ interface Props {
 }
 
 interface Outcome {
+  /** The exact value that was looked up, kept so the panel never drifts. */
+  target: string;
   reputation?: LookupResult;
   threat?: ThreatResult;
   reports: Report[];
   errors: string[];
   /** The shared verdict, when the backend could compute one. */
   verdict?: AiVerdict;
+  /** Every external source the backend consulted for this value. */
+  sources?: AiChatSource[];
 }
 
 /** The indicator kind the shared pipeline understands, per lookup tab. */
@@ -113,6 +119,17 @@ function optionalVariant(value: [] | [object]): string | null {
   return first ? variantKey(first) : null;
 }
 
+/** The community reports, in the plain shape the crypto panel reads. */
+function communityReports(reports: Report[]): CommunityReportSummary[] {
+  return reports.map(report => ({
+    category: variantKey(report.category),
+    status: variantKey(report.status),
+    riskScore: Number(report.riskScore),
+    // The canister keeps nanoseconds since the epoch.
+    createdAt: Number(report.createdAt / 1_000_000n),
+  }));
+}
+
 function severityBadge(severity: string | null): string {
   if (severity === 'critical' || severity === 'high') return 'badge-red';
   if (severity === 'medium') return 'badge-amber';
@@ -173,15 +190,15 @@ export default function LookupTool({ lookupType }: Props) {
       errors.push(`community: ${e instanceof Error ? e.message : String(e)}`);
     }
 
-    const canisterOutcome = { reputation, threat, reports, errors };
+    const canisterOutcome = { target, reputation, threat, reports, errors };
     setOutcome(canisterOutcome);
 
     // ─── shared verdict (same pipeline as the AI Assistant) ───────────────
     const kind = analysableKind(lookupType, target);
     if (kind && isAiBackendConfigured) {
       try {
-        const { verdict } = await analyseIndicator(kind, target, localEvidence(canisterOutcome));
-        setOutcome({ ...canisterOutcome, verdict });
+        const { verdict, sources } = await analyseIndicator(kind, target, localEvidence(canisterOutcome));
+        setOutcome({ ...canisterOutcome, verdict, sources });
       } catch (e) {
         setOutcome({
           ...canisterOutcome,
@@ -230,10 +247,20 @@ export default function LookupTool({ lookupType }: Props) {
       </div>
 
       {outcome && (
-        <div className="card mt-2" style={{ maxWidth: 600 }}>
+        <div className="card mt-2" style={{ maxWidth: lookupType === 'crypto' ? 860 : 600 }}>
           <h3 style={{ marginTop: 0 }}>Result</h3>
 
-          {outcome.verdict && <VerdictBanner verdict={outcome.verdict} />}
+          <AnalysisReport verdict={outcome.verdict} sources={outcome.sources}>
+            {lookupType === 'crypto' && (
+              <CryptoAnalysisPanel
+                address={outcome.target}
+                chain={/^0x[a-fA-F0-9]{40}$/.test(outcome.target) ? 'eth' : 'btc'}
+                verdict={outcome.verdict}
+                sources={outcome.sources ?? []}
+                reports={communityReports(outcome.reports)}
+              />
+            )}
+          </AnalysisReport>
 
           {outcome.errors.map(err => (
             <div key={err} className="alert-error mb-2" role="alert">⚠ {err}</div>

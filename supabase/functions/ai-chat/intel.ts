@@ -1225,6 +1225,14 @@ function vtStats(attributes: any): Record<string, unknown> {
 
 const GOPLUS_TOKEN_TTL_MS = 55 * 60 * 1000;
 
+/**
+ * How much market history the crypto panel draws, and how many exchanges are
+ * named. Seven daily points is the chart; the caps keep the source payload —
+ * which also travels inside the model's evidence block — small.
+ */
+const COINGECKO_HISTORY_POINTS = 8;
+const COINGECKO_MAX_EXCHANGES = 8;
+
 let goPlusToken: { token: string; expiresAt: number } | undefined;
 /** In-flight token request, so parallel lookups share a single authentication. */
 let goPlusTokenPending: Promise<string> | undefined;
@@ -1657,9 +1665,16 @@ const PROVIDERS: Provider[] = [
         `${base}&module=account&action=txlist&address=${encodeURIComponent(value)}&page=1&offset=10&sort=desc&apikey=${encodeURIComponent(key)}`,
       ).catch(() => null);
       const list: any[] = Array.isArray(txs?.result) ? txs.result : [];
+      // A contract and a wallet are not the same risk: `eth_getCode` answers
+      // "0x" for a plain wallet and the bytecode for a deployed contract.
+      const code = await fetchJson(
+        `${base}&module=proxy&action=eth_getCode&address=${encodeURIComponent(value)}&tag=latest&apikey=${encodeURIComponent(key)}`,
+      ).catch(() => null);
+      const bytecode = str(code?.result);
       return clean({
         balanceEth: typeof wei === 'number' ? Number((wei / 1e18).toFixed(6)) : undefined,
         recentTransactions: list.length,
+        isContract: bytecode === undefined ? undefined : bytecode.length > 2,
         firstSeen: list.length > 0
           ? new Date(Number(list[list.length - 1]?.timeStamp) * 1000).toISOString()
           : undefined,
@@ -1747,12 +1762,42 @@ const PROVIDERS: Provider[] = [
         }
         throw err;
       }
+      const market = data?.market_data ?? {};
+      // The seven-day price history is a second call: it is what the crypto
+      // panel draws, and a failure here must not lose the market data above.
+      const id = str(data?.id);
+      const history = id
+        ? await fetchJson(
+          `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(id)}/market_chart?vs_currency=usd&days=7&interval=daily`,
+          { headers: { 'x-cg-demo-api-key': key } },
+        ).catch(() => null)
+        : null;
+      const points: any[] = Array.isArray(history?.prices) ? history.prices : [];
+      const priceHistory7d = points
+        .map((point) => ({ t: num(point?.[0]), p: num(point?.[1]) }))
+        .filter((point) => typeof point.t === 'number' && typeof point.p === 'number')
+        .slice(-COINGECKO_HISTORY_POINTS);
+      // The exchanges the token actually trades on, deduplicated and capped.
+      const tickers: any[] = Array.isArray(data?.tickers) ? data.tickers : [];
+      const exchanges = [
+        ...new Set(
+          tickers
+            .map((ticker) => str(ticker?.market?.name))
+            .filter((name): name is string => Boolean(name)),
+        ),
+      ].slice(0, COINGECKO_MAX_EXCHANGES);
       return clean({
         listedToken: true,
+        coinId: id,
         name: str(data?.name),
         symbol: str(data?.symbol),
         marketCapRank: num(data?.market_cap_rank),
-        priceUsd: num(data?.market_data?.current_price?.usd),
+        priceUsd: num(market?.current_price?.usd),
+        priceChange24hPct: num(market?.price_change_percentage_24h),
+        volume24hUsd: num(market?.total_volume?.usd),
+        marketCapUsd: num(market?.market_cap?.usd),
+        exchanges: exchanges.length > 0 ? exchanges : undefined,
+        priceHistory7d: priceHistory7d.length > 0 ? priceHistory7d : undefined,
       });
     },
   },

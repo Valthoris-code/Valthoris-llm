@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useActors } from '../hooks/useActors';
-import VerdictBanner from '../components/VerdictBanner';
+import AnalysisReport from '../components/AnalysisReport';
 import { analyseIndicator, isAiBackendConfigured } from '../services/aiChatService';
-import type { AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
+import type { AiChatSource, AiVerdict, AnalysableKind, LocalEvidence } from '../services/aiChatService';
 import type { ThreatResult } from '../../../declarations/threat_intelligence/index.d.ts';
 
 type ScanType = 'url' | 'ip' | 'domain' | 'hash' | 'email' | 'phone' | 'domain_lookup';
@@ -60,6 +60,7 @@ export default function Scanner() {
   const [result, setResult]     = useState<ThreatResult | null>(null);
   const [phoneResult, setPhoneResult] = useState<string | null>(null);
   const [verdict, setVerdict]   = useState<AiVerdict | null>(null);
+  const [sources, setSources]   = useState<AiChatSource[]>([]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
 
@@ -69,6 +70,7 @@ export default function Scanner() {
     setResult(null);
     setPhoneResult(null);
     setVerdict(null);
+    setSources([]);
     setError('');
     const local: LocalEvidence = {};
     try {
@@ -132,6 +134,7 @@ export default function Scanner() {
       try {
         const analysis = await analyseIndicator(kind, query.trim(), local);
         setVerdict(analysis.verdict);
+        setSources(analysis.sources ?? []);
       } catch (e) {
         setError('Não foi possível calcular o veredito: ' + (e instanceof Error ? e.message : String(e)));
       }
@@ -185,9 +188,9 @@ export default function Scanner() {
 
       {error && <div className="alert-error mt-2">{error}</div>}
 
-      {verdict && (
-        <div className="mt-2" style={{ maxWidth: 620 }}>
-          <VerdictBanner verdict={verdict} />
+      {(verdict || sources.length > 0) && (
+        <div className="card mt-2" style={{ maxWidth: 620 }}>
+          <AnalysisReport verdict={verdict ?? undefined} sources={sources} />
         </div>
       )}
 
