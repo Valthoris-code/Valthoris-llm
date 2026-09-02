@@ -191,11 +191,12 @@ function PriceChart({ points }: { points: PricePoint[] }) {
   const rising = prices[prices.length - 1] >= prices[0];
   const colour = rising ? 'var(--accent-green, #52c41a)' : 'var(--accent-red, #ff4d4f)';
   return (
-    <figure style={{ margin: '0.4rem 0 0' }}>
+    <figure style={{ margin: '0.4rem 0 0', maxWidth: width }}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         width="100%"
         height={height}
+        preserveAspectRatio="none"
         role="img"
         aria-label={`Histórico de preço a 7 dias: de ${USD.format(prices[0])} a ${USD.format(prices[prices.length - 1])}`}
       >
