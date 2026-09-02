@@ -20,7 +20,7 @@
  */
 
 import { DelegationChain, ECDSAKeyIdentity, Ed25519KeyIdentity } from 'npm:@dfinity/identity@2.4.1';
-import { IC_ROOT_KEY, wrapDER } from 'npm:@dfinity/agent@2.4.1';
+import { Cbor, IC_ROOT_KEY, wrapDER } from 'npm:@dfinity/agent@2.4.1';
 import { Principal } from 'npm:@dfinity/principal@2.4.1';
 import {
   CHALLENGE_TTL_MS,
@@ -32,7 +32,9 @@ import {
 } from './index.ts';
 import {
   challengeMessage,
+  certifiedCanisterRanges,
   checkCanisterSignature,
+  checkCertifiedCanisterRanges,
   checkPlainSignature,
   delegationMessage,
   DelegationVerificationError,
@@ -417,6 +419,130 @@ Deno.test('an unusable root key configuration is reported, not swallowed', async
   );
   assertFalse(check.ok);
   assert(!check.ok && check.reason.includes('root key is unusable'), !check.ok ? check.reason : '');
+});
+
+// ─── Canister ranges ─────────────────────────────────────────────────────────
+
+/**
+ * Subnet `uzr34-…-oqe` — the one that hosts Internet Identity — publishes its
+ * canister ranges in the sharded `/canister_ranges/<subnet id>/<shard>` tree.
+ * `@dfinity/agent@2.4.1` only ever reads `/subnet/<id>/canister_ranges`, so it
+ * refused every session with "Could not find canister ranges for subnet
+ * uzr34-…", which is why this module reads the ranges itself, from the
+ * delegation certificate, in both shapes.
+ */
+const II_SUBNET_ID = 'uzr34-akd3s-xrdag-3ql62-ocgoh-ld2ao-tamcv-54e7j-krwgb-2gm4z-oqe';
+
+const label = (text: string) => new TextEncoder().encode(text);
+
+/** `Leaf(cbor([[low, high], …]))`. */
+function rangesLeaf(pairs: [string, string][]): unknown {
+  const encoded = Cbor.encode(
+    pairs.map(([low, high]) => [
+      Principal.fromText(low).toUint8Array(),
+      Principal.fromText(high).toUint8Array(),
+    ]),
+  );
+  return [3, new Uint8Array(encoded)];
+}
+
+/** The legacy layout: `/subnet/<subnet id>/canister_ranges`. */
+function legacyRangesTree(subnet: string, pairs: [string, string][]): unknown {
+  return [2, label('subnet'), [
+    2,
+    Principal.fromText(subnet).toUint8Array(),
+    [2, label('canister_ranges'), rangesLeaf(pairs)],
+  ]];
+}
+
+/** The sharded layout: `/canister_ranges/<subnet id>/<first canister>`. */
+function shardedRangesTree(subnet: string, shards: [string, string][][]): unknown {
+  const forks = shards.map(pairs => [
+    2,
+    Principal.fromText(pairs[0][0]).toUint8Array(),
+    rangesLeaf(pairs),
+  ]);
+  const children = forks.reduce((left, right) => [1, left, right]);
+  return [2, label('canister_ranges'), [2, Principal.fromText(subnet).toUint8Array(), children]];
+}
+
+/** A state certificate delegated to `subnet`, carrying `tree` in its delegation. */
+function certificateWithDelegation(subnet: string, tree: unknown): Uint8Array {
+  const delegationCertificate = Cbor.encode({ tree, signature: new Uint8Array(96) });
+  return new Uint8Array(
+    Cbor.encode({
+      tree: [0],
+      signature: new Uint8Array(96),
+      delegation: {
+        subnet_id: Principal.fromText(subnet).toUint8Array(),
+        certificate: new Uint8Array(delegationCertificate),
+      },
+    }),
+  );
+}
+
+Deno.test('canister ranges are read from the sharded tree the IC now publishes', () => {
+  const tree = shardedRangesTree(II_SUBNET_ID, [
+    [['aaaaa-aa', 'aaaaa-aa']],
+    [['rwlgt-iiaaa-aaaaa-aaaaa-cai', 'e5xzy-miaaa-aaaah-7777q-cai']],
+  ]);
+  const ranges = certifiedCanisterRanges(tree, Principal.fromText(II_SUBNET_ID));
+  assertEquals(ranges.length, 2);
+
+  const check = checkCertifiedCanisterRanges(
+    certificateWithDelegation(II_SUBNET_ID, tree),
+    Principal.fromText(INTERNET_IDENTITY_CANISTER_ID),
+  );
+  assert(check.ok, !check.ok ? check.reason : '');
+});
+
+Deno.test('canister ranges are still read from the legacy subnet tree', () => {
+  const check = checkCertifiedCanisterRanges(
+    certificateWithDelegation(
+      II_SUBNET_ID,
+      legacyRangesTree(II_SUBNET_ID, [['rwlgt-iiaaa-aaaaa-aaaaa-cai', 'e5xzy-miaaa-aaaah-7777q-cai']]),
+    ),
+    Principal.fromText(INTERNET_IDENTITY_CANISTER_ID),
+  );
+  assert(check.ok, !check.ok ? check.reason : '');
+});
+
+Deno.test('a canister outside the certified ranges is refused', () => {
+  const check = checkCertifiedCanisterRanges(
+    certificateWithDelegation(
+      II_SUBNET_ID,
+      shardedRangesTree(II_SUBNET_ID, [[['aaaaa-aa', 'aaaaa-aa']]]),
+    ),
+    Principal.fromText(INTERNET_IDENTITY_CANISTER_ID),
+  );
+  assertFalse(check.ok);
+  assert(!check.ok && check.reason.includes('is outside'), !check.ok ? check.reason : '');
+});
+
+Deno.test('a delegation certifying no range at all is refused, never assumed', () => {
+  const check = checkCertifiedCanisterRanges(
+    // The ranges belong to another subnet, so none of them is certified here.
+    certificateWithDelegation(
+      II_SUBNET_ID,
+      legacyRangesTree('tdb26-jop6k-aogll-7ltgs-eruif-6kk7m-qpktf-gdiqx-mxtrf-vb5e6-eqe', [
+        ['rwlgt-iiaaa-aaaaa-aaaaa-cai', 'e5xzy-miaaa-aaaah-7777q-cai'],
+      ]),
+    ),
+    Principal.fromText(INTERNET_IDENTITY_CANISTER_ID),
+  );
+  assertFalse(check.ok);
+  assert(!check.ok && check.reason.includes('certifies no canister ranges'), !check.ok ? check.reason : '');
+});
+
+Deno.test('a certificate signed by the root subnet itself needs no ranges', () => {
+  const certificate = new Uint8Array(
+    Cbor.encode({ tree: [0], signature: new Uint8Array(96) }),
+  );
+  const check = checkCertifiedCanisterRanges(
+    certificate,
+    Principal.fromText(INTERNET_IDENTITY_CANISTER_ID),
+  );
+  assert(check.ok, !check.ok ? check.reason : '');
 });
 
 // ─── Reasons ─────────────────────────────────────────────────────────────────

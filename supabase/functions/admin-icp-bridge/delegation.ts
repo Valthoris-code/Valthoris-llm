@@ -60,6 +60,7 @@ import {
   lookup_path,
   lookupResultToBuffer,
   LookupStatus,
+  NodeType,
   reconstruct,
   unwrapDER,
 } from 'npm:@dfinity/agent@2.4.1';
@@ -301,13 +302,147 @@ export function verifyPlainSignature(
 }
 
 /**
+ * The management canister. `Certificate` skips *its own* canister-range check
+ * for this id, which is exactly what this module needs: the check shipped in
+ * `@dfinity/agent@2.4.1` only knows the legacy `/subnet/<id>/canister_ranges`
+ * path, and refuses every subnet that publishes the sharded
+ * `/canister_ranges/<subnet id>/<shard>` tree instead. The range check is done
+ * here, `checkCertifiedCanisterRanges` below, over both layouts.
+ */
+const RANGE_CHECK_DISABLED_CANISTER_ID = Principal.fromText('aaaaa-aa');
+
+/** Every leaf of a certified hash tree, in tree order. Pruned nodes are skipped. */
+// deno-lint-ignore no-explicit-any
+function treeLeaves(tree: any, out: Uint8Array[] = []): Uint8Array[] {
+  if (!Array.isArray(tree)) return out;
+  switch (tree[0]) {
+    case NodeType.Fork:
+      treeLeaves(tree[1], out);
+      treeLeaves(tree[2], out);
+      break;
+    case NodeType.Labeled:
+      treeLeaves(tree[2], out);
+      break;
+    case NodeType.Leaf:
+      if (tree[1]) out.push(bytes(tree[1]));
+      break;
+    default:
+      break;
+  }
+  return out;
+}
+
+/** `[low, high]` canister ranges encoded in one `canister_ranges` leaf. */
+function decodeRanges(leaf: Uint8Array): [Principal, Principal][] {
+  let decoded: unknown;
+  try {
+    decoded = Cbor.decode(buffer(leaf));
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(decoded)) return [];
+  const ranges: [Principal, Principal][] = [];
+  for (const range of decoded) {
+    if (!Array.isArray(range) || range.length !== 2) continue;
+    try {
+      ranges.push([
+        Principal.fromUint8Array(bytes(range[0])),
+        Principal.fromUint8Array(bytes(range[1])),
+      ]);
+    } catch {
+      // A range that is not a pair of principals certifies nothing; skip it.
+    }
+  }
+  return ranges;
+}
+
+/**
+ * The canister ranges a delegation certificate certifies for one subnet.
+ *
+ * The Internet Computer publishes them in two shapes, and a replica may serve
+ * either one:
+ *
+ *   • `/subnet/<subnet id>/canister_ranges` — the original single leaf;
+ *   • `/canister_ranges/<subnet id>/<first canister of the shard>` — the newer
+ *     sharded tree, introduced because the single leaf grew too large to ship
+ *     in every certificate.
+ *
+ * Both are read, because the ranges must come from the certificate that is
+ * being verified — never from a list compiled here, which would go stale the
+ * moment the Internet Computer adds a subnet or moves a canister.
+ */
+// deno-lint-ignore no-explicit-any
+export function certifiedCanisterRanges(tree: any, subnetId: Principal): [Principal, Principal][] {
+  const id = subnetId.toUint8Array();
+  const ranges: [Principal, Principal][] = [];
+  for (const path of [['subnet', buffer(id), 'canister_ranges'], ['canister_ranges', buffer(id)]]) {
+    const found = lookup_path(path, tree);
+    if (found.status !== LookupStatus.Found) continue;
+    const value = found.value;
+    const leaves = value instanceof ArrayBuffer || value instanceof Uint8Array
+      ? [bytes(value)]
+      : treeLeaves(value);
+    for (const leaf of leaves) ranges.push(...decodeRanges(leaf));
+  }
+  return ranges;
+}
+
+/**
+ * Checks that the certificate really was issued by a subnet allowed to host
+ * this canister — the step `Certificate.create` is not being asked to do.
+ *
+ * A certificate signed by the root subnet itself carries no delegation, and so
+ * nothing to restrict: the root key vouched for it directly. A delegated one
+ * must name, inside its own delegation certificate, a range that contains the
+ * canister; anything else is refused, so a stale or unreadable range list can
+ * never turn into an accepted signature.
+ */
+export function checkCertifiedCanisterRanges(
+  certificateBytes: Uint8Array,
+  canisterId: Principal,
+): SignatureCheck {
+  let delegation: { subnet_id: ArrayBuffer | Uint8Array; certificate: ArrayBuffer | Uint8Array } | undefined;
+  try {
+    delegation = Cbor.decode<{ delegation?: typeof delegation }>(buffer(certificateBytes))?.delegation;
+  } catch (error) {
+    return invalid(`the state certificate could not be read: ${errorText(error)}`);
+  }
+  if (!delegation) return VALID;
+
+  let subnetId: Principal;
+  // deno-lint-ignore no-explicit-any
+  let tree: any;
+  try {
+    subnetId = Principal.fromUint8Array(bytes(delegation.subnet_id));
+    tree = Cbor.decode<{ tree: unknown }>(buffer(delegation.certificate))?.tree;
+  } catch (error) {
+    return invalid(`the subnet delegation could not be read: ${errorText(error)}`);
+  }
+  if (!tree) return invalid('the subnet delegation carries no certificate tree');
+
+  const ranges = certifiedCanisterRanges(tree, subnetId);
+  if (ranges.length === 0) {
+    return invalid(
+      `the delegation of subnet ${subnetId.toText()} certifies no canister ranges`,
+    );
+  }
+  const inRange = ranges.some(([low, high]) => low.ltEq(canisterId) && high.gtEq(canisterId));
+  return inRange
+    ? VALID
+    : invalid(
+      `canister ${canisterId.toText()} is outside the ${ranges.length} range(s) certified for subnet ${subnetId.toText()}`,
+    );
+}
+
+/**
  * Verifies a *canister signature*: the proof that the Internet Identity
  * canister itself signed the first delegation of the chain.
  *
  * The signature carries an Internet Computer state certificate. The certificate
- * is verified against the IC root key — BLS signature, subnet delegation and
- * canister ranges included, by `Certificate.create` — and the signed message
- * must appear in that canister's certified `sig` tree.
+ * is verified against the IC root key — BLS signature and subnet delegation by
+ * `Certificate.create`, canister ranges by `checkCertifiedCanisterRanges` right
+ * here — and the signed message must appear in that canister's certified `sig`
+ * tree.
  *
  * Certificate *time* is not checked: the certificate is minted once, when the
  * user signs in, while the delegation it certifies is deliberately valid for
@@ -384,7 +519,7 @@ export async function checkCanisterSignature(
     cert = await Certificate.create({
       certificate: buffer(certificateBytes),
       rootKey,
-      canisterId,
+      canisterId: RANGE_CHECK_DISABLED_CANISTER_ID,
       disableTimeVerification: true,
     });
   } catch (error) {
@@ -392,6 +527,12 @@ export async function checkCanisterSignature(
       `the state certificate was rejected against the Internet Computer root key: ${errorText(error)}`,
     );
   }
+
+  // The subnet that signed it must be one allowed to host this canister — the
+  // check `Certificate.create` was told to skip, done here over both layouts
+  // the Internet Computer uses to publish canister ranges.
+  const ranges = checkCertifiedCanisterRanges(certificateBytes, canisterId);
+  if (!ranges.ok) return ranges;
 
   try {
     // The tree carried by the signature must be the one the canister certified.
