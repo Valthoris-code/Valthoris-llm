@@ -1025,3 +1025,120 @@ Deno.test('a rejected credential names the secret to fix', async () => {
     clearSecrets();
   }
 });
+
+// ─── Crypto: the panel data ──────────────────────────────────────────────────
+
+Deno.test('a listed token returns the market data and the price history', async () => {
+  // USDT: a real, listed contract — the address the crypto panel is expected to
+  // show market data for, exercised against a stub of the two APIs.
+  const usdt = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+  clearSecrets();
+  Deno.env.set('ETHERSCAN_API_KEY', 'unit-test-etherscan-key');
+  Deno.env.set('COINGECKO_API_KEY', 'unit-test-coingecko-key');
+
+  const day = 24 * 60 * 60 * 1000;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const json = (body: unknown) =>
+      Promise.resolve(
+        new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } }),
+      );
+    const host = new URL(url).hostname;
+    if (host === 'api.etherscan.io') {
+      if (url.includes('action=balance')) return json({ status: '1', result: '2500000000000000000' });
+      if (url.includes('action=txlist')) {
+        return json({
+          status: '1',
+          result: [
+            { timeStamp: String(Math.floor((Date.now()) / 1000)) },
+            { timeStamp: String(Math.floor((Date.now() - 30 * day) / 1000)) },
+          ],
+        });
+      }
+      if (url.includes('action=eth_getCode')) return json({ result: '0x60806040523480' });
+    }
+    if (url.includes('/coins/ethereum/contract/')) {
+      return json({
+        id: 'tether',
+        name: 'Tether',
+        symbol: 'usdt',
+        market_cap_rank: 3,
+        market_data: {
+          current_price: { usd: 1.001 },
+          price_change_percentage_24h: -0.02,
+          total_volume: { usd: 42_000_000_000 },
+          market_cap: { usd: 95_000_000_000 },
+        },
+        tickers: [
+          { market: { name: 'Binance' } },
+          { market: { name: 'Binance' } },
+          { market: { name: 'Kraken' } },
+        ],
+      });
+    }
+    if (url.includes('/market_chart')) {
+      return json({
+        prices: [
+          [Date.now() - 2 * day, 0.999],
+          [Date.now() - day, 1.0],
+          [Date.now(), 1.001],
+        ],
+      });
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+
+  try {
+    const reports = await gatherIntelligence({ kind: 'crypto_eth', value: usdt });
+    const etherscan = reports.find((r) => r.provider === 'Etherscan');
+    const coingecko = reports.find((r) => r.provider === 'CoinGecko');
+
+    assertEquals(etherscan?.status, 'success');
+    assertEquals(etherscan?.data?.balanceEth, 2.5);
+    assertEquals(etherscan?.data?.recentTransactions, 2);
+    // USDT is a contract, not a wallet — the panel says so explicitly.
+    assertEquals(etherscan?.data?.isContract, true);
+
+    assertEquals(coingecko?.status, 'success');
+    assertEquals(coingecko?.data?.listedToken, true);
+    assertEquals(coingecko?.data?.symbol, 'usdt');
+    assertEquals(coingecko?.data?.priceUsd, 1.001);
+    assertEquals(coingecko?.data?.priceChange24hPct, -0.02);
+    assertEquals(coingecko?.data?.volume24hUsd, 42_000_000_000);
+    assertEquals(coingecko?.data?.marketCapUsd, 95_000_000_000);
+    assertEquals(coingecko?.data?.exchanges, ['Binance', 'Kraken']);
+    assertEquals((coingecko?.data?.priceHistory7d as unknown[]).length, 3);
+
+    // No credential ever reaches a source report or the model's evidence.
+    const evidence = formatEvidence({ kind: 'crypto_eth', value: usdt }, reports);
+    assert(!evidence.includes('unit-test-etherscan-key'));
+    assert(!evidence.includes('unit-test-coingecko-key'));
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});
+
+Deno.test('a plain wallet is reported as not being a listed token', async () => {
+  const wallet = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+  clearSecrets();
+  Deno.env.set('COINGECKO_API_KEY', 'unit-test-coingecko-key');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes('/coins/ethereum/contract/')) {
+      return Promise.resolve(new Response('not found', { status: 404 }));
+    }
+    return Promise.reject(new Error(`unexpected call to ${url}`));
+  }) as typeof fetch;
+  try {
+    const reports = await gatherIntelligence({ kind: 'crypto_eth', value: wallet });
+    const coingecko = reports.find((r) => r.provider === 'CoinGecko');
+    assertEquals(coingecko?.status, 'success');
+    assertEquals(coingecko?.data?.listedToken, false);
+  } finally {
+    globalThis.fetch = realFetch;
+    clearSecrets();
+  }
+});

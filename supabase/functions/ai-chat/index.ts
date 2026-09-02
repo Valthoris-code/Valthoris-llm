@@ -1269,7 +1269,10 @@ function evidenceValue(value: unknown): string | null {
 const PLACE_ENTITY_WORDS =
   "restaurante|loja|[óo]ptica|[óo]tica|hospital|centro de sa[úu]de|centro comercial|escola|universidade|hotel|hostel|pens[ãa]o|empresa|cl[íi]nica|banco|multibanco|farm[áa]cia|caf[ée]|padaria|pastelaria|pizzaria|churrasqueira|talho|peixaria|mercado|supermercado|hipermercado|minimercado|bomba de gasolina|gasolineira|posto de (?:combust[íi]vel|abastecimento)|gin[áa]sio|oficina|est[úa]dio|museu|biblioteca|correios|esquadra|posto da (?:gnr|psp)|junta de freguesia|c[âa]mara municipal|tribunal|dentista|veterin[áa]ri[oa]|cabeleireiro|parque de estacionamento|esta[çc][ãa]o|terminal rodovi[áa]rio|aeroporto|igreja|restaurant|shop|store|supermarket|clinic|pharmacy|bakery|gas station|petrol station|school|company|hotel|library|museum";
 
-const PLACE_ENTITY_RE = new RegExp(`\\b(${PLACE_ENTITY_WORDS})\\b`, 'i');
+const PLACE_ENTITY_RE = new RegExp(
+  `(?<![\\p{L}\\p{N}])(${PLACE_ENTITY_WORDS})(?![\\p{L}\\p{N}])`,
+  'iu',
+);
 
 const PLACE_PATTERN_RE =
   /\b\p{L}[\p{L}.'-]{2,}\s+(?:em|no|na|nos|nas|d[oa]s?|de|in|at)\s+\p{Lu}[\p{L}.'-]{2,}/u;
@@ -1318,7 +1321,7 @@ const PLACE_POSTCODE_RE = /\b\d{4}-\d{3}\b/;
  * when the name itself is a single letter or a very short word.
  */
 const NAMED_PLACE_RE = new RegExp(
-  `\\b(?:${PLACE_ENTITY_WORDS})\\s+(?:(?:d[oa]s?|de|em|no|na|of|in|at)\\s+)?\\p{L}[\\p{L}.'-]*`,
+  `(?<![\\p{L}\\p{N}])(?:${PLACE_ENTITY_WORDS})\\s+(?:(?:d[oa]s?|de|em|no|na|of|in|at)\\s+)?\\p{L}[\\p{L}.'-]*`,
   'iu',
 );
 
@@ -1331,6 +1334,61 @@ const PLACE_NON_LOOKUP_RE =
 
 /** A bare place mention is a name, not a paragraph. */
 const BARE_PLACE_MAX_WORDS = 12;
+
+/**
+ * The shape of a person's name: two or three capitalised words and nothing else.
+ *
+ * "Herminio Coragem" and "Herminio Coragem em Évora" both match
+ * `PLACE_PATTERN_RE` ("X em Y"), and used to be geocoded — the map then
+ * answered with the nearest thing whose name looked similar ("Monte Herminio"),
+ * stated with full confidence. A person is not a place, and there is no
+ * gazetteer that can tell the difference for us, so the name itself is read
+ * here: a run of capitalised words with no establishment word, no street, no
+ * postal code and no business term is a person until the user says otherwise.
+ */
+const PERSON_NAME_RE =
+  /^\p{Lu}[\p{Ll}'’-]+(?:\s+(?:d[aeo]s?|e|von|van|del|de\s+l[ao]s?)\s+|\s+)\p{Lu}[\p{Ll}'’-]+(?:(?:\s+(?:d[aeo]s?|e)\s+|\s+)\p{Lu}[\p{Ll}'’-]+){0,2}$/u;
+
+/**
+ * Words that name a place or an organisation even outside the establishment
+ * vocabulary: "Centro Hospitalar de Setúbal" and "Quinta da Fonte" have the
+ * shape of a person's name and are not people. Their presence vetoes the
+ * person reading and keeps the lookup running.
+ */
+const PLACE_NAME_HINT_RE =
+  /(?<![\p{L}\p{N}])(centro|hospitalar|quinta|monte|serra|vila|vale|casa|pal[áa]cio|solar|jardim|parque|castelo|torre|ponte|praia|ilha|forte|convento|mosteiro|s[ée]|bairro|urbaniza[çc][ãa]o|residencial|apartamentos|edif[íi]cio|torres|grupo|sociedade|associa[çc][ãa]o|instituto|academia|col[ée]gio|funda[çc][ãa]o|cooperativa|clube|lda|s\.a|unipessoal|holdings?|group|center|centre|house|hall|tower|park)(?![\p{L}\p{N}])/iu;
+
+/** The connectors "X em Y" is built with, stripped to leave the "X" alone. */
+const PLACE_PATTERN_SPLIT_RE =
+  /\s+(?:em|no|na|nos|nas|d[oa]s?|de|in|at)\s+(?=\p{Lu})/u;
+
+/**
+ * True when the "X em Y" shape is a person's name rather than a place.
+ *
+ * Only the "X" is examined, and only when nothing else in the turn points at a
+ * real location: an establishment word, a street, a postal code or an explicit
+ * request ("morada de …", "contacto de …") all keep the lookup running, because
+ * then the user has said what they are looking for. With none of those, a bare
+ * "Nome Apelido [em Cidade]" is treated as conversation — asking is cheaper
+ * than confidently returning the wrong point on a map.
+ */
+export function looksLikePersonName(text: string): boolean {
+  const cleaned = text.replace(/[?¿!¡.,;:]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (cleaned.length === 0) return false;
+  if (
+    PLACE_ENTITY_RE.test(cleaned) ||
+    PLACE_ADDRESS_RE.test(cleaned) ||
+    PLACE_POSTCODE_RE.test(cleaned) ||
+    PLACE_REQUEST_RE.test(cleaned) ||
+    PLACE_NEED_RE.test(cleaned) ||
+    PLACE_NAME_HINT_RE.test(cleaned)
+  ) {
+    return false;
+  }
+  const [head] = cleaned.split(PLACE_PATTERN_SPLIT_RE);
+  const candidate = (head ?? cleaned).trim();
+  return PERSON_NAME_RE.test(candidate);
+}
 
 /**
  * True when the whole turn is simply the name of a place or an address.
@@ -1347,6 +1405,7 @@ export function isBarePlaceMention(text: string): boolean {
   if (cleaned.length < 3) return false;
   if (cleaned.split(' ').length > BARE_PLACE_MAX_WORDS) return false;
   if (PLACE_NON_LOOKUP_RE.test(cleaned)) return false;
+  if (looksLikePersonName(cleaned)) return false;
   return (
     PLACE_PATTERN_RE.test(cleaned) ||
     NAMED_PLACE_RE.test(cleaned) ||
@@ -1371,6 +1430,9 @@ export function isPlaceLookup(text: string): boolean {
     PLACE_ADDRESS_RE.test(text) ||
     PLACE_POSTCODE_RE.test(text);
   if (!hasEntity) return false;
+  // "Herminio Coragem em Évora" satisfies the "X em Y" shape and nothing else:
+  // a name, not an address, and the map must not be asked about it.
+  if (looksLikePersonName(text)) return false;
   if (PLACE_REQUEST_RE.test(text) || PLACE_NEED_RE.test(text)) return true;
   return isBarePlaceMention(text);
 }
@@ -1442,9 +1504,23 @@ const NEWS_INTENT_RE =
 const SMALL_TALK_RE =
   /^(?:[\s!?.…,]*(?:ol[áa]|oi|hey|hi|hello|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+est[áa]s?|obrigad[oa]|agradecido|thanks|thank\s+you|ok|okay|certo|perfeito|fixe|adeus|at[ée]\s+j[áa]|bye|good\s*bye|sim|n[ãa]o|yes|no|test(?:e)?)(?![\p{L}\p{N}]))+[\s!?.…,]*$/iu;
 
-/** Turns addressed to the assistant itself, which no external page can answer. */
+/**
+ * Turns addressed to the assistant itself, which no external page can answer.
+ *
+ * "Quais são os teus regulamentos, as tuas instruções, quem é a tua empresa?"
+ * is a question about Valthoris, and it was answered with the Wikipedia article
+ * about ChatGPT — the search engine had no way of knowing who "tu" is. Anything
+ * that asks about the assistant's own identity, rules, instructions, maker or
+ * company therefore never leaves the function: it is conversation about
+ * Valthoris, and Valthoris is the only source for it.
+ *
+ * The match is not anchored at the start of the turn, because these questions
+ * are usually asked in the middle of a sentence ("diz-me quem é a tua
+ * empresa"), and the possessive ("teu", "tua", "vosso") or "Valthoris" itself
+ * is what makes the question self-referential.
+ */
 const SELF_REFERENTIAL_RE =
-  /^\s*(?:quem\s+[ée]s\s+tu|quem\s+es\s+tu|o\s+que\s+[ée]s\s+tu|what\s+are\s+you|who\s+are\s+you|como\s+te\s+chamas|what\s+is\s+your\s+name)\b/i;
+  /(?<![\p{L}\p{N}])(?:quem\s+[ée]s\s+tu|quem\s+es\s+tu|o\s+que\s+[ée]s\s+tu|what\s+are\s+you|who\s+are\s+you|como\s+te\s+chamas|what\s+is\s+your\s+name|quem\s+te\s+(?:criou|fez|desenvolveu|programou)|who\s+(?:created|made|built|trained)\s+you|(?:[oa]s?\s+)?(?:teus?|tuas?|vossos?|vossas?)\s+(?:regulamentos?|regras?|instru[çc][õo]es|diretrizes|directrizes|pol[íi]ticas?|termos|limites|capacidades|funcionalidades|fontes|modelos?|treino|dados|empresa|criador(?:es)?|donos?|propriet[áa]ri[oa]s?|respons[áa]ve(?:l|is)|nome|identidade|prompt)|quem\s+(?:é|e)\s+(?:a\s+)?(?:tua|vossa)\s+(?:empresa|equipa|dona|criadora|propriet[áa]ria)|your\s+(?:rules?|instructions?|guidelines?|policies|policy|company|creator|owner|training|system\s+prompt)|(?:quem|o\s+que)\s+(?:é|e)\s+(?:o\s+)?valthoris|s[ãa]o\s+os\s+teus\s+regulamentos)(?![\p{L}\p{N}])/iu;
 
 /** A turn too short to search with, once punctuation is removed. */
 const MIN_SEARCHABLE_CHARS = 3;

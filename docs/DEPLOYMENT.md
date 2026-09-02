@@ -323,6 +323,34 @@ the few fields the verdict reads and is never used for authorization. A username
 has no external provider: its verdict rests on the community evidence alone,
 and nothing else is contacted for it.
 
+Each of those surfaces now renders the **whole** analysis, not just the traffic
+light: the score with the signals that produced it, how much of the evidence
+answered (sources that replied, failed, or have no credential on this
+deployment) and the list of providers with the timestamp of each lookup — the
+same panel the assistant shows. A wallet (`crypto_eth` / `crypto_btc`) opens a
+dedicated panel on top of it: the score split by category (on-chain, market,
+blacklist, community), the Etherscan activity (balance, recent transactions,
+contract or plain wallet, first and last transaction seen), the CoinGecko market
+data when the address is a listed token (price, 24 h change, 24 h volume,
+capitalisation, exchanges and a seven-day price chart), the GoPlus blacklist
+state, the Valthoris community reports with their trend, and direct links to the
+address on Etherscan, Blockchair, Blockchain.com and CoinGecko.
+
+### A person is not a place, and Valthoris is not ChatGPT
+
+"Herminio Coragem em Évora" has the shape of a place ("X em Y") and used to be
+geocoded, which answered a question about a person with the nearest hill whose
+name looked similar. A capitalised name with no establishment word, no street,
+no postal code and no explicit request ("morada de…", "contacto de…") is now
+read as a person and never reaches the map — asking is better than confidently
+pointing at the wrong place.
+
+Questions about the assistant itself ("quais são os teus regulamentos", "as
+tuas instruções", "quem é a tua empresa", "quem te criou") are `social`: no
+provider is contacted and no source is cited. They used to escape the
+self-referential test and were searched literally, which is how a question about
+Valthoris came back citing the Wikipedia article about ChatGPT.
+
 ### When the language model fails, the lookup is not lost
 
 `ai-chat` used to answer *"De momento não consigo processar o seu pedido"*

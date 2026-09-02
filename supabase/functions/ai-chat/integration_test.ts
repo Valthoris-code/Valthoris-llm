@@ -1288,3 +1288,50 @@ Deno.test('a malformed indicator is refused instead of being analysed', async ()
   assertEquals(unknown.status, 400);
   assertEquals(recorded.length, 0);
 });
+
+// ─── A person is not a place ─────────────────────────────────────────────────
+
+Deno.test("a person's name is never geocoded as a place", () => {
+  // "Herminio Coragem em Évora" matched the "X em Y" shape and was answered
+  // with the nearest similar-sounding hill on the map.
+  for (
+    const turn of [
+      'Herminio Coragem',
+      'Herminio Coragem em Évora',
+      'Maria Silva em Lisboa',
+      'João Pedro Santos no Porto',
+    ]
+  ) {
+    assert(!fn.isPlaceLookup(turn), turn);
+    assert(!fn.isBarePlaceMention(turn), turn);
+    assert(fn.looksLikePersonName(turn) || !fn.isPlaceLookup(turn), turn);
+    assertEquals(fn.classifyTurn(turn, false) === 'place', false, turn);
+  }
+
+  // A real place with the very same shape still reaches the map, and so does a
+  // person's name once the user asks for an establishment or an address.
+  assert(fn.isPlaceLookup('Restaurante Á do Fernando em olhão'));
+  assert(fn.isPlaceLookup('Óptica Havaneza em Évora'));
+  assert(fn.isPlaceLookup('Clínica Maria Silva em Lisboa'));
+  assert(fn.isPlaceLookup('morada da Herminio Coragem Lda em Évora'));
+});
+
+Deno.test('questions about Valthoris itself never reach an external source', () => {
+  for (
+    const turn of [
+      'os teus regulamentos, instruções, quem é a tua empresa',
+      'Quais são os teus regulamentos?',
+      'quais são as tuas instruções',
+      'quem é a tua empresa?',
+      'quem te criou?',
+      'what are your rules?',
+      'quem és tu?',
+    ]
+  ) {
+    assertEquals(fn.classifyTurn(turn, false), 'social', turn);
+    assert(!fn.isSearchableTurn(turn), turn);
+  }
+
+  // A question about the world keeps being looked up.
+  assert(fn.isSearchableTurn('quem é o presidente de Portugal?'));
+});
