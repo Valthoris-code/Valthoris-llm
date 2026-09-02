@@ -24,6 +24,55 @@ function Stat({ label, value, hint }: { label: string; value: React.ReactNode; h
   );
 }
 
+/**
+ * Binds this browser's Internet Identity to the administrator who is signed in.
+ *
+ * It exists so that an administrator whose principal is not on file yet can
+ * enable Internet Identity sign-in themselves, from a session that is already
+ * verified, instead of somebody editing the database by hand. The binding is
+ * one-way: an account that already has a principal is refused, and both
+ * outcomes are audited.
+ */
+function InternetIdentityBinding() {
+  const { linkIcp } = useAdminAuth();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const onLink = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const claimed = await linkIcp();
+      setMessage(
+        claimed
+          ? 'Internet Identity associada. Pode agora entrar na administração com Internet Identity.'
+          : 'Já existe uma Internet Identity associada a esta conta. Nada foi alterado.',
+      );
+    } catch {
+      setMessage(ADMIN_GENERIC_ERROR);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="vadmin-card" style={{ marginBottom: '1.5rem' }}>
+      <div className="vadmin-stat-label">Internet Identity</div>
+      <p className="vadmin-stat-hint" style={{ marginTop: '0.6rem' }}>
+        Associe a Internet Identity que usa na aplicação a esta conta administrativa. A
+        delegação é verificada no servidor contra a chave raiz da Internet Computer; a
+        verificação em dois passos continua obrigatória em cada sessão.
+      </p>
+      <p style={{ marginTop: '0.6rem' }}>
+        <button className="vadmin-btn-ghost" type="button" disabled={busy} onClick={() => { void onLink(); }}>
+          {busy ? 'A verificar…' : 'Associar Internet Identity'}
+        </button>
+      </p>
+      {message && <div className="vadmin-note" role="status">{message}</div>}
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { admin } = useAdminAuth();
   const [data, setData] = useState<AdminDashboard | null>(null);
@@ -100,6 +149,8 @@ export default function AdminDashboardPage() {
               <Link className="vadmin-btn-ghost" to="/admin/audit">Registo de auditoria</Link>
             </p>
           </div>
+
+          <InternetIdentityBinding />
 
           <div className="vadmin-note">
             Estado da plataforma (Supabase, ICP, Edge Functions, IA, AutoShield, Threat

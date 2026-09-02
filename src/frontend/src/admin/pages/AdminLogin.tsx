@@ -2,7 +2,8 @@
  * /admin/login — the administrative sign-in.
  *
  * Three steps, and none of them ever explains itself:
- *   1. e-mail + password (Supabase Auth);
+ *   1. identification — Internet Identity (the provider the rest of Valthoris
+ *      uses, verified server-side by `admin-icp-bridge`) or e-mail + password;
  *   2. TOTP enrolment, when the account has no factor yet;
  *   3. TOTP verification, which raises the session to AAL2.
  *
@@ -17,7 +18,7 @@ import { useAdminAuth } from '../AdminAuthContext';
 import type { AdminEnrollment } from '../AdminAuthContext';
 
 export default function AdminLogin() {
-  const { stage, busy, error, configured, signIn, verifyCode, startEnrollment, signOut } =
+  const { stage, busy, error, configured, signIn, signInWithIcp, verifyCode, startEnrollment, signOut } =
     useAdminAuth();
 
   const [email, setEmail] = useState('');
@@ -84,6 +85,25 @@ export default function AdminLogin() {
             <div role="status" aria-live="polite" style={{ color: 'var(--vadmin-muted)' }}>
               A verificar sessão…
             </div>
+          )}
+
+          {configured && stage === 'anonymous' && (
+            <>
+              <button
+                className="vadmin-btn"
+                type="button"
+                disabled={busy}
+                style={{ width: '100%' }}
+                onClick={() => { void signInWithIcp(); }}
+              >
+                {busy ? 'A validar…' : 'Entrar com Internet Identity'}
+              </button>
+              <p className="vadmin-note" style={{ margin: '0.6rem 0 1.1rem' }}>
+                A delegação do Internet Identity é verificada no servidor antes de
+                qualquer sessão ser criada. A verificação em dois passos continua a
+                ser exigida.
+              </p>
+            </>
           )}
 
           {configured && stage === 'anonymous' && (

@@ -56,6 +56,16 @@ export function adminApiUrl(path: string): string {
   return `${supabaseUrl}/functions/v1/admin-api${path}`;
 }
 
+/**
+ * Base URL of the Internet Identity → Supabase bridge.
+ *
+ * It is a separate function because it is the only administrative endpoint
+ * called *before* a Supabase session exists: issuing that session is its job.
+ */
+export function adminBridgeUrl(path: string): string {
+  return `${supabaseUrl}/functions/v1/admin-icp-bridge${path}`;
+}
+
 /** The public anon key, required by the Functions gateway. Never a secret. */
 export function adminApiKey(): string {
   return supabaseAnon;

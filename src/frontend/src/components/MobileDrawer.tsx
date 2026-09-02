@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useIsVerifiedAdmin } from '../admin/adminPresence';
 import { useT } from '../i18n/useI18n';
 import { hasMinimumRole } from '../models/User';
 import type { UserRole } from '../models/User';
@@ -38,6 +39,18 @@ const DRAWER_ITEMS: DrawerItem[] = [
   { to: '/operations',          label: 'Administration',      labelKey: 'nav.admin',        icon: '🛡', minRole: 'administrator' },
 ];
 
+/**
+ * The Administration & Governance Center. It is appended only when a real,
+ * server-verified Supabase administrative session exists (see
+ * admin/adminPresence.ts) — never from a principal or an e-mail held in the
+ * browser.
+ */
+const GOVERNANCE_ITEM = {
+  to: '/admin',
+  label: 'Administração',
+  icon: '🛡',
+};
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -45,6 +58,7 @@ interface Props {
 
 export default function MobileDrawer({ open, onClose }: Props) {
   const { isAuthenticated, user } = useAuth();
+  const isVerifiedAdmin = useIsVerifiedAdmin();
   const t = useT();
 
   const labelOf = (item: DrawerItem) => item.labelKey ? t(item.labelKey) : item.label;
@@ -55,7 +69,7 @@ export default function MobileDrawer({ open, onClose }: Props) {
       if (!user || !hasMinimumRole(user.role, item.minRole as UserRole)) return false;
     }
     return true;
-  });
+  }).concat(isVerifiedAdmin ? [GOVERNANCE_ITEM] : []);
 
   if (!open) return null;
 

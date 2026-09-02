@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useIsVerifiedAdmin } from '../admin/adminPresence';
 import { useT } from '../i18n/useI18n';
 import { hasMinimumRole } from '../models/User';
 import type { UserRole } from '../models/User';
@@ -52,6 +53,18 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/operations',          label: 'Administration',       labelKey: 'nav.admin',         icon: '🛡', minRole: 'administrator' },
 ];
 
+/**
+ * The Administration & Governance Center. It is appended only when a real,
+ * server-verified Supabase administrative session exists (see
+ * admin/adminPresence.ts) — never from a principal or an e-mail held in the
+ * browser.
+ */
+const GOVERNANCE_ITEM = {
+  to: '/admin',
+  label: 'Administração',
+  icon: '🛡',
+};
+
 const COMING_SOON: NavItem[] = [
   { to: '#autoshield',     label: 'AutoShield',          icon: '🔰', comingSoon: true },
   { to: '#android',        label: 'Android Protection',  icon: '🤖', comingSoon: true },
@@ -68,6 +81,7 @@ interface Props {
 
 export default function Sidebar({ collapsed, onToggle }: Props) {
   const { isAuthenticated, user } = useAuth();
+  const isVerifiedAdmin = useIsVerifiedAdmin();
   const t = useT();
   const labelOf = (item: { label: string; labelKey?: string }) =>
     item.labelKey ? t(item.labelKey) : item.label;
@@ -80,7 +94,7 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
       if (!user || !hasMinimumRole(user.role, item.minRole as UserRole)) return false;
     }
     return true;
-  });
+  }).concat(isVerifiedAdmin ? [GOVERNANCE_ITEM] : []);
 
   return (
     <aside
