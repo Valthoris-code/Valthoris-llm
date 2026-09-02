@@ -224,14 +224,31 @@ jobs:
           api="https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query"
           scheme="Bea"; scheme="${scheme}rer"
           query() {
-            jq -n --arg q "$1" '{query: $q}' > /tmp/verify.req
-            curl -sS -o /tmp/verify.json -w '%{http_code}' -X POST "$api" \
-              -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
-              -H 'Content-Type: application/json' \
-              --data-binary @/tmp/verify.req
+            # $1 = SQL. Answers with the HTTP status; the body is left in
+            # /tmp/verify.json. Transient Management API errors (rate limiting
+            # in particular, after a long run of statements) must not be read
+            # as "the database is wrong", so the call is retried.
+            local attempt status
+            for attempt in 1 2 3 4 5; do
+              jq -n --arg q "$1" '{query: $q}' > /tmp/verify.req
+              status=$(curl -sS -o /tmp/verify.json -w '%{http_code}' -X POST "$api" \
+                -H "Authorization: $scheme $SUPABASE_ACCESS_TOKEN" \
+                -H 'Content-Type: application/json' \
+                --data-binary @/tmp/verify.req)
+              if [ "$status" = "200" ] || [ "$status" = "201" ]; then
+                return 0
+              fi
+              echo "::warning::Verification query answered HTTP $status" \
+                "($(jq -r '.message // .error // "no detail"' /tmp/verify.json 2>/dev/null || echo 'no detail'));" \
+                "attempt $attempt of 5."
+              sleep $((attempt * 5))
+            done
+            echo "::error::The database could not be read back through the" \
+              "Management API (HTTP $status), so the provisioning cannot be verified."
+            return 1
           }
 
-          test "$(query "SELECT version FROM supabase_migrations.schema_migrations;")" = "200"
+          query "SELECT version FROM supabase_migrations.schema_migrations;"
           applied=$(jq -r '.[]?.version // empty' /tmp/verify.json | sort -u)
           missing=0
           for file in supabase/migrations/*.sql; do
@@ -245,7 +262,7 @@ jobs:
 
           # The functions the administration cannot work without.
           expected="governance_admin_by_principal governance_claim_admin_principal governance_resolve_admin governance_write_audit governance_write_error"
-          test "$(query "SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname LIKE 'governance\\_%';")" = "200"
+          query "SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname IN ('governance_admin_by_principal', 'governance_claim_admin_principal', 'governance_resolve_admin', 'governance_write_audit', 'governance_write_error');"
           present=$(jq -r '.[]?.proname // empty' /tmp/verify.json | sort -u)
           for fn in $expected; do
             if ! echo "$present" | grep -qx "$fn"; then
