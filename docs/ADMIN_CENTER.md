@@ -149,12 +149,18 @@ somebody remembering to click in a dashboard is not a security boundary.
 | # | What the workflow does | How |
 |---|---|---|
 | 1 | Applies every migration, including the `governance` schema | `supabase db push --include-all`, or the Management API when `SUPABASE_DB_PASSWORD` is absent |
-| 2 | Enables TOTP MFA enrolment and verification | `PATCH /v1/projects/{ref}/config/auth` |
-| 3 | Enables the *Customize Access Token* hook on `governance.custom_access_token_admin_hook` | same call |
-| 4 | Removes `governance` from the exposed schemas if it is ever added | `GET`/`PATCH /v1/projects/{ref}/postgrest` |
-| 5 | Invites the two ROOT accounts, if they do not exist yet | Auth Admin API `POST /auth/v1/invite` |
-| 6 | Publishes `ADMIN_ALLOWED_ORIGINS` as a function secret | `supabase secrets set` |
-| 7 | Proves an anonymous caller gets no administrative data, and that a bare principal does not open a session | four `curl` probes, the job fails otherwise |
+| 2 | Reads the database back and fails unless every migration file is recorded and every `public.governance_*` RPC exists | `SELECT` through the Management API |
+| 3 | Enables TOTP MFA enrolment and verification | `PATCH /v1/projects/{ref}/config/auth` |
+| 4 | Enables the *Customize Access Token* hook on `governance.custom_access_token_admin_hook` | same call |
+| 5 | Removes `governance` from the exposed schemas if it is ever added | `GET`/`PATCH /v1/projects/{ref}/postgrest` |
+| 6 | Invites the two ROOT accounts, if they do not exist yet | Auth Admin API `POST /auth/v1/invite` |
+| 7 | Publishes `ADMIN_ALLOWED_ORIGINS` as a function secret | `supabase secrets set` |
+| 8 | Proves an anonymous caller gets no administrative data, and that a bare principal does not open a session | four `curl` probes, the job fails otherwise |
+
+Before any of that, the workflow checks that `SUPABASE_PROJECT_REF` is the
+project this repository is linked to (`supabase/.temp/linked-project.json`) and
+stops if it is not: the reference is a secret, so a run that provisioned the
+wrong database would otherwise look exactly like a run that worked.
 
 `admin-api` and `admin-icp-bridge` are deployed by
 `.github/workflows/deploy-edge-functions.yml`, which runs their unit tests first.
@@ -209,7 +215,25 @@ administration is empty — by design.
 local `vite preview`) must be listed in the `ADMIN_ALLOWED_ORIGINS` secret as a
 comma-separated list, e.g. `http://localhost:4173`.
 
-### 5.5 What still cannot be automated
+### 5.5 A `governance` schema that came from somewhere else
+
+`20260901000000_create_governance_admin_center.sql` starts by checking whether
+the project already carries a *different* `governance` schema — one whose
+`audit_logs` has no `occurred_at` column. That happened once in production: a
+draft of the administration had been applied out of band, so every
+`CREATE TABLE IF NOT EXISTS` in the migration did nothing, the first index on a
+column only this design has failed, and the migration never reached
+`supabase_migrations.schema_migrations` — taking the two migrations after it,
+and therefore `admin-icp-bridge`, down with it.
+
+When that is detected the foreign schema is renamed to
+`governance_archived_<UTC timestamp>` (no row is deleted, and no API role can
+reach it), the `public.governance_*` wrappers compiled against it are dropped,
+and the administration is rebuilt from this repository. The repository is the
+single source of truth for the schema; the check is inert on a database that
+already carries this design.
+
+### 5.6 What still cannot be automated
 
 Enrolling a TOTP factor requires the physical authenticator of each ROOT and is
 therefore done by Hermínio and Tiago themselves, at their first sign-in on
