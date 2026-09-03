@@ -203,20 +203,22 @@ Deno.test('the assistant turn is mapped to the Gemini "model" role', async () =>
   });
 });
 
-Deno.test('a Gemini failure is generic, never a raw status nor a placeholder', async () => {
+Deno.test('a Gemini failure falls back to the verdict, never a raw status nor a placeholder', async () => {
   await withGemini(async () => {
     httpStatus = 429;
 
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Verifica 1.2.3.4' }] }));
 
-    assertEquals(res.status, 502);
+    // With no second provider configured no model answers — but the verdict was
+    // computed before any of them ran, so the user still gets it, and the rate
+    // limit stays in the logs: no raw status ever reaches the conversation.
+    assertEquals(res.status, 200);
     const body = await res.json();
-    // With no second provider configured the turn fails — but the rate limit
-    // stays in the logs: the user sees one generic sentence and no answer.
-    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
-    assert(!String(body.error).includes('429'), body.error);
-    assert(!String(body.error).includes('quota'));
-    assertEquals(body.content, undefined);
+    assertEquals(body.error, undefined);
+    assertEquals(body.provider, 'valthoris/evidence');
+    assertEquals(body.content, body.verdict.headline);
+    assert(!String(body.content).includes('429'), body.content);
+    assert(!String(body.content).includes('quota'), body.content);
   });
 });
 

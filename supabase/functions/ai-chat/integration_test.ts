@@ -354,7 +354,7 @@ Deno.test('a general question is answered without creating fraud records', async
   assertEquals(restCalls('fraud_workflow_runs').length, 0);
 });
 
-Deno.test('a provider failure is reported generically, never answered with a placeholder', async () => {
+Deno.test('a provider failure still answers with the verdict, never a placeholder', async () => {
   recorded = [];
   providerAnswers = [''];
 
@@ -362,13 +362,13 @@ Deno.test('a provider failure is reported generically, never answered with a pla
     messages: [{ role: 'user', content: 'Analyze https://example.test' }],
   }));
 
-  assertEquals(res.status, 502);
+  // No model answered, but the verdict was computed from the providers alone:
+  // it is the answer, instead of a generic error that throws it away.
+  assertEquals(res.status, 200);
   const body = await res.json();
-  assertEquals(
-    body.error,
-    'De momento não consigo processar o seu pedido, tente novamente em instantes.',
-  );
-  assertEquals(body.content, undefined);
+  assertEquals(body.error, undefined);
+  assertEquals(body.provider, 'valthoris/evidence');
+  assertEquals(body.content, body.verdict.headline);
   assertEquals(restCalls('fraud_events').length, 0);
 });
 

@@ -802,6 +802,10 @@ async function geminiWebSearch(query: string): Promise<{ results: WebResult[]; a
       // misconfigured `GEMINI_MODEL` never costs the deployment its search.
       lastError = err instanceof Error ? err : new Error(String(err));
       if (err instanceof HttpStatusError && err.status === 404) notFound = true;
+      // Every model name shares one quota: once it is exhausted (429), trying
+      // the remaining names only spends more of the same budget for the same
+      // failure, so the search gives up on this turn instead.
+      if (err instanceof HttpStatusError && err.status === 429) break;
     }
   }
 
