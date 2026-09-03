@@ -56,9 +56,12 @@ jobs:
           deno test --allow-net --allow-env supabase/functions/admin-api
           deno test --allow-net --allow-env supabase/functions/admin-icp-bridge
 
+      # `version: latest` makes the action ask the public GitHub API for the
+      # newest release, which is rate limited and fails the whole job. Pin the
+      # CLI instead: the download URL is built directly from this version.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.116.0
 
       - name: Deploy ai-chat
         env:
