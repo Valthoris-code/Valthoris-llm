@@ -1004,6 +1004,22 @@ function sanitizeLocalEvidence(local: unknown): LocalEvidence | undefined {
         200,
       );
     }
+    // No source carried data, but the deterministic verdict was still computed
+    // from what the providers said: the headline is the answer, exactly as the
+    // Scanner's `analyse` action reports it.
+    if (verdict) {
+      return json(
+        {
+          content: verdict.headline,
+          provider: 'valthoris/evidence',
+          model: 'evidence-only',
+          grounded: true,
+          sources: intel?.sources ?? [],
+          verdict,
+        },
+        200,
+      );
+    }
     // Only curated messages reach the browser; unexpected faults are generic.
     const message = err instanceof AiChatError ? err.message : PROVIDERS_UNAVAILABLE;
     return json({ error: message }, err instanceof AiChatError ? err.status : 502);
