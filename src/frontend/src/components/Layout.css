@@ -442,6 +442,34 @@
   flex-shrink: 0;
 }
 
+/* Repository link in the assistant header, in the place the BETA badge used to
+   occupy — the release stage is already announced by the notice at the top. */
+.ai-chat-header-github {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ai-chat-header-github:hover,
+.ai-chat-header-github:focus-visible {
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.08);
+  text-decoration: none;
+}
+
+.ai-chat-header-github-star {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
 /* ─── Embedded place map (assistant answers) ────────────────────── */
 .ai-place-map {
   margin-top: 0.6rem;
@@ -862,3 +890,51 @@
   .ai-welcome-title { font-size: 1.05rem !important; }
   .ai-welcome-subtitle { font-size: 0.75rem !important; }
 }
+
+/*
+ * ─── "Segurança by design" seal ─────────────────────────────────────────────
+ *
+ * A small, fixed seal in the bottom-right corner, visible on every page and
+ * while the page scrolls. It is its own fixed layer, so it changes no other
+ * element's box: nothing reflows because of it.
+ *
+ * z-index sits above ordinary content (the shell's watermark is 0, the toolbar
+ * 100) but below the bottom navigation (300), the drawer (400/500) and the
+ * cookie banner, so it can never sit on top of a control. `pointer-events: none`
+ * makes that guarantee absolute — a click always reaches whatever is behind it.
+ */
+.security-badge {
+  position: fixed;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(10, 20, 33, 0.82);
+  backdrop-filter: blur(6px);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.security-badge-icon { font-size: 0.8rem; }
+
+/* On a phone the bottom navigation owns the bottom edge; the seal rests above it. */
+@media (max-width: 768px) {
+  .security-badge {
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    right: 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* With the on-screen keyboard open the bottom navigation hides; so does the seal. */
+html[data-keyboard='open'] .security-badge { display: none; }

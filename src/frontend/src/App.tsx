@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { BASE_PATH }  from './basePath';
 import Layout         from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import SecurityBadge  from './components/SecurityBadge';
 
 // Existing pages (preserved)
 import Home            from './pages/Home';
@@ -81,6 +82,7 @@ function RouteFallback() {
 export default function App() {
   return (
     <BrowserRouter basename={BASE_PATH}>
+      <SecurityBadge />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Administration & Governance Center — outside the normal layout.

@@ -276,7 +276,19 @@ therefore done by Hermínio and Tiago themselves, at their first sign-in on
 | `/admin/roles` | RBAC model read from the database |
 | `/admin/audit` | Paginated, searchable, filterable audit trail |
 | `/admin/intel-sources` | State of every external intelligence source (✅ operational / ⚠️ degraded / ➖ not configured / ⊘ disabled), last error with its HTTP status, and a **test now** button that performs a real lookup. Requires `system_health.read` |
+| `/admin/statistics` | Statistics: live counts read from the tables that exist, and nothing else. Requires `dashboard.read` |
+| `/admin/fraud-reports` | Fraud reports: submission form (`reports.write`) and a filterable, paginated list (`reports.read`) |
+| `/admin/fraud-map` | Map of the reports that carry coordinates; the ones without a location are counted apart. Requires `reports.read` |
+| `/admin/blacklist` | Blacklist by category (IP / phone / e-mail / crypto / IBAN / domain / other), with an add form and CSV / JSON bulk import. Requires `blacklist.read`, `blacklist.write` to write |
+| `/admin/users` | Administrators and platform accounts side by side. Requires `users.read` |
+| `/admin/reputation` | Reputation of an entity: current score and its history. Requires `reputation.read`, `reputation.write` to score |
+| `/admin/threat-intelligence` | Indicators aggregated by type (phone scam, phishing, fraudulent URL, malicious IP, suspicious domain, crypto fraud, suspicious IBAN, romance scam). Requires `threat_intel.read` |
+| `/admin/monitoring` | Global monitoring: recent audit and error events, with the last 24 hours counted. Requires `audit.read` |
 | other `/admin/*` | Route, permission and navigation already in place; data connected in the phase shown on the page |
+
+Every section above reads only from this project's Supabase, through
+`public.governance_*` and the `admin-api` Edge Function. A section with no rows
+yet shows an empty state — never an invented number.
 
 The legacy Internet Identity operations console moved from `/admin` to
 `/operations` (`/operations/users`), unchanged in behaviour, because `/admin` now
@@ -286,10 +298,13 @@ belongs to an area with a different identity model.
 
 ## 7. Build order for the next phases
 
-`USERS → PLANS → USAGE → BILLING → THREAT INTELLIGENCE → DATA INGESTION →
-INTELLIGENCE MODULES → AUTOSHIELD ADMIN → MULTIMEDIA / CONVERSATION / API CENTER
-→ COMPLIANCE, AUTHORITY VIEW, REPORTS, SYSTEM HEALTH, SUPPORT, FEATURE FLAGS,
-VERSIONING, BUSINESS`
+Statistics, fraud reports, the report map, the blacklist, users, reputation,
+threat intelligence and global monitoring are done (section 6). What remains:
+
+`PLANS → USAGE → BILLING → DATA INGESTION → INTELLIGENCE MODULES →
+AUTOSHIELD ADMIN → MULTIMEDIA / CONVERSATION / API CENTER → COMPLIANCE,
+AUTHORITY VIEW, REPORTS, SYSTEM HEALTH, SUPPORT, FEATURE FLAGS, VERSIONING,
+BUSINESS`
 
 Each phase replaces one placeholder page, adds its tables to the appropriate
 domain and keeps the application compiling and functional.
