@@ -609,6 +609,29 @@ $$;
 -- one section. Only account-level facts are returned — never a password hash,
 -- never a token, never bulk personal data.
 
+-- Counts the rows of a table that may not exist on a given database, and
+-- answers NULL when it is absent. A SQL-language function is parsed when it
+-- is created, so a static reference to an optional table would make this
+-- whole migration fail on a project where that table was never created.
+CREATE OR REPLACE FUNCTION public.governance_optional_count(p_table TEXT)
+RETURNS BIGINT
+LANGUAGE plpgsql
+STABLE
+SET search_path = pg_catalog, pg_temp
+AS $$
+DECLARE
+  reg REGCLASS := to_regclass(p_table);
+  n   BIGINT;
+BEGIN
+  IF reg IS NULL THEN
+    RETURN NULL;
+  END IF;
+  -- `reg` is a resolved regclass, so this cannot carry arbitrary SQL.
+  EXECUTE format('SELECT count(*) FROM %s', reg::TEXT) INTO n;
+  RETURN n;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.governance_list_platform_users(
   p_limit  INT  DEFAULT 50,
   p_offset INT  DEFAULT 0,
@@ -650,7 +673,7 @@ AS $$
       'new7d',     (SELECT count(*) FROM auth.users WHERE created_at > now() - INTERVAL '7 days'),
       'confirmed', (SELECT count(*) FROM auth.users WHERE email_confirmed_at IS NOT NULL),
       'admins',    (SELECT count(*) FROM governance.admins),
-      'profiles',  (SELECT count(*) FROM public.profiles)
+      'profiles',  public.governance_optional_count('public.profiles')
     )
   );
 $$;
@@ -805,6 +828,7 @@ BEGIN
     'public.governance_threat_intel_summary()',
     'public.governance_recent_events(INT)',
     'public.governance_list_platform_users(INT, INT, TEXT)',
+    'public.governance_optional_count(TEXT)',
     'public.governance_command_center_stats()',
     'public.governance_dashboard()'
   ] LOOP
