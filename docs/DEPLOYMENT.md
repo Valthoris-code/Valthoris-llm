@@ -93,6 +93,14 @@ which surfaced as **"Gemini request failed with HTTP 404"**; when the configured
 model answers 404 the function retries on a model that is still served, and if
 none is reachable the error names `GEMINI_MODEL` so the secret can be fixed.
 
+Google also answers **HTTP 503 `UNAVAILABLE` ("the model is overloaded")** when
+its own capacity is short. That is not a fault of the request: the same body
+succeeds seconds later. Each model of the chain is therefore attempted up to
+three times (400 ms then 1200 ms apart) before the next name is tried, with a
+45 s ceiling on the whole chain — the same treatment is given to `500`, `502`,
+`504` and `529`. A quota rejection (`429`) is *not* retried: every model name
+shares one quota, so retrying only spends more of the same budget.
+
 If the key is not configured the function returns HTTP 502 with a real error
 message naming `GEMINI_API_KEY`, and the assistant displays it instead of an
 answer. It never returns a simulated answer. When Google rejects the key the
@@ -366,6 +374,14 @@ plainly that the language model did not take part. Nothing is inferred: a field
 the source did not carry is reported as *não confirmado / not confirmed*. The
 generic message remains only for a turn where there is genuinely nothing to
 show.
+
+Plain conversation ("Olá", "Tudo bem contigo?") has no evidence to fall back to,
+and answering it with the failure notice is what made the whole assistant look
+dead while its lookups were still working. When no model answers such a turn,
+`ai-chat` returns a fixed line (`provider: valthoris/offline`) that states
+nothing about the world — only that the conversational model is momentarily
+unavailable and which artefacts can still be verified. No upstream status,
+model name or credential ever appears in it.
 
 Each model call also has a hard 25 s deadline, so a provider that never answers
 falls back to the other one instead of hanging until the platform kills the

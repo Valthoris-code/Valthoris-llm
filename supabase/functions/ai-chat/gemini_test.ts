@@ -33,6 +33,10 @@ let answers: string[] = [];
 let httpStatus = 200;
 /** Model names the stub answers 404 for, as Google does for a retired model. */
 let notFoundModels: string[] = [];
+/** Number of *transient* failures the stub answers before serving the request. */
+let transientFailures = 0;
+/** Status of those transient failures (503 "the model is overloaded", typically). */
+let transientStatus = 503;
 /** Body the stub returns when `httpStatus` is not 200. */
 // deno-lint-ignore no-explicit-any
 let errorBody: any = { error: 'quota' };
@@ -71,6 +75,8 @@ function emptySearchAnswer(url: string): Response | null {
 function stubGemini() {
   recorded = [];
   httpStatus = 200;
+  transientFailures = 0;
+  transientStatus = 503;
   notFoundModels = [];
   errorBody = { error: 'quota' };
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
@@ -100,6 +106,21 @@ function stubGemini() {
         new Response(
           JSON.stringify({ error: { code: 404, message: 'model not found', status: 'NOT_FOUND' } }),
           { status: 404 },
+        ),
+      );
+    }
+    if (transientFailures > 0) {
+      transientFailures--;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: transientStatus,
+              message: 'The model is overloaded. Please try again later.',
+              status: 'UNAVAILABLE',
+            },
+          }),
+          { status: transientStatus },
         ),
       );
     }
@@ -222,16 +243,19 @@ Deno.test('a Gemini failure falls back to the verdict, never a raw status nor a 
   });
 });
 
-Deno.test('an empty Gemini completion is reported generically', async () => {
+Deno.test('an empty Gemini completion never reaches the conversation', async () => {
   await withGemini(async () => {
     answers = [''];
 
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Analisa isto' }] }));
 
-    assertEquals(res.status, 502);
+    // Conversation with nothing to look up: the fixed offline line is the
+    // answer, and it carries no upstream detail at all.
+    assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
-    assertEquals(body.content, undefined);
+    assertEquals(body.error, undefined);
+    assertEquals(body.provider, 'valthoris/offline');
+    assert(String(body.content).includes('VALTHORIS'), body.content);
   });
 });
 
@@ -248,11 +272,12 @@ Deno.test('a Gemini authentication failure never reaches the conversation', asyn
 
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Verifica isto' }] }));
 
-    assertEquals(res.status, 502);
+    assertEquals(res.status, 200);
     const body = await res.json();
     // Google's own diagnostic is for the operator's logs, not for the user.
-    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
-    assert(!String(body.error).includes('API key'), body.error);
+    assertEquals(body.provider, 'valthoris/offline');
+    assert(!String(body.content).includes('API key'), body.content);
+    assert(!String(body.content).includes('403'), body.content);
   });
 });
 
@@ -270,9 +295,10 @@ Deno.test('with no provider configured the user still gets the generic message',
   Deno.env.delete('GEMINI_API_KEY');
   try {
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
-    assertEquals(res.status, 502);
+    assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
+    assertEquals(body.provider, 'valthoris/offline');
+    assertEquals(body.error, undefined);
   } finally {
     if (previous) Deno.env.set('GEMINI_API_KEY', previous);
   }
@@ -322,15 +348,78 @@ Deno.test('a retired model answering 404 is retried on a supported one', async (
   });
 });
 
-Deno.test('when every model answers 404 the user sees the generic message', async () => {
+Deno.test('when every model answers 404 no status reaches the conversation', async () => {
   await withGemini(async () => {
     notFoundModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
     const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
 
-    assertEquals(res.status, 502);
+    assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(body.error, 'De momento não consigo processar o seu pedido, tente novamente em instantes.');
-    assert(!String(body.error).includes('404'), body.error);
+    assertEquals(body.provider, 'valthoris/offline');
+    assert(!String(body.content).includes('404'), body.content);
+  });
+});
+
+Deno.test('a transient HTTP 503 is retried on the same model instead of failing the turn', async () => {
+  await withGemini(async () => {
+    // Google answers "the model is overloaded" once, exactly as it did on
+    // 4 September 2026, and then serves the request.
+    transientFailures = 1;
+    transientStatus = 503;
+    answers = ['Olá! Em que posso ajudar?'];
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.provider, 'gemini');
+    assertEquals(body.content, 'Olá! Em que posso ajudar?');
+    // Same model, twice: the retry never wastes a name of the chain.
+    assertEquals(recorded.length, 2);
+    assert(recorded[0].url.includes('/models/gemini-2.5-flash:'), recorded[0].url);
+    assert(recorded[1].url.includes('/models/gemini-2.5-flash:'), recorded[1].url);
+  });
+});
+
+Deno.test('a model overloaded for good is retried, then the next name is tried', async () => {
+  await withGemini(async () => {
+    // Three attempts on the configured model, three on the fallback: the turn
+    // gives up only once Google refused every one of them.
+    transientFailures = Number.MAX_SAFE_INTEGER;
+    transientStatus = 503;
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'olá' }] }));
+
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.provider, 'valthoris/offline');
+    assert(!String(body.content).includes('503'), body.content);
+    assertEquals(recorded.length, 6);
+    assertEquals(
+      recorded.map((call) => modelOf(call.url)),
+      [
+        'gemini-2.5-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash-lite',
+      ],
+    );
+  });
+});
+
+Deno.test('an overloaded model still yields the deterministic verdict', async () => {
+  await withGemini(async () => {
+    transientFailures = Number.MAX_SAFE_INTEGER;
+    transientStatus = 503;
+
+    const res = await handleRequest(post({ messages: [{ role: 'user', content: 'Verifica 1.2.3.4' }] }));
+
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.provider, 'valthoris/evidence');
+    assert(!String(body.content).includes('503'), body.content);
   });
 });

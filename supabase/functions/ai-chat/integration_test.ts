@@ -702,7 +702,7 @@ Deno.test('a 400 that is not the tool never leaks its status to the user', async
   }
 });
 
-Deno.test('with no evidence at all, a model failure stays generic', async () => {
+Deno.test('with no evidence at all, a greeting is still answered without any upstream detail', async () => {
   recorded = [];
   const realFetchStub = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
@@ -719,12 +719,15 @@ Deno.test('with no evidence at all, a model failure stays generic', async () => 
     const res = await handler!(post({
       messages: [{ role: 'user', content: 'Olá, tudo bem?' }],
     }));
-    assertEquals(res.status, 502);
+    // Conversation needs no model and no source: the turn is answered with the
+    // fixed offline line instead of the failure notice, and the upstream status
+    // stays in the logs.
+    assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(
-      body.error,
-      'De momento não consigo processar o seu pedido, tente novamente em instantes.',
-    );
+    assertEquals(body.error, undefined);
+    assertEquals(body.provider, 'valthoris/offline');
+    assertStringIncludes(body.content, 'VALTHORIS');
+    assertEquals(String(body.content).includes('400'), false);
   } finally {
     globalThis.fetch = realFetchStub;
   }
@@ -798,7 +801,7 @@ Deno.test('a Gemini rate limit falls back to DeepSeek without reaching the user'
   }
 });
 
-Deno.test('when both models fail the user sees one generic message, never a status', async () => {
+Deno.test('when both models fail no upstream status ever reaches the conversation', async () => {
   recorded = [];
   Deno.env.set('DEEPSEEK_API_KEY', 'test-deepseek-key');
   const realFetchStub = globalThis.fetch;
@@ -817,14 +820,13 @@ Deno.test('when both models fail the user sees one generic message, never a stat
     const res = await handler!(post({
       messages: [{ role: 'user', content: 'Olá, tudo bem?' }],
     }));
-    assertEquals(res.status, 502);
+    assertEquals(res.status, 200);
     const body = await res.json();
-    assertEquals(
-      body.error,
-      'De momento não consigo processar o seu pedido, tente novamente em instantes.',
-    );
-    assert(!String(body.error).includes('HTTP'));
-    assertEquals(body.content, undefined);
+    assertEquals(body.error, undefined);
+    assertEquals(body.provider, 'valthoris/offline');
+    assert(!String(body.content).includes('HTTP'));
+    assert(!String(body.content).includes('429'));
+    assert(!String(body.content).includes('402'));
   } finally {
     globalThis.fetch = realFetchStub;
     Deno.env.delete('DEEPSEEK_API_KEY');
