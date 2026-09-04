@@ -358,6 +358,27 @@ class GeminiModelNotFound extends Error {}
 class GeminiToolUnsupported extends Error {}
 
 /**
+ * Raised when Google answers a *transient* upstream failure.
+ *
+ * `503 UNAVAILABLE` ("the model is overloaded") is the common one, and it is
+ * not a fault of the request: the very same body succeeds moments later, or on
+ * another model of the same family. Treated as final — which is what produced
+ * "Gemini request failed with HTTP 503" on every turn, including "Olá" — a
+ * single overloaded minute at Google silences the whole assistant.
+ */
+class GeminiUnavailable extends Error {
+  readonly status: number;
+
+  constructor(model: string, status: number) {
+    super(`Gemini model "${model}" answered HTTP ${status}`);
+    this.status = status;
+  }
+}
+
+/** Upstream statuses that mean "try again", never "this request is wrong". */
+const GEMINI_RETRYABLE_STATUS = new Set([500, 502, 503, 504, 529]);
+
+/**
  * Hard ceiling for a single model call.
  *
  * A provider that never answers is worse than one that fails: without a
@@ -399,6 +420,25 @@ const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 /**
+ * Delays between attempts on the *same* model after a transient failure.
+ *
+ * Two extra attempts, spaced by less than two seconds in total, so that a
+ * momentary overload at Google costs the user a pause instead of an error,
+ * while a genuine outage still falls through to the next model (and then to the
+ * evidence answer) well inside the request budget.
+ */
+const GEMINI_RETRY_DELAYS_MS = [400, 1_200];
+
+/**
+ * Wall-clock ceiling for the whole model chain (all models, all attempts).
+ *
+ * Each attempt already has `MODEL_TIMEOUT_MS`; without a ceiling on the chain a
+ * provider that is slow *and* failing would keep the browser waiting for
+ * minutes, when the evidence answer is one second away.
+ */
+const GEMINI_CHAIN_BUDGET_MS = 45_000;
+
+/**
  * Normalises the configured model name.
  *
  * The secret is written by a human, so it may carry surrounding whitespace, a
@@ -437,30 +477,64 @@ async function callGemini(
   webSearch = false,
 ): Promise<Completion> {
   const chain = geminiModelChain();
+  const deadline = Date.now() + GEMINI_CHAIN_BUDGET_MS;
   let lastNotFound: AiChatError | undefined;
+  let lastUnavailable: GeminiUnavailable | undefined;
   for (const model of chain) {
-    try {
-      return await callGeminiModel(messages, apiKey, systemPrompt, model, webSearch);
-    } catch (err) {
-      if (err instanceof GeminiToolUnsupported) {
-        // The deployment's model or API version does not serve the search tool.
-        // The Nominatim evidence is still in the turn, so it is retried without
-        // the tool rather than lost.
-        console.warn('[ai-chat] gemini google_search unavailable — retrying without it');
-        return await callGeminiModel(messages, apiKey, systemPrompt, model, false);
+    if (Date.now() >= deadline) break;
+    // Google's overload is measured in seconds, so the same name is given a
+    // couple of extra chances before the next one is tried. The delays are
+    // short on purpose: the browser is waiting on this request.
+    for (let attempt = 0; attempt < GEMINI_RETRY_DELAYS_MS.length + 1; attempt++) {
+      try {
+        return await callGeminiModel(messages, apiKey, systemPrompt, model, webSearch);
+      } catch (err) {
+        if (err instanceof GeminiToolUnsupported) {
+          // The deployment's model or API version does not serve the search tool.
+          // The Nominatim evidence is still in the turn, so it is retried without
+          // the tool rather than lost.
+          console.warn('[ai-chat] gemini google_search unavailable — retrying without it');
+          return await callGeminiModel(messages, apiKey, systemPrompt, model, false);
+        }
+        if (err instanceof GeminiModelNotFound) {
+          lastNotFound = new AiChatError(
+            `Gemini model "${model}" is not available for this API key (HTTP 404). ` +
+              'Set the GEMINI_MODEL secret to a model your key can serve.',
+          );
+          break;
+        }
+        if (err instanceof GeminiUnavailable) {
+          lastUnavailable = err;
+          const delay = GEMINI_RETRY_DELAYS_MS[attempt];
+          console.warn(
+            `[ai-chat] gemini ${model} HTTP ${err.status}` +
+              (delay === undefined
+                ? ' — no attempt left on this model'
+                : ` — retrying in ${delay} ms`),
+          );
+          if (delay === undefined) break;
+          if (Date.now() + delay >= deadline) break;
+          await sleep(delay);
+          continue;
+        }
+        throw err;
       }
-      if (err instanceof GeminiModelNotFound) {
-        lastNotFound = new AiChatError(
-          `Gemini model "${model}" is not available for this API key (HTTP 404). ` +
-            'Set the GEMINI_MODEL secret to a model your key can serve.',
-        );
-        continue;
-      }
-      throw err;
     }
   }
-  throw lastNotFound ??
-    new AiChatError('Gemini request failed: no model could be reached.');
+  if (lastNotFound) throw lastNotFound;
+  if (lastUnavailable) {
+    // The status stays in the message for the function logs; the browser only
+    // ever sees `PROVIDERS_UNAVAILABLE` (or the evidence answer).
+    throw new AiChatError(
+      `Gemini is unavailable on every model (last: HTTP ${lastUnavailable.status}).`,
+    );
+  }
+  throw new AiChatError('Gemini request failed: no model could be reached.');
+}
+
+/** Waits `ms` milliseconds — used only to space out retries of an overloaded model. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function callGeminiModel(
@@ -518,6 +592,9 @@ async function callGeminiModel(
     // A 404 identifies the model, not the request: let the caller try the next
     // name in the chain before giving up.
     if (res.status === 404) throw new GeminiModelNotFound(model);
+    // A 5xx is Google's own capacity, not this request: it is retried on the
+    // same model and then on the next one, instead of failing the turn.
+    if (GEMINI_RETRYABLE_STATUS.has(res.status)) throw new GeminiUnavailable(model, res.status);
     throw new AiChatError(`Gemini request failed with HTTP ${res.status}`);
   }
 
@@ -638,6 +715,24 @@ async function callDeepSeek(
  */
 const PROVIDERS_UNAVAILABLE =
   'De momento não consigo processar o seu pedido, tente novamente em instantes.';
+
+/**
+ * The reply to plain conversation when no model is answering.
+ *
+ * It states nothing about the world — it only says what the assistant can still
+ * do — so it can never become a guess dressed as an answer. It exists because a
+ * greeting has no evidence to fall back to, and the failure notice in its place
+ * makes an assistant whose lookups are working look entirely dead.
+ */
+function socialFallback(language: 'pt' | 'en'): string {
+  return language === 'en'
+    ? 'Hello. I am the VALTHORIS assistant. My conversational model is momentarily ' +
+      'unavailable, but the verification sources are working: send me a phone number, ' +
+      'link, domain, e-mail address, IBAN or wallet and I will check it for you.'
+    : 'Olá. Sou o assistente VALTHORIS. O meu modelo de conversa está momentaneamente ' +
+      'indisponível, mas as fontes de verificação estão a funcionar: envie-me um número ' +
+      'de telefone, link, domínio, e-mail, IBAN ou carteira e eu verifico-o por si.';
+}
 
 /**
  * Answers the turn with whichever provider is available.
@@ -1016,6 +1111,21 @@ function sanitizeLocalEvidence(local: unknown): LocalEvidence | undefined {
           grounded: true,
           sources: intel?.sources ?? [],
           verdict,
+        },
+        200,
+      );
+    }
+    // Plain conversation ("Olá", "Tudo bem contigo?") needs no model and no
+    // source: answering it with the failure notice is what made the assistant
+    // look broken while its lookups were still working. A fixed, honest line
+    // keeps the conversation alive and states plainly what it can do right now.
+    if (intent === 'social') {
+      return json(
+        {
+          content: socialFallback(language),
+          provider: 'valthoris/offline',
+          model: 'offline-reply',
+          grounded: false,
         },
         200,
       );
