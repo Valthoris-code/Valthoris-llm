@@ -41,6 +41,59 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    title: 'Centro de Comando',
+    items: [
+      {
+        to: '/admin/statistics',
+        label: 'Estatísticas',
+        icon: '📊',
+        permission: 'dashboard.read',
+        phase: 1,
+        summary: 'Contagens reais das tabelas deste Supabase, sem números fabricados.',
+      },
+      {
+        to: '/admin/fraud-reports',
+        label: 'Denúncias',
+        icon: '📣',
+        permission: 'reports.read',
+        phase: 1,
+        summary: 'Submissão e consulta de denúncias de fraude registadas na plataforma.',
+      },
+      {
+        to: '/admin/fraud-map',
+        label: 'Mapa de Denúncias',
+        icon: '🗺',
+        permission: 'reports.read',
+        phase: 1,
+        summary: 'Denúncias com coordenadas conhecidas, sobre o mapa.',
+      },
+      {
+        to: '/admin/blacklist',
+        label: 'Blacklist',
+        icon: '⛔',
+        permission: 'blacklist.read',
+        phase: 1,
+        summary: 'IP, telefone, email, cripto, IBAN, domínio e outros, com importação em lote.',
+      },
+      {
+        to: '/admin/reputation',
+        label: 'Reputação de Entidades',
+        icon: '⚖',
+        permission: 'reputation.read',
+        phase: 1,
+        summary: 'Score por entidade e o histórico de cada alteração.',
+      },
+      {
+        to: '/admin/monitoring',
+        label: 'Monitorização Global',
+        icon: '📡',
+        permission: 'audit.read',
+        phase: 1,
+        summary: 'Feed recente da auditoria e do registo técnico de erros.',
+      },
+    ],
+  },
+  {
     title: 'Governance',
     items: [
       {
@@ -74,11 +127,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       {
         to: '/admin/users',
-        label: 'Users',
+        label: 'Utilizadores e Admins',
         icon: '🧑‍🤝‍🧑',
         permission: 'users.read',
-        phase: 2,
-        summary: 'Platform accounts, plans, usage, sessions, devices and reports.',
+        phase: 1,
+        summary: 'Contas da plataforma e administradores, com o estado real de cada uma.',
       },
       {
         to: '/admin/plans',
@@ -122,8 +175,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         label: 'Threat Intelligence',
         icon: '🕵',
         permission: 'threat_intel.read',
-        phase: 6,
-        summary: 'Indicators with their evidence chain, sources and risk scoring.',
+        phase: 1,
+        summary: 'Indicadores agregados por tipo de ameaça, a partir das nossas tabelas.',
       },
       {
         to: '/admin/ingestion',

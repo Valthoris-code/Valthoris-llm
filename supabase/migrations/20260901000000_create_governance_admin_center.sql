@@ -50,10 +50,16 @@ DECLARE
   v_archive TEXT;
   v_fn      RECORD;
 BEGIN
+  -- `to_regclass()` on both sides on purpose: a literal `::regclass` cast is
+  -- resolved while the statement is parsed, so on a database that does *not*
+  -- carry the foreign draft — a brand-new project — it raised "relation
+  -- governance.audit_logs does not exist" before the guard above could
+  -- short-circuit, and this migration (and every migration after it) never
+  -- applied. `to_regclass()` returns NULL instead of raising.
   IF to_regclass('governance.audit_logs') IS NULL
      OR EXISTS (
        SELECT 1 FROM pg_attribute
-        WHERE attrelid = 'governance.audit_logs'::regclass
+        WHERE attrelid = to_regclass('governance.audit_logs')
           AND attname  = 'occurred_at'
           AND NOT attisdropped
      )

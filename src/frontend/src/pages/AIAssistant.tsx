@@ -7,7 +7,7 @@ import {
 } from '../services/aiChatService';
 import type { AiChatAnalysis, AiChatMessage, AiChatSource } from '../services/aiChatService';
 import { useAuth } from '../hooks/useAuth';
-import SocialShare from '../components/SocialShare';
+import SocialShare, { VALTHORIS_REPOSITORY, GITHUB_GLYPH_PATH } from '../components/SocialShare';
 import NewsTicker from '../components/NewsTicker';
 import ValthorisShield from '../components/ValthorisShield';
 import PlaceMap from '../components/PlaceMap';
@@ -603,7 +603,22 @@ export default function AIAssistant() {
               )}
             </div>
           </div>
-          <span className="badge-beta ai-chat-header-badge">BETA</span>
+          {/* The release stage is already stated in the notice at the top of the
+              page ("v0.1-beta"), so the header carries the repository link
+              instead — same GitHub mark used everywhere else in the app. */}
+          <a
+            className="ai-chat-header-github"
+            href={VALTHORIS_REPOSITORY}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="VALTHORIS no GitHub"
+            aria-label="VALTHORIS no GitHub"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="18" height="18">
+              <path d={GITHUB_GLYPH_PATH} fill="currentColor" />
+            </svg>
+            <span className="ai-chat-header-github-star" aria-hidden="true">★</span>
+          </a>
         </div>
 
         {/* Messages */}

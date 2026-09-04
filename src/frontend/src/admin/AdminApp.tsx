@@ -22,6 +22,14 @@ import Administrators from './pages/Administrators';
 import RolesPage from './pages/RolesPage';
 import AuditLogPage from './pages/AuditLogPage';
 import IntelSourcesPage from './pages/IntelSourcesPage';
+import StatisticsPage from './pages/StatisticsPage';
+import FraudReportsPage from './pages/FraudReportsPage';
+import FraudMapPage from './pages/FraudMapPage';
+import BlacklistPage from './pages/BlacklistPage';
+import ReputationPage from './pages/ReputationPage';
+import ThreatIntelligencePage from './pages/ThreatIntelligencePage';
+import MonitoringPage from './pages/MonitoringPage';
+import UsersPage from './pages/UsersPage';
 import AdminPlaceholder from './pages/AdminPlaceholder';
 import { ADMIN_NAV_ITEMS } from './adminNav';
 import './admin.css';
@@ -33,6 +41,14 @@ const IMPLEMENTED = new Set([
   '/admin/roles',
   '/admin/audit',
   '/admin/intel-sources',
+  '/admin/statistics',
+  '/admin/fraud-reports',
+  '/admin/fraud-map',
+  '/admin/blacklist',
+  '/admin/reputation',
+  '/admin/monitoring',
+  '/admin/threat-intelligence',
+  '/admin/users',
 ]);
 
 export default function AdminApp() {
@@ -73,6 +89,72 @@ export default function AdminApp() {
               element={
                 <PermissionGuard permission="audit.read">
                   <AuditLogPage />
+                </PermissionGuard>
+              }
+            />
+
+            {/* Centro de Comando — every section reads this project's Supabase. */}
+            <Route
+              path="statistics"
+              element={
+                <PermissionGuard permission="dashboard.read">
+                  <StatisticsPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="fraud-reports"
+              element={
+                <PermissionGuard permission="reports.read">
+                  <FraudReportsPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="fraud-map"
+              element={
+                <PermissionGuard permission="reports.read">
+                  <FraudMapPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="blacklist"
+              element={
+                <PermissionGuard permission="blacklist.read">
+                  <BlacklistPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="reputation"
+              element={
+                <PermissionGuard permission="reputation.read">
+                  <ReputationPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="threat-intelligence"
+              element={
+                <PermissionGuard permission="threat_intel.read">
+                  <ThreatIntelligencePage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="monitoring"
+              element={
+                <PermissionGuard permission="audit.read">
+                  <MonitoringPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <PermissionGuard permission="users.read">
+                  <UsersPage />
                 </PermissionGuard>
               }
             />
