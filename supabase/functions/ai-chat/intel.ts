@@ -1945,6 +1945,15 @@ const PROVIDERS: Provider[] = [
     endpoint: 'web/search',
     kinds: ['web', 'topic'],
     probeValue: 'openstreetmap',
+    // ── Paid feature, switched off ──────────────────────────────────────────
+    // Grounding with Google Search is billed separately from the ordinary
+    // Gemini generation quota and its free allowance is very small, so it is
+    // exhausted almost immediately and every later turn fails. The code is kept
+    // intact: remove `disabled` once the grounding quota is contracted.
+    disabled:
+      'Grounding with Google Search is a paid Gemini feature with a very small ' +
+      'free quota, separate from the ordinary Gemini quota. It is switched off; ' +
+      'web search is served by DuckDuckGo, Brave, Tavily and Serper.',
     config: () => env('GEMINI_API_KEY'),
     run: async (value) => {
       const { results, answer } = await geminiWebSearch(value);

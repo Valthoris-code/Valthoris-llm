@@ -926,14 +926,25 @@
 
 .security-badge-icon { font-size: 0.8rem; }
 
-/* On a phone the bottom navigation owns the bottom edge; the seal rests above it. */
+/*
+ * On a phone the bottom navigation owns the bottom edge and the share icons sit
+ * right above it, so the corner the seal used to occupy is already taken — it
+ * covered the WhatsApp/TikTok/X row. It is therefore parked, smaller, in the
+ * thin band between that icon row and the navigation bar, centred and clear of
+ * both.
+ */
 @media (max-width: 768px) {
   .security-badge {
-    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
-    right: 0.5rem;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.5rem;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 0.25rem;
+    font-size: 0.55rem;
+    padding: 0.1rem 0.45rem;
   }
+
+  .security-badge .security-badge-icon { font-size: 0.62rem; }
 }
 
 /* With the on-screen keyboard open the bottom navigation hides; so does the seal. */

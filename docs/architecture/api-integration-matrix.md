@@ -47,7 +47,7 @@ Valthoris frontend (src/frontend/src/pages/AIAssistant.tsx)
 | CryptoScamDB | `CRYPTOSCAMDB_API_URL` | `ai-chat` → `intel.ts` | Crypto Intelligence | `/v1/check/{entity}` — answers HTTP 404 for every entity | — | CryptoScamDB | **DISABLED** (service discontinued; candidate replacements: Chainabuse, ScamSniffer) |
 | CoinGecko | `COINGECKO_API_KEY` | `ai-chat` → `intel.ts` | Crypto Intelligence | `coins/ethereum/contract/{address}` | listed token, symbol, market cap rank, price | CoinGecko | ACTIVE |
 | NewsData | `NEWSDATA_API_KEY` | `ai-chat` → `intel.ts` | Threat Intelligence (current) | `api/1/news` | headlines, sources, publication dates | NewsData | ACTIVE |
-| Google Search (Gemini) | `GEMINI_API_KEY` (+ optional `GEMINI_SEARCH_MODEL`) | `ai-chat` → `intel.ts` | Public web search (any subject) — **primary** | `v1beta/models/{model}:generateContent` with the `google_search` tool, read as a search source | grounded summary, pages consulted with their links | Google | ACTIVE |
+| Google Search (Gemini) | `GEMINI_API_KEY` (+ optional `GEMINI_SEARCH_MODEL`) | `ai-chat` → `intel.ts` | Public web search (any subject) | `v1beta/models/{model}:generateContent` with the `google_search` tool, read as a search source | grounded summary, pages consulted with their links | Google | **DISABLED** (Grounding with Google Search is a paid feature with a very small free quota, separate from the ordinary Gemini quota; the keyless engines carry the search) |
 | Photon (Komoot) | none (keyless) | `ai-chat` → `intel.ts` | Public place / business lookup | `api?q=…&lang=pt&limit=5` | name, address, category, coordinates | Photon / OpenStreetMap | ACTIVE |
 | DuckDuckGo | none (keyless) | `ai-chat` → `intel.ts` | Public web search (any subject) | `html.duckduckgo.com/html/` result page, `api.duckduckgo.com` Instant Answer as fallback | page titles, links, snippets | DuckDuckGo | ACTIVE |
 | Wikipedia | none (keyless) | `ai-chat` → `intel.ts` | Public web search (any subject) | `pt`/`en` `w/api.php?action=query&list=search` | article titles, extracts, links | Wikipedia | ACTIVE |
@@ -79,7 +79,7 @@ own state to the user:
 | Ethereum address | Etherscan + GoPlus + CoinGecko |
 | Bitcoin address | — (CryptoScamDB disabled; no replacement contracted yet) |
 | Public place / business question | Nominatim + Photon (whenever the turn names a place **and** either asks for a factual detail **or** expresses a practical need — "tenho fome", "perto de mim", "como chego lá"), plus the web-search engines |
-| Any other real question, on any subject | Google Search through Gemini (primary), DuckDuckGo + Wikipedia (keyless) and Brave / Tavily / Serper when their key is configured; if no engine returned a page, the answer call itself is made with Google's search tool. Only small talk is answered without searching |
+| Any other real question, on any subject | DuckDuckGo + Wikipedia (keyless) and Brave / Tavily / Serper when their key is configured. Google Search through Gemini is disabled (paid grounding quota), and the answering call never enables Google's search tool. Only small talk is answered without searching |
 | Current-threat question | NewsData (only on an explicit news intent) + the web-search engines |
 
 ## Guarantees
