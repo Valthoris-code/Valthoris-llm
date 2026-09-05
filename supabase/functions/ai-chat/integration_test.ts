@@ -660,9 +660,10 @@ Deno.test('a model that does not serve the search tool still answers the turn', 
     }));
     assertEquals(res.status, 200);
     const body = await res.json();
-    // The search source tries each model in its chain, and the answer call then
-    // falls back to Google's own tool because that source found nothing.
-    assertEquals(toolCalls, 3);
+    // The search source tries each model in its chain; the answer call no
+    // longer falls back to Google's own tool, so only the search source's
+    // attempts carry it.
+    assertEquals(toolCalls, 2);
     assertEquals(body.content, 'NOME: Hospital do Espírito Santo\nCONTACTO: não confirmado');
     assertEquals(body.error, undefined);
   } finally {
