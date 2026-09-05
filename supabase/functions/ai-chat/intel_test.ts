@@ -685,80 +685,29 @@ Deno.test('a real web search is performed with no credential at all', async () =
   }
 });
 
-Deno.test('the Gemini key alone is enough to search the web', async () => {
+Deno.test('the paid Gemini search is switched off and never called', async () => {
   clearSecrets();
   Deno.env.set('GEMINI_API_KEY', 'unit-test-gemini-key');
   const realFetch = globalThis.fetch;
   const calls: string[] = [];
-  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    calls.push(url);
-    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
-      const body = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
-      assert(
-        Array.isArray(body.tools) && body.tools.some((t: Record<string, unknown>) => 'google_search' in t),
-        'the search tool was not requested',
-      );
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            candidates: [{
-              content: { parts: [{ text: 'A Óptica Havaneza fica na Praça do Giraldo.' }] },
-              groundingMetadata: {
-                groundingChunks: [
-                  { web: { uri: 'https://exemplo.test/havaneza', title: 'Óptica Havaneza' } },
-                  { web: { uri: 'javascript:alert(1)', title: 'não é uma página' } },
-                  { web: { uri: 'https://exemplo.test/havaneza', title: 'duplicado' } },
-                ],
-              },
-            }],
-          }),
-          { status: 200 },
-        ),
-      );
-    }
-    return Promise.reject(new Error(`unexpected fetch to ${url}`));
-  }) as typeof fetch;
-
-  try {
-    const reports = await gatherIntelligence({ kind: 'web', value: 'óptica havaneza évora' });
-    const search = reports.find((r) => r.provider === 'Google Search (Gemini)');
-    assertEquals(search?.status, 'success');
-    const pages = search?.data?.pages as { url: string }[];
-    // The unsafe link is dropped and the duplicate is collapsed.
-    assertEquals(pages.length, 1);
-    assertEquals(pages[0].url, 'https://exemplo.test/havaneza');
-    assertEquals(search?.data?.answer, 'A Óptica Havaneza fica na Praça do Giraldo.');
-    // The key never appears anywhere but in the request itself.
-    assert(!JSON.stringify(search).includes('unit-test-gemini-key'));
-  } finally {
-    globalThis.fetch = realFetch;
-    clearSecrets();
-  }
-});
-
-Deno.test('a Gemini search that finds nothing says so instead of recalling', async () => {
-  clearSecrets();
-  Deno.env.set('GEMINI_API_KEY', 'unit-test-gemini-key');
-  const realFetch = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    if (url.startsWith('https://generativelanguage.googleapis.com/')) {
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({ candidates: [{ content: { parts: [{ text: 'SEM RESULTADOS' }] } }] }),
-          { status: 200 },
-        ),
-      );
-    }
-    return Promise.reject(new Error(`unexpected fetch to ${url}`));
+    calls.push(url);
+    return Promise.resolve(new Response('{}', { status: 200 }));
   }) as typeof fetch;
 
   try {
-    const reports = await gatherIntelligence({ kind: 'web', value: 'assunto inexistente' });
+    // Grounding with Google Search is billed apart from the ordinary Gemini
+    // quota, so the source is disabled: it is reported as such, with the
+    // reason, and the Gemini endpoint is not contacted for a search.
+    const reports = await gatherIntelligence({ kind: 'web', value: 'óptica havaneza évora' });
     const search = reports.find((r) => r.provider === 'Google Search (Gemini)');
-    assertEquals(search?.status, 'success');
-    assertEquals(search?.data?.found, false);
+    assertEquals(search?.status, 'disabled');
+    assert(String(search?.error).includes('paid'));
+    assert(!calls.some((url) => url.startsWith('https://generativelanguage.googleapis.com/')));
+
+    const health = await probeSource(sourceId('Google Search (Gemini)', 'web/search'));
+    assertEquals(health?.status, 'disabled');
   } finally {
     globalThis.fetch = realFetch;
     clearSecrets();

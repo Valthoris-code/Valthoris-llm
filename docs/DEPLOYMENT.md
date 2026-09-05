@@ -177,25 +177,17 @@ Every turn that is a real question — any subject, not only security — is
 searched on the web **before** the model writes the answer, and the pages that
 were read are listed as sources under it.
 
-The primary engine is **Google Search through Gemini**: `ai-chat/intel.ts`
-calls `generateContent` with the `google_search` tool as a *search source*, not
-as an answer, keeps the pages from the grounding metadata and hands them to the
-turn as evidence. That is what makes the search stable — it is a contracted API
-served against `GEMINI_API_KEY`, so it does not depend on a public endpoint
-tolerating requests from a datacentre address. If the configured model does not
-serve the tool, the next model in the chain is tried (`GEMINI_SEARCH_MODEL` →
-`GEMINI_MODEL` → `gemini-2.5-flash` → `gemini-2.5-flash-lite`).
+The Google Search source served through Gemini (`ai-chat/intel.ts`, `web/search`)
+is **switched off**: Grounding with Google Search is a paid Gemini feature whose
+free allowance is very small and separate from the ordinary Gemini quota, so it
+was exhausted almost at once and every later search failed. The provider is kept
+in the code and reported as `disabled`, with the reason, instead of being deleted
+— remove its `disabled` field once the grounding quota is contracted. The chain
+it would use is still configurable (`GEMINI_SEARCH_MODEL` → `GEMINI_MODEL` →
+`gemini-2.5-flash` → `gemini-2.5-flash-lite`).
 
-A model name that this key does not serve answers **HTTP 404** ("endpoint not
-found") for every search, which is why the search could fail permanently while
-the key itself was perfectly valid. When the whole chain answers 404, `ai-chat`
-now asks the key which models it actually has (`ListModels`), keeps the ones
-that support `generateContent`, and retries with them; the discovered list is
-reused for the rest of the instance's life. Setting `GEMINI_SEARCH_MODEL` to a
-model the key serves skips the discovery entirely.
-
-Two more engines need no credential at all and run alongside it, so the answer
-never rests on a single provider:
+Two engines need no credential at all and carry the search, so the answer never
+rests on a single provider:
 
 * **DuckDuckGo**, through its no-JavaScript result page (with the Instant Answer
   API as the fallback when that page throttles the datacentre address);
@@ -209,11 +201,10 @@ The optional keys above are added on top: when they are configured, their
 engines answer alongside the others and every source is listed individually, so
 a throttled engine is visible instead of silently narrowing the answer.
 
-When **no** engine returned a page, the answer call itself is made with
-Google's search tool enabled, so the model searches instead of recalling; the
-pages it grounded on are reported as the `Google Search (Gemini)` source with
-the `web/grounding` endpoint. When a search source already answered, that second
-search is skipped, so a question never spends the search quota twice.
+When **no** engine returned a page, the answer is still written from the evidence
+that was gathered: the answering call never enables Google's search tool, because
+that tool is the same paid Grounding with Google Search feature. Nothing spends
+the grounding quota.
 
 ### What is searched, and what is simply answered
 

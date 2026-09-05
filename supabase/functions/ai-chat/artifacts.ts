@@ -26,6 +26,11 @@ export interface DetectedArtifact {
   value: string;
   /** Narrower label kept in the event payload metadata. */
   kind: 'url' | 'domain' | 'email' | 'crypto' | 'iban' | 'phone' | 'ip';
+  /**
+   * International form used to query the external sources (NumVerify, Abstract
+   * Phone). It never replaces `value`, which stays exactly as the user wrote it.
+   */
+  normalized?: string;
 }
 
 const URL_RE = /\bhttps?:\/\/[^\s<>"')]+/i;
@@ -36,6 +41,8 @@ const BTC_RE = /\b(?:bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})\b/;
 const ETH_RE = /\b0x[a-fA-F0-9]{40}\b/;
 const IBAN_RE = /\b[A-Z]{2}[0-9]{2}(?:[ ]?[A-Z0-9]{4}){2,7}[ ]?[A-Z0-9]{1,3}\b/;
 const PHONE_RE = /(?:\+|00)[0-9][0-9 ().-]{7,17}[0-9]/;
+/** Portuguese 9-digit number written without the +351 country code. */
+const BARE_PT_PHONE_RE = /(?<![+\d])(?:9[1236]\d{7}|2\d{8}|3\d{8})(?!\d)/;
 const IPV4_RE = /\b(?:(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\b/;
 
 /**
@@ -63,6 +70,16 @@ export function detectArtifact(text: string): DetectedArtifact | null {
 
   const phone = PHONE_RE.exec(text);
   if (phone) return { eventType: 'sms', value: phone[0].trim(), kind: 'phone' };
+
+  const barePtPhone = BARE_PT_PHONE_RE.exec(text);
+  if (barePtPhone) {
+    return {
+      eventType: 'sms',
+      value: barePtPhone[0],
+      kind: 'phone',
+      normalized: `+351${barePtPhone[0]}`,
+    };
+  }
 
   const domain = DOMAIN_RE.exec(text);
   if (domain) return { eventType: 'url', value: domain[0], kind: 'domain' };

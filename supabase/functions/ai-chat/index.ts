@@ -1056,12 +1056,10 @@ function sanitizeLocalEvidence(local: unknown): LocalEvidence | undefined {
       ? `${SYSTEM_PROMPT} ${responseFormatFor(intel.kind)}`
       : `${SYSTEM_PROMPT} ${UNGROUNDED_RESPONSE_FORMAT}`;
 
-  // Google's own search tool is enabled on every turn that is a lookup rather
-  // than conversation, unless a search engine already came back with pages in
-  // this turn. That keeps a factual question from ever being answered from the
-  // model's memory — if every engine was throttled, the model searches itself —
-  // without spending the Gemini search quota twice on the same question.
-  const webSearch = intent !== 'social' && !(intel?.searched ?? false);
+  // Google's own search tool inside the answering call is the paid Gemini
+  // search, and it is no longer used: the turn is answered from the evidence
+  // the intelligence layer already gathered, never from a second paid search.
+  const webSearch = false;
 
   // ─── Deterministic verdict ────────────────────────────────────────────────
   // Computed from the provider payloads alone, before any answer is written:
@@ -1872,7 +1870,9 @@ function intelEntityFor(artifact: DetectedArtifact): IntelEntity | null {
     };
   }
   const kind = kindMap[artifact.kind];
-  return kind ? { kind, value: artifact.value } : null;
+  // The external sources are queried with the international form when the
+  // artefact carries one; `artifact.value` stays what the user actually wrote.
+  return kind ? { kind, value: artifact.normalized ?? artifact.value } : null;
 }
 
 /**
